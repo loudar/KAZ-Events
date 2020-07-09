@@ -107,7 +107,7 @@ REM $INCLUDE:'code/UM.BI'
 REM $INCLUDE:'code/TYPES.BI'
 
 'import from site
-maxtags = 2000
+maxtags = 20000
 DIM SHARED tag$(maxtags)
 DIM SHARED content$(maxtags)
 
@@ -120,10 +120,10 @@ maxprinters = 50
 DIM SHARED default$(maxprinters)
 DIM SHARED printer$(maxprinters)
 
-'fetchEvents
+fetchEvents
 
-'SLEEP
-'SYSTEM
+SLEEP
+SYSTEM
 
 loadall
 
@@ -2776,8 +2776,10 @@ SUB fetchEvents
         DO
             LINE INPUT #100, name$ 'reads name from file
             LINE INPUT #100, url$ 'reads url from file
-            SHELL "wget " + url$ + " -O " + outputfile$
+            PRINT "Lade " + url$ + " herunter..."
+            SHELL "wget --recursive --no-parent --include lagerhaus " + url$ + " -O " + outputfile$
             OPEN outputfile$ FOR INPUT AS #101 'opens downloaded .html/.php or whatever file
+            PRINT "Lese Tags f" + CHR$(129) + "r " + name$ + "..."
             IF LOF(101) > 0 THEN
                 t = 0
                 DO
@@ -2809,6 +2811,17 @@ SUB fetchEvents
                                             t = t - 1 'removes closing tags and tags without content
                                         END IF
                                     END IF
+                                    IF t > 2 THEN
+                                        IF tag$(t) = "</span>" THEN
+                                            IF tag$(t - 1) = "<span class=" + CHR$(34) + "caps" + CHR$(34) + ">" THEN
+                                                IF tag$(t - 2) = "<p>" THEN
+                                                    tag$(t - 2) = "<p>"
+                                                    content$(t - 2) = content$(t - 2) + content$(t - 1) + content$(t)
+                                                    t = t - 2
+                                                END IF
+                                            END IF
+                                        END IF
+                                    END IF
                                     newtag = 0
                                 END IF
                             LOOP UNTIL p >= LEN(line$)
@@ -2819,6 +2832,7 @@ SUB fetchEvents
                     OPEN "import\list2.txt" FOR OUTPUT AS #102
                     OPEN "import\list3.txt" FOR OUTPUT AS #103
                     skiptitle = 1
+                    iv = 0
                     t = 0: DO: t = t + 1
                         'print to file
                         PRINT #102, tag$(t)
@@ -2826,26 +2840,61 @@ SUB fetchEvents
                         'html replacer
                         p = 0: DO: p = p + 1
                             SELECT CASE MID$(content$(t), p, 1)
-                                CASE IS = "&"
-                                    'IF MID$(content$(t), p, 6) = "&#160;" THEN
-                                    '        content$(t) = MID$(content$(t), 1, p-1) + " " + MID$(content$(t), p + 6, LEN(content$(t)) - p
-                                    'END IF
+                                CASE IS = "&" 'replaces html codes
+                                    u = p
+                                    DO: p = p + 1
+                                    LOOP UNTIL MID$(content$(t), p, 1) = ";"
+                                    htmlcode$ = MID$(content$(t), u, p - u + 1)
+                                    content$(t) = MID$(content$(t), 1, u - 1) + htmlreplace$(htmlcode$) + MID$(content$(t), p + 1, LEN(content$(t)) - p)
+                                    p = p - LEN(htmlcode$) + 1
+                                CASE IS = "’"
+                                    content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 1, LEN(content$(t)) - p)
                             END SELECT
-                        LOOP UNTIL p = LEN(content$(t))
+                            SELECT CASE MID$(content$(t), p, 2)
+                                CASE IS = CHR$(195) + CHR$(164) 'ae
+                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(132) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                CASE IS = CHR$(195) + CHR$(182) 'oe
+                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(148) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                CASE IS = CHR$(195) + CHR$(188) 'ue
+                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(129) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                            END SELECT
+                            SELECT CASE MID$(content$(t), p, 3) ' *sigh*
+                                CASE IS = CHR$(226) + CHR$(128) + CHR$(158) '"-down
+                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                                CASE IS = CHR$(226) + CHR$(128) + CHR$(156) '"-up
+                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                                CASE IS = CHR$(226) + CHR$(128) + CHR$(153) 'apostrophe
+                                    content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                            END SELECT
+                        LOOP UNTIL p >= LEN(content$(t))
                         'print to screen
-                        PRINT tag$(t), content$(t)
+                        'PRINT tag$(t), content$(t)
                         SELECT CASE name$
                             CASE IS = "Kulturzentrum Lagerhaus"
-                                IF MID$(tag$(t), 1, 23) = "<a rel=" + CHR$(34) + "bookmark" + CHR$(34) + " href=" THEN 'starting tag for event
+                                IF MID$(tag$(t), 1, 23) = "<a rel=" + CHR$(34) + "bookmark" + CHR$(34) + " href=" THEN 'starting tag for event (titel)
                                     IF content$(t) <> "Das Lagerhaus" AND content$(t) <> "Impressum" AND content$(t) <> "Kontakt" AND content$(t) <> "Datenschutz" AND content$(t) <> "Projekte" THEN 'exclude static cases
                                         IF skiptitle = 0 THEN
                                             skiptitle = 1
+                                            iv = iv + 1
                                             titel$ = content$(t)
                                             PRINT #103, "Titel", titel$
+                                            PRINT "Veranstaltung gefunden: " + titel$
                                             t = t + 1
-                                            IF tag$(t) = "<span id=" + CHR$(34) + "datum_global" + CHR$(34) + " class=" + CHR$(34) + "datum_lagerhaus" + CHR$(34) + ">" THEN
-                                                datum$ = MID$(content$(t), LEN(content$(t)) - 11, 12)
+                                            IF tag$(t) = "<span id=" + CHR$(34) + "datum_global" + CHR$(34) + " class=" + CHR$(34) + "datum_lagerhaus" + CHR$(34) + ">" THEN 'datum-tag
+                                                datum$ = MID$(content$(t), LEN(content$(t)) - 9, 10)
                                                 PRINT #103, "Datum", datum$
+                                            ELSE 'nothing, this should never happen
+                                            END IF
+                                            t = t + 1
+                                            IF tag$(t) = "<span class=" + CHR$(34) + "zeit" + CHR$(34) + ">" THEN 'uhrzeit-tag
+                                                zeit$ = MID$(content$(t), LEN(content$(t)) - 4, 5)
+                                                PRINT #103, "Zeit", zeit$
+                                            END IF
+                                            DO: t = t + 1
+                                            LOOP UNTIL tag$(t) = "<p>" OR t >= maxt
+                                            IF tag$(t) = "<p>" THEN
+                                                text$ = content$(t)
+                                                PRINT #103, "Text", text$
                                             END IF
                                         ELSE
                                             skiptitle = 0
@@ -2856,14 +2905,27 @@ SUB fetchEvents
                     LOOP UNTIL t >= maxt
                     CLOSE #102
                     CLOSE #103
+                    maxiv = iv
+                    PRINT iv; " Veranstaltungen gefunden."
+                    SLEEP
                 END IF
             END IF
             CLOSE #101
-            SLEEP
         LOOP UNTIL EOF(100) = -1
     END IF
     CLOSE #100
 END SUB
+
+FUNCTION htmlreplace$ (htmlcode$)
+    SELECT CASE htmlcode$
+        CASE IS = "&#160;": htmlreplace$ = " "
+        CASE IS = "&amp;": htmlreplace$ = "&"
+        CASE IS = "&nbsp;": htmlreplace$ = " "
+        CASE IS = "&#8217;": htmlreplace$ = "'"
+        CASE IS = "&#8211;": htmlreplace$ = "-"
+    END SELECT
+    EXIT FUNCTION
+END FUNCTION
 
 SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.php?topic=939.msg117741#msg117741
     IF _FILEEXISTS("printdialog.ps1") = 0 THEN
