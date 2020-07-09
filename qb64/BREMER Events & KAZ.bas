@@ -107,7 +107,7 @@ REM $INCLUDE:'code/UM.BI'
 REM $INCLUDE:'code/TYPES.BI'
 
 'import from site
-maxtags = 20000
+maxtags = 100000
 DIM SHARED tag$(maxtags)
 DIM SHARED content$(maxtags)
 
@@ -2771,14 +2771,13 @@ END SUB
 
 SUB fetchEvents
     OPEN netpath$ + "import\links.txt" FOR INPUT AS #100
-    outputfile$ = "import\list.txt"
     IF LOF(100) > 0 THEN
         DO
             LINE INPUT #100, name$ 'reads name from file
             LINE INPUT #100, url$ 'reads url from file
             PRINT "Lade " + url$ + " herunter..."
-            SHELL "wget --recursive --no-parent --include lagerhaus " + url$ + " -O " + outputfile$
-            OPEN outputfile$ FOR INPUT AS #101 'opens downloaded .html/.php or whatever file
+            SHELL "wget -l 2 -nd -r -k -A html " + url$ + " -P import/site"
+            OPEN "import/site/index.html" FOR INPUT AS #101 'opens downloaded .html/.php or whatever file
             PRINT "Lese Tags f" + CHR$(129) + "r " + name$ + "..."
             IF LOF(101) > 0 THEN
                 t = 0
