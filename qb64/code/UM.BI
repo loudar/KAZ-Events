@@ -84,7 +84,7 @@ DIM SHARED titel$ 'uberschrift fur alles
 DIM SHARED maxcliparray
 DIM SHARED cliparray$(menulimit)
 'tempsave
-DIM SHARED maxtemparray(12)
+DIM SHARED maxtemparray(0 TO 12)
 DIM SHARED temparray$(12, menulimit)
 'status
 statuslimit = 20

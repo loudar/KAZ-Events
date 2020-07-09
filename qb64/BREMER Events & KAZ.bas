@@ -120,10 +120,10 @@ maxprinters = 50
 DIM SHARED default$(maxprinters)
 DIM SHARED printer$(maxprinters)
 
-fetchEvents
+'fetchEvents
 
-SLEEP
-SYSTEM
+'SLEEP
+'SYSTEM
 
 loadall
 
@@ -2307,7 +2307,7 @@ SUB RunMenu (selectedm, layout, titel$)
             ELSE
                 UMround = 0
             END IF
-            _DISPLAY
+            '_DISPLAY
             _LIMIT framerate
         LOOP UNTIL endmenu = 1 OR interactable = 0
         m = 0: DO: m = m + 1
@@ -2337,7 +2337,7 @@ SUB RunMenu (selectedm, layout, titel$)
         LOOP UNTIL m = maxm
 
         'tempsave
-        IF endparameter$ <> "save" THEN
+        IF endparameter$ <> "save" AND listID <> 0 THEN
             m2 = 0: DO: m2 = m2 + 1
                 temparray$(listID, m2) = UserInput$(m2)
                 IF LEN(temparray$(listID, m2)) = 50 THEN
