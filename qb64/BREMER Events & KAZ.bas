@@ -120,10 +120,9 @@ maxprinters = 50
 DIM SHARED default$(maxprinters)
 DIM SHARED printer$(maxprinters)
 
-fetchEvents
-
-SLEEP
-SYSTEM
+'fetchEvents
+'SLEEP
+'SYSTEM
 
 loadall
 
@@ -210,14 +209,14 @@ DO
             NewMenItem 3, 0, "Exportieren", "export"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(11)), "yellow"
-            newStatus "Neueste: " + RTRIM$(Veranstaltung(max(11)).Titel), "yellow"
+            IF max(11) > 0 THEN newStatus "Neueste: " + RTRIM$(Veranstaltung(max(11)).Titel), "yellow"
             RunMenu 1, 0, "VERANSTALTUNGEN"
         CASE IS = "asg"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(3)), "yellow"
-            newStatus "Neueste: " + LST$(Ausgabe(max(3)).Monat), "yellow"
+            IF max(3) > 0 THEN newStatus "Neueste: " + LST$(Ausgabe(max(3)).Monat), "yellow"
             RunMenu 1, 0, "AUSGABEN"
         CASE IS = "kaz"
             NewMenItem 1, 0, "Suche", "search"
@@ -225,7 +224,7 @@ DO
             NewMenItem 3, 0, "Exportieren", "export"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(10)), "yellow"
-            newStatus "Neueste: " + RTRIM$(Kleinanzeige(max(10)).Titel), "yellow"
+            IF max(10) > 0 THEN newStatus "Neueste: " + RTRIM$(Kleinanzeige(max(10)).Titel), "yellow"
             RunMenu 1, 0, "KLEINANZEIGEN"
         CASE IS = "vea"
             NewMenItem 1, 0, "Suche", "search"
@@ -233,7 +232,7 @@ DO
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(9)), "yellow"
-            newStatus "Neuester: " + RTRIM$(Veranstalter(max(9)).Name), "yellow"
+            IF max(9) > 0 THEN newStatus "Neuester: " + RTRIM$(Veranstalter(max(9)).Name), "yellow"
             RunMenu 1, 0, "VERANSTALTER"
         CASE IS = "usr"
             IF admin = 1 THEN NewMenItem 1, 0, "Suche", "search"
@@ -484,7 +483,7 @@ DO
                     NewInput 3, 0, "Land:           ", "Deutschland", 0
                     NewInput 4, 0, "Strasse:        ", "", 0
                     NewMenItem 6, 0, "Speichern", "save"
-                    NewMenItem 6, 11, "<- Abbrechen", "back"
+                    NewMenItem 6, 13, "<- Abbrechen", "back"
                     NewMenItem 6, 29, "Einf" + CHR$(129) + "gen", "paste"
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 6
@@ -889,7 +888,7 @@ SUB display (listID$, node)
                 END IF
             LOOP UNTIL d = max(6)
             NewText 4, 0, "Telefon:      " + LST$(Veranstalter(node).Telefon), colour&("white"), "r"
-            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(ndoe).Telefax), colour&("white"), "r"
+            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(node).Telefax), colour&("white"), "r"
             NewText 6, 0, "Anrede:       " + RTRIM$(Veranstalter(node).Anrede), colour&("white"), "r"
             NewText 7, 0, "Notiz:        " + RTRIM$(Veranstalter(node).Notiz), colour&("white"), "r"
             NewMenItem 9, 0, "<- Abbrechen", "back"
@@ -1303,7 +1302,7 @@ FUNCTION search (listID$, placeholder$)
                         CASE IS = "usr"
                             SetArrayData 30, 1
                             searched$(1) = User(node).Name: searched$(2) = arraydata$(30, User(node).Zugang): searched$(3) = User(node).Abteilung: searched$(4) = LST$(User(node).Telefon): searched$(5) = LST$(User(node).Zugang)
-                            searchpart 4
+                            searchpart 5
                         CASE IS = "obj"
                             searched$(1) = Objekt(node).Name: searched$(2) = Objekt(node).Waehrung:
                             searchpart 2
@@ -1327,16 +1326,16 @@ FUNCTION search (listID$, placeholder$)
                             searchpart 3
                         CASE IS = "vea"
                             searched$(1) = Veranstalter(node).Kuerzel: searched$(2) = Veranstalter(node).Name: searched$(3) = LST$(Veranstalter(node).Telefon): searched$(4) = LST$(Veranstalter(node).Telefax): searched$(5) = Veranstalter(node).Sachbearbeiter: searched$(6) = Veranstalter(node).Anrede: searched$(7) = Veranstalter(node).Notiz
-                            searchpart 8
+                            searchpart 7
                         CASE IS = "ver"
                             searched$(1) = LST$(Veranstaltung(node).ID): searched$(2) = LST$(Veranstaltung(node).Ausgabe): searched$(3) = Veranstaltung(node).Datum: searched$(4) = Veranstaltung(node).Veranstalter: searched$(5) = Veranstaltung(node).Rubrik: searched$(6) = Veranstaltung(node).Zeit1: searched$(7) = Veranstaltung(node).Zeit2: searched$(8) = Veranstaltung(node).Titel: searched$(9) = Veranstaltung(node).Text
-                            searchpart 10
+                            searchpart 9
                         CASE IS = "kaz"
                             searched$(1) = Kleinanzeige(node).Kategorie1: searched$(2) = Kleinanzeige(node).Kategorie2: searched$(3) = Kleinanzeige(node).Kategorie3: searched$(4) = Kleinanzeige(node).Text: searched$(5) = Objekt(Kleinanzeige(node).Objekt).Name: searched$(6) = LST$(Kleinanzeige(node).Ausgabe): searched$(7) = LST$(Kleinanzeige(node).Telefon): searched$(8) = Kleinanzeige(node).Name: searched$(9) = Kleinanzeige(node).Chiffre: searched$(10) = Kleinanzeige(node).Notiz: searched$(11) = Kleinanzeige(node).Titel
                             searchpart 11
                         CASE IS = "kat"
                             searched$(1) = Kategorie(node).Kuerzel: searched$(2) = Objekt(Kategorie(node).Objekt).Name: searched$(3) = Kategorie(node).Name
-                            searchpart 12
+                            searchpart 3
                     END SELECT
                 LOOP UNTIL node = max(listID)
                 maxo = o
@@ -1465,23 +1464,26 @@ SUB searchheader (listID$)
 END SUB
 
 SUB searchpart (maxs)
-    s = 0: DO: s = s + 1
-        searched$(s) = RTRIM$(LTRIM$(searched$(s)))
-        IF suchbegriff$ = searched$(s) AND listnode(o) <> node THEN
-            addList node
-        ELSE
-            IF LEN(searched$(s)) > LEN(suchbegriff$) AND listnode(o) <> node THEN
-                po = 0: DO: po = po + 1
-                    IF MID$(searched$(s), po, LEN(suchbegriff$)) = suchbegriff$ AND listnode(o) <> node THEN addList node 'normal casing
-                    IF UCASE$(MID$(searched$(s), po, LEN(suchbegriff$))) = UCASE$(suchbegriff$) AND listnode(o) <> node THEN addList node 'uppercase
-                LOOP UNTIL po = LEN(searched$(s)) - LEN(suchbegriff$) + 1 OR listnode(o) = node
+    IF maxs > 0 THEN
+        s = 0: DO: s = s + 1
+            searched$(s) = RTRIM$(LTRIM$(searched$(s)))
+            IF suchbegriff$ = searched$(s) AND listnode(o) <> node THEN
+                addList node
+            ELSE
+                IF LEN(searched$(s)) > LEN(suchbegriff$) AND listnode(o) <> node THEN
+                    po = 0: DO: po = po + 1
+                        IF MID$(searched$(s), po, LEN(suchbegriff$)) = suchbegriff$ AND listnode(o) <> node THEN addList node 'normal casing
+                        IF UCASE$(MID$(searched$(s), po, LEN(suchbegriff$))) = UCASE$(suchbegriff$) AND listnode(o) <> node THEN addList node 'uppercase
+                    LOOP UNTIL po = LEN(searched$(s)) - LEN(suchbegriff$) + 1 OR listnode(o) = node
+                END IF
             END IF
-        END IF
-    LOOP UNTIL s = maxs
+        LOOP UNTIL s = maxs
+    END IF
 END SUB
 
 SUB addList (node)
     o = o + 1
+    maxo = o
     listnode(o) = node
 END SUB
 
@@ -1664,7 +1666,9 @@ SUB RunMenu (selectedm, layout, titel$)
         DO
             m = 0
             DO
-                framestart = TIMER
+                IF fps = 0 THEN
+                    framestart = TIMER
+                END IF
                 m = m + 1
                 prevm = selectedm
 
@@ -1895,24 +1899,31 @@ SUB RunMenu (selectedm, layout, titel$)
                         CASE IS = CHR$(0) + CHR$(77) 'arrow right
                             IF type$(selectedm) = "selector" THEN
                                 IF selected(selectedm) < maxad(array(selectedm)) THEN
-                                    selected(selectedm) = selected(selectedm) + 1: change(selectedm) = 1: change(selectedm - 1) = 1
+                                    selected(selectedm) = selected(selectedm) + 1
+                                    change(selectedm) = 1
+                                    change(selectedm - 1) = 1
                                 ELSE
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                 END IF
                             ELSEIF type$(selectedm) = "date" THEN
                                 IF selected(selectedm) < 3 THEN
-                                    selected(selectedm) = selected(selectedm) + 1: change(selectedm) = 1: change(selectedm - 1) = 1
+                                    selected(selectedm) = selected(selectedm) + 1
+                                    change(selectedm) = 1
+                                    change(selectedm - 1) = 1
                                 ELSE
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                 END IF
                             ELSEIF type$(selectedm) = "time" THEN
                                 IF selected(selectedm) < 2 THEN
-                                    selected(selectedm) = selected(selectedm) + 1: change(selectedm) = 1: change(selectedm - 1) = 1
+                                    selected(selectedm) = selected(selectedm) + 1
+                                    change(selectedm) = 1
+                                    change(selectedm - 1) = 1
                                 ELSE
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                 END IF
                             ELSE
-                                IF selectedm < maxm THEN selectedm = selectedm + 1: change(selectedm - 1) = 1 ELSE selectedm = 1: change(1) = 1
+                                IF selectedm < maxm THEN selectedm = selectedm + 1: change(selectedm - 1) = 1 ELSE selectedm = 1
+                                change(1) = 1
                             END IF
                         CASE IS = CHR$(0) + CHR$(75) 'arrow left
                             IF type$(selectedm) = "selector" OR type$(selectedm) = "date" OR type$(selectedm) = "time" THEN
@@ -2233,6 +2244,9 @@ SUB RunMenu (selectedm, layout, titel$)
                         ELSEIF Taste$ = CHR$(246) THEN 'oe
                             g(selectedm) = g(selectedm) + 1
                             char$(selectedm, g(selectedm)) = CHR$(148)
+                        ELSEIF Taste$ = CHR$(223) THEN 'ss
+                            g(selectedm) = g(selectedm) + 1
+                            char$(selectedm, g(selectedm)) = CHR$(225)
                         END IF
                     END IF
                     IF gbf(selectedm) <> g(selectedm) THEN
@@ -2272,9 +2286,12 @@ SUB RunMenu (selectedm, layout, titel$)
                         ELSEIF Taste$ = CHR$(252) THEN 'ue
                             g(selectedm) = g(selectedm) + 1
                             char$(selectedm, g(selectedm)) = CHR$(129)
-                        ELSEIF Taste$ = CHR$(249) THEN 'oe
+                        ELSEIF Taste$ = CHR$(246) THEN 'oe
                             g(selectedm) = g(selectedm) + 1
                             char$(selectedm, g(selectedm)) = CHR$(148)
+                        ELSEIF Taste$ = CHR$(223) THEN 'ss
+                            g(selectedm) = g(selectedm) + 1
+                            char$(selectedm, g(selectedm)) = CHR$(225)
                         END IF
                         IF gbf(selectedm) <> g(selectedm) AND g(selectedm) > 0 THEN
                             change(selectedm) = 1
@@ -2301,13 +2318,20 @@ SUB RunMenu (selectedm, layout, titel$)
             firstprint = 0
             frameend = TIMER
             frametime = frameend - framestart
-            IF frametime < (1 / framerate * 2) THEN
-                UMround = 4
-                IF st > 0 THEN printStatus
-            ELSE
-                UMround = 0
+            fps = fps + 1
+            IF frametime >= 1 THEN
+                LOCATE maxlines - 1, maxrows - 4
+                COLOR colour&("fg"), colour&("bg")
+                PRINT fps
+                IF fps < (framerate * 2) THEN 'removes rounding in case the framerate drops below half, potentially saves some time
+                    UMround = 4
+                    IF st > 0 THEN printStatus
+                ELSE
+                    UMround = 0
+                END IF
+                fps = 0
             END IF
-            '_DISPLAY
+            _DISPLAY
             _LIMIT framerate
         LOOP UNTIL endmenu = 1 OR interactable = 0
         m = 0: DO: m = m + 1
@@ -2323,7 +2347,11 @@ SUB RunMenu (selectedm, layout, titel$)
                     END IF
                 CASE IS = "selector"
                     UserInput$(m) = arraydata$(array(m), selected(m))
-                    g = 0: DO: g = g + 1: char$(m, g) = "": LOOP UNTIL char$(m, g + 1) = ""
+                    IF g(m) > 0 THEN
+                        g = 0: DO: g = g + 1: char$(m, g) = "": LOOP UNTIL g = g(m)
+                    END IF
+                    g(m) = 0
+                    gbf(m) = 0
                 CASE IS = "date"
                     year$ = convyear$(year(m))
                     month$ = convmonth$(month(m))
@@ -2777,7 +2805,12 @@ SUB fetchEvents
             LINE INPUT #100, url$ 'reads url from file
             PRINT "Lade " + url$ + " herunter..."
             SHELL "wget -l 2 -nd -r -k -A html " + url$ + " -P import/site"
-            OPEN "import/site/index.html" FOR INPUT AS #101 'opens downloaded .html/.php or whatever file
+            SELECT CASE name$ 'opens downloaded .html/.php or whatever file
+                CASE IS = "Kulturzentrum Lagerhaus"
+                    OPEN "import/site/index.html" FOR INPUT AS #101
+                CASE IS = "Kulturzentrum Schlachthof"
+                    OPEN "import/site/programm.html" FOR INPUT AS #101
+            END SELECT
             PRINT "Lese Tags f" + CHR$(129) + "r " + name$ + "..."
             IF LOF(101) > 0 THEN
                 t = 0
@@ -2833,83 +2866,106 @@ SUB fetchEvents
                     skiptitle = 1
                     iv = 0
                     t = 0: DO: t = t + 1
+                        'html replacer
+                        runcode = 0: DO: runcode = runcode + 1
+                            p = 0: DO: p = p + 1
+                                SELECT CASE MID$(content$(t), p, 1)
+                                    CASE IS = "&" 'replaces html codes
+                                        u = p
+                                        DO: p = p + 1
+                                        LOOP UNTIL MID$(content$(t), p, 1) = ";" OR p = LEN(content$(t))
+                                        IF MID$(content$(t), p, 1) = ";" THEN
+                                            htmlcode$ = MID$(content$(t), u, p - u + 1)
+                                            content$(t) = MID$(content$(t), 1, u - 1) + htmlreplace$(htmlcode$) + MID$(content$(t), p + 1, LEN(content$(t)) - p)
+                                            p = p - LEN(htmlcode$) + 1
+                                        END IF
+                                END SELECT
+                                SELECT CASE MID$(content$(t), p, 2)
+                                    CASE IS = CHR$(195) + CHR$(164) 'ae
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(132) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                    CASE IS = CHR$(195) + CHR$(182) 'oe
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(148) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                    CASE IS = CHR$(195) + CHR$(188) 'ue
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(129) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                    CASE IS = CHR$(195) + CHR$(170) 'e
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(136) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
+                                END SELECT
+                                SELECT CASE MID$(content$(t), p, 3) ' *sigh*
+                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(158) '"-down
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(156) '"-up
+                                        content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(153) 'apostrophe
+                                        content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 3, LEN(content$(t)) - p)
+                                END SELECT
+                            LOOP UNTIL p >= LEN(content$(t))
+                        LOOP UNTIL runcode = 1
                         'print to file
                         PRINT #102, tag$(t)
                         PRINT #102, content$(t)
-                        'html replacer
-                        p = 0: DO: p = p + 1
-                            SELECT CASE MID$(content$(t), p, 1)
-                                CASE IS = "&" 'replaces html codes
-                                    u = p
-                                    DO: p = p + 1
-                                    LOOP UNTIL MID$(content$(t), p, 1) = ";"
-                                    htmlcode$ = MID$(content$(t), u, p - u + 1)
-                                    content$(t) = MID$(content$(t), 1, u - 1) + htmlreplace$(htmlcode$) + MID$(content$(t), p + 1, LEN(content$(t)) - p)
-                                    p = p - LEN(htmlcode$) + 1
-                                CASE IS = "’"
-                                    content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 1, LEN(content$(t)) - p)
-                            END SELECT
-                            SELECT CASE MID$(content$(t), p, 2)
-                                CASE IS = CHR$(195) + CHR$(164) 'ae
-                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(132) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                                CASE IS = CHR$(195) + CHR$(182) 'oe
-                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(148) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                                CASE IS = CHR$(195) + CHR$(188) 'ue
-                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(129) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                            END SELECT
-                            SELECT CASE MID$(content$(t), p, 3) ' *sigh*
-                                CASE IS = CHR$(226) + CHR$(128) + CHR$(158) '"-down
-                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
-                                CASE IS = CHR$(226) + CHR$(128) + CHR$(156) '"-up
-                                    content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
-                                CASE IS = CHR$(226) + CHR$(128) + CHR$(153) 'apostrophe
-                                    content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 3, LEN(content$(t)) - p)
-                            END SELECT
-                        LOOP UNTIL p >= LEN(content$(t))
-                        'print to screen
-                        'PRINT tag$(t), content$(t)
+                    LOOP UNTIL t >= maxt
+                    t = 0: DO: t = t + 1
                         SELECT CASE name$
                             CASE IS = "Kulturzentrum Lagerhaus"
                                 IF MID$(tag$(t), 1, 23) = "<a rel=" + CHR$(34) + "bookmark" + CHR$(34) + " href=" THEN 'starting tag for event (titel)
                                     IF content$(t) <> "Das Lagerhaus" AND content$(t) <> "Impressum" AND content$(t) <> "Kontakt" AND content$(t) <> "Datenschutz" AND content$(t) <> "Projekte" THEN 'exclude static cases
-                                        IF skiptitle = 0 THEN
-                                            skiptitle = 1
-                                            iv = iv + 1
-                                            titel$ = content$(t)
-                                            PRINT #103, "Titel", titel$
-                                            PRINT "Veranstaltung gefunden: " + titel$
-                                            t = t + 1
-                                            IF tag$(t) = "<span id=" + CHR$(34) + "datum_global" + CHR$(34) + " class=" + CHR$(34) + "datum_lagerhaus" + CHR$(34) + ">" THEN 'datum-tag
-                                                datum$ = MID$(content$(t), LEN(content$(t)) - 9, 10)
-                                                PRINT #103, "Datum", datum$
-                                            ELSE 'nothing, this should never happen
+                                        iv = iv + 1
+                                        titel$(iv) = content$(t)
+                                        'PRINT "Veranstaltung gefunden: " + titel$(iv)
+                                        t = t + 1
+                                        IF tag$(t) = "<span id=" + CHR$(34) + "datum_global" + CHR$(34) + " class=" + CHR$(34) + "datum_lagerhaus" + CHR$(34) + ">" THEN 'datum-tag
+                                            datum$(iv) = MID$(content$(t), LEN(content$(t)) - 9, 10)
+                                        ELSE 'nothing, this should never happen
+                                        END IF
+                                        t = t + 1
+                                        IF tag$(t) = "<span class=" + CHR$(34) + "zeit" + CHR$(34) + ">" THEN 'uhrzeit-tag
+                                            zeit$(iv) = MID$(content$(t), LEN(content$(t)) - 4, 5)
+                                        END IF
+                                        DO: t = t + 1
+                                        LOOP UNTIL tag$(t) = "<p>" OR tag$(t) = "</strong>" OR t >= maxt
+                                        IF tag$(t) = "<p>" OR tag$(t) = "</strong>" THEN
+                                            IF content$(t) <> "" THEN
+                                                ivtext$(iv) = content$(t)
+                                            ELSE
+                                                iv = iv - 1
                                             END IF
-                                            t = t + 1
-                                            IF tag$(t) = "<span class=" + CHR$(34) + "zeit" + CHR$(34) + ">" THEN 'uhrzeit-tag
-                                                zeit$ = MID$(content$(t), LEN(content$(t)) - 4, 5)
-                                                PRINT #103, "Zeit", zeit$
-                                            END IF
-                                            DO: t = t + 1
-                                            LOOP UNTIL tag$(t) = "<p>" OR t >= maxt
-                                            IF tag$(t) = "<p>" THEN
-                                                text$ = content$(t)
-                                                PRINT #103, "Text", text$
-                                            END IF
-                                        ELSE
-                                            skiptitle = 0
                                         END IF
                                     END IF
                                 END IF
+                            CASE IS = "Kulturzentrum Schlachthof"
+
                         END SELECT
-                    LOOP UNTIL t >= maxt
-                    CLOSE #102
-                    CLOSE #103
-                    maxiv = iv
+                    LOOP UNTIL t = maxt
                     PRINT iv; " Veranstaltungen gefunden."
-                    SLEEP
                 END IF
             END IF
             CLOSE #101
+            maxiv = iv
+            runcode = 0: DO: runcode = runcode + 1
+                iv = 0: DO: iv = iv + 2
+                    coiv = iv - 1
+                    IF titel$(iv) = titel$(coiv) AND datum$(iv) = datum$(coiv) AND zeit$(iv) = zeit$(coiv) THEN
+                        IF LEN(ivtext$(iv)) > LEN(ivtext$(coiv)) THEN
+                            printiv = iv
+                        ELSE
+                            printiv = coiv
+                        END IF
+                        PRINT #103, "Titel", titel$(printiv)
+                        PRINT #103, "Datum", datum$(printiv)
+                        PRINT #103, "Zeit", zeit$(printiv)
+                        PRINT #103, "Text", ivtext$(printiv)
+                    ELSE
+                        PRINT #103, "Titel", titel$(coiv)
+                        PRINT #103, "Datum", datum$(coiv)
+                        PRINT #103, "Zeit", zeit$(coiv)
+                        PRINT #103, "Text", ivtext$(coiv)
+                        iv = iv - 1
+                    END IF
+                LOOP UNTIL iv >= maxiv
+            LOOP UNTIL runcode = 2
+            CLOSE #102
+            CLOSE #103
+            SLEEP
         LOOP UNTIL EOF(100) = -1
     END IF
     CLOSE #100
@@ -2922,6 +2978,7 @@ FUNCTION htmlreplace$ (htmlcode$)
         CASE IS = "&nbsp;": htmlreplace$ = " "
         CASE IS = "&#8217;": htmlreplace$ = "'"
         CASE IS = "&#8211;": htmlreplace$ = "-"
+        CASE IS = "&#8230;": htmlreplace$ = "..."
     END SELECT
     EXIT FUNCTION
 END FUNCTION
@@ -3213,28 +3270,17 @@ FUNCTION maxday (year, month)
             ELSE
                 maxday = 28
             END IF
-        CASE IS = 1
-            maxday = 31
-        CASE IS = 3
-            maxday = 31
-        CASE IS = 5
-            maxday = 31
-        CASE IS = 7
-            maxday = 31
-        CASE IS = 8
-            maxday = 31
-        CASE IS = 10
-            maxday = 31
-        CASE IS = 12
-            maxday = 31
-        CASE IS = 4
-            maxday = 30
-        CASE IS = 6
-            maxday = 30
-        CASE IS = 9
-            maxday = 30
-        CASE IS = 11
-            maxday = 30
+        CASE IS = 1: maxday = 31
+        CASE IS = 3: maxday = 31
+        CASE IS = 5: maxday = 31
+        CASE IS = 7: maxday = 31
+        CASE IS = 8: maxday = 31
+        CASE IS = 10: maxday = 31
+        CASE IS = 12: maxday = 31
+        CASE IS = 4: maxday = 30
+        CASE IS = 6: maxday = 30
+        CASE IS = 9: maxday = 30
+        CASE IS = 11: maxday = 30
     END SELECT
 END FUNCTION
 

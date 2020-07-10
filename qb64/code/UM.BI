@@ -27,7 +27,7 @@ DIM SHARED hour(menulimit)
 DIM SHARED day(menulimit)
 DIM SHARED month(menulimit)
 DIM SHARED year(menulimit)
-DIM SHARED change(menulimit)
+DIM SHARED change(0 TO menulimit)
 DIM SHARED changevalxl(menulimit)
 DIM SHARED changevalxr(menulimit)
 DIM SHARED increasevalyu(menulimit)
@@ -66,7 +66,7 @@ DIM SHARED UserInput$(menulimit) 'speichert den input von m
 DIM SHARED suchbegriff$
 DIM SHARED lastsearchinput$ 'letzte sucheingabe, wird benutzt, wenn man aus der einzelansicht zuruckkehrt
 DIM SHARED searched$(50)
-DIM SHARED listnode(500) 'speichert die interne ID des in einer liste anzuzeigendes objektes
+DIM SHARED listnode(0 TO 500) 'speichert die interne ID des in einer liste anzuzeigendes objektes
 DIM SHARED o
 DIM SHARED maxo
 DIM SHARED reprinto 'indiziert, ob die liste neu angezeigt werden soll
@@ -98,3 +98,8 @@ DIM SHARED UMround 'used for rounded shapes
 UMround = 4
 DIM SHARED detail
 detail = 2
+maximportv = 500
+DIM SHARED titel$(maximportv)
+DIM SHARED datum$(maximportv)
+DIM SHARED zeit$(maximportv)
+DIM SHARED ivtext$(maximportv)
