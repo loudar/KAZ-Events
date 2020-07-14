@@ -410,8 +410,8 @@ DO
                     IF max(9) > 0 THEN
                         NewSelector 4, 0, "Veranstalter:   ", 3, "vea", 1
                         va = 0: DO: va = va + 1
-                            IF Veranstalter(va).Name <> "" THEN
-                                arraydata$(3, va) = LTRIM$(RTRIM$(Veranstalter(va).Name))
+                            IF Veranstalter(va).Name <> "" AND Veranstalter(va).Kuerzel <> "" THEN
+                                arraydata$(3, va) = LTRIM$(RTRIM$(Veranstalter(va).Kuerzel)) + ", " + LTRIM$(RTRIM$(Veranstalter(va).Name))
                             END IF
                         LOOP UNTIL va = max(9): maxad(3) = max(9)
                     ELSE
@@ -479,7 +479,7 @@ DO
                     NewSelector 1, 0, "Postleitzahl:   ", 1, "plz", 1
                     p = 0: DO: p = p + 1: arraydata$(1, p) = LST$(PLZ(p).PLZ): LOOP UNTIL p = max(5): maxad(1) = max(5)
                     NewSelector 2, 0, "Ort:            ", 2, "ort", 1
-                    ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
+                    ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = ot
                     NewInput 3, 0, "Land:           ", "Deutschland", 0
                     NewInput 4, 0, "Strasse:        ", "", 0
                     NewMenItem 6, 0, "Speichern", "save"
@@ -1740,7 +1740,7 @@ SUB RunMenu (selectedm, layout, titel$)
                 END IF
 
                 'Key selection
-                IF _KEYDOWN(100306) = -1 THEN 'ctrl
+                IF _KEYDOWN(100306) = -1 OR _KEYDOWN(100305) = -1 THEN 'ctrl
                     IF type$(selectedm) = "input" THEN showpassword = 1: change(selectedm) = 1
                     hitk = _KEYHIT
                     IF hitk = 13 THEN 'ctrl + enter
@@ -1748,71 +1748,114 @@ SUB RunMenu (selectedm, layout, titel$)
                             endparameter$ = destination$(selectedm): endmenu = 1
                         END IF
                     END IF
-                    IF hitk = 97 THEN 'ctrl + a
+                    IF hitk = 97 OR hitk = 65 THEN 'ctrl + a
                         IF type$(selectedm) = "input" THEN
+                            DO: LOOP UNTIL _KEYDOWN(hitk) = 0 'prevents multiple triggers
                             IF allsel(selectedm) = 1 THEN allsel(selectedm) = 0 ELSE allsel(selectedm) = 1
                         END IF
                     END IF
-                    IF hitk = 99 THEN 'ctrl + c
-                        copy:
-                        m2 = 0: DO: m2 = m2 + 1
-                            SELECT CASE type$(m2)
-                                CASE IS = "text"
-                                    cliparray$(m2) = cutcontent$(text$(m2))
-                                    IF LEN(cliparray$(m2)) = 50 THEN
-                                        cliparray$(m2) = ""
-                                    END IF
-                            END SELECT
-                        LOOP UNTIL m2 = maxm
-                        maxcliparray = maxm
-                        clearStatus
-                        newStatus "Kopiert.", "green"
-                    END IF
-                    IF hitk = 118 AND maxcliparray > 0 THEN 'ctrl + v
-                        paste:
-                        m2 = 0: DO: m2 = m2 + 1
-                            SELECT CASE type$(m2)
-                                CASE IS = "input"
-                                    IF LEN(cliparray$(m2)) > 0 THEN
-                                        p = 0: DO: p = p + 1
-                                            char$(m2, p) = MID$(cliparray$(m2), p, 1)
-                                        LOOP UNTIL p = LEN(cliparray$(m2))
-                                        g(m2) = p
-                                        gbf(m2) = p
-                                    END IF
-                                CASE IS = "selector"
-                                    ad = 0: DO: ad = ad + 1
-                                        IF LEN(cliparray$(m2)) < LEN(arraydata$(array(m2), ad)) THEN
-                                            p = 0: DO: p = p + 1
-                                                IF MID$(arraydata$(array(m2), ad), p, LEN(cliparray$(m2))) = cliparray$(m2) THEN
-                                                    selected(m2) = ad: ad = maxad(array(m2))
-                                                END IF
-                                            LOOP UNTIL p >= LEN(arraydata$(array(m2), ad)) - LEN(cliparray$(m2)) + 1
-                                        ELSEIF cliparray$(m2) = arraydata$(array(m2), ad) THEN
-                                            selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
-                                        END IF
-                                    LOOP UNTIL ad = maxad(array(m2))
-                                CASE IS = "date"
-                                    IF LEN(cliparray$(m2)) > 10 THEN
-                                        year(m2) = VAL(MID$(cliparray$(m2), 1, 4))
-                                        month(m2) = VAL(MID$(cliparray$(m2), 6, 2))
-                                        day(m2) = VAL(MID$(cliparray$(m2), 9, 2))
-                                    END IF
-                                CASE IS = "time"
-                                    IF LEN(cliparray$(m2)) >= 5 THEN
-                                        hour(m2) = VAL(MID$(cliparray$(m2), 1, 2))
-                                        minute(m2) = VAL(MID$(cliparray$(m2), 4, 2))
-                                    END IF
-                            END SELECT
-                            change(m2) = 1
-                        LOOP UNTIL m2 = maxm OR m2 = maxcliparray
+                    IF hitk = 99 OR hitk = 67 THEN 'ctrl + c
                         maxcliparray = 0
+                        SELECT CASE type$(selectedm)
+                            CASE IS = "text"
+                                _CLIPBOARD$ = cutcontent$(text$(m2))
+                            CASE IS = "input"
+                                UIn$ = ""
+                                IF g(selectedm) > 0 THEN
+                                    g = 0: DO: g = g + 1
+                                        UIn$ = UIn$ + char$(selectedm, g)
+                                    LOOP UNTIL g = g(selectedm)
+                                END IF
+                                _CLIPBOARD$ = UIn$
+                        END SELECT
                         clearStatus
-                        newStatus "Eingef" + CHR$(129) + "gt.", "green"
+                        newStatus "Element Kopiert.", "green"
+                    END IF
+                    IF hitk = 118 OR hitk = 86 THEN 'ctrl + v
+                        paste:
+                        IF maxcliparray > 0 THEN
+                            m2 = 0: DO: m2 = m2 + 1
+                                SELECT CASE type$(m2)
+                                    CASE IS = "input"
+                                        IF LEN(cliparray$(m2)) > 0 THEN
+                                            p = 0: DO: p = p + 1
+                                                char$(m2, p) = MID$(cliparray$(m2), p, 1)
+                                            LOOP UNTIL p = LEN(cliparray$(m2))
+                                            g(m2) = p
+                                            gbf(m2) = p
+                                        END IF
+                                    CASE IS = "selector"
+                                        ad = 0: DO: ad = ad + 1
+                                            IF LEN(cliparray$(m2)) < LEN(arraydata$(array(m2), ad)) THEN
+                                                p = 0: DO: p = p + 1
+                                                    IF MID$(arraydata$(array(m2), ad), p, LEN(cliparray$(m2))) = cliparray$(m2) THEN
+                                                        selected(m2) = ad: ad = maxad(array(m2))
+                                                    END IF
+                                                LOOP UNTIL p >= LEN(arraydata$(array(m2), ad)) - LEN(cliparray$(m2)) + 1
+                                            ELSEIF cliparray$(m2) = arraydata$(array(m2), ad) THEN
+                                                selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
+                                            END IF
+                                        LOOP UNTIL ad = maxad(array(m2))
+                                    CASE IS = "date"
+                                        IF LEN(cliparray$(m2)) > 10 THEN
+                                            year(m2) = VAL(MID$(cliparray$(m2), 1, 4))
+                                            month(m2) = VAL(MID$(cliparray$(m2), 6, 2))
+                                            day(m2) = VAL(MID$(cliparray$(m2), 9, 2))
+                                        END IF
+                                    CASE IS = "time"
+                                        IF LEN(cliparray$(m2)) >= 5 THEN
+                                            hour(m2) = VAL(MID$(cliparray$(m2), 1, 2))
+                                            minute(m2) = VAL(MID$(cliparray$(m2), 4, 2))
+                                        END IF
+                                END SELECT
+                                change(m2) = 1
+                            LOOP UNTIL m2 = maxm OR m2 = maxcliparray
+                            maxcliparray = 0
+                            clearStatus
+                            newStatus "Eingef" + CHR$(129) + "gt.", "green"
+                        END IF
                     END IF
                 ELSE
                     IF type$(selectedm) = "input" THEN
                         showpassword = 0: change(selectedm) = 1
+                    END IF
+                END IF
+                IF _KEYDOWN(100308) = -1 OR _KEYDOWN(100307) = -1 THEN 'alt
+                    hitk = _KEYHIT
+                    IF hitk = 97 OR hitk = 65 THEN 'alt + a
+                        IF type$(selectedm) = "input" THEN
+                            DO: LOOP UNTIL _KEYDOWN(hitk) = 0 'prevents multiple triggers
+                            IF allsel(selectedm) = 1 THEN allsel(selectedm) = 0 ELSE allsel(selectedm) = 1
+                        END IF
+                    END IF
+                    IF hitk = 67 OR hitk = 99 THEN 'alt + c
+                        copy:
+                        _CLIPBOARD$ = ""
+                        m2 = 0: DO: m2 = m2 + 1
+                            SELECT CASE type$(m2)
+                                CASE IS = "text"
+                                    IF LEN(text$(m2)) > 0 THEN
+                                        cliparray$(m2) = cutcontent$(text$(m2))
+                                        IF LEN(cliparray$(m2)) = 50 THEN
+                                            cliparray$(m2) = ""
+                                        END IF
+                                    ELSE
+                                        cliparray$(m2) = ""
+                                    END IF
+                                CASE IS = "input"
+                                    UIn$ = ""
+                                    IF g(m2) > 0 THEN
+                                        g = 0: DO: g = g + 1
+                                            UIn$ = UIn$ + char$(m2, g)
+                                        LOOP UNTIL g = g(m2)
+                                    END IF
+                                    cliparray$(m2) = UIn$
+                            END SELECT
+                            _CLIPBOARD$ = _CLIPBOARD$ + CHR$(13) + cliparray$(m2)
+                        LOOP UNTIL m2 = maxm
+                        maxcliparray = maxm
+                        clearStatus
+                        newStatus "Alles Kopiert.", "green"
                     END IF
                 END IF
                 Taste$ = INKEY$
@@ -2106,7 +2149,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             ELSE
                                 COLOR colour&("red"), colour&("bg")
                             END IF
-                            PRINT " < "; arraydata$(array(m), selected(m)); " >  ";
+                            PRINT " < "; _TRIM$(arraydata$(array(m), selected(m))); " >  ";
                             COLOR colour&("offfocus")
                             suche$ = ""
                             IF g(m) > 0 AND m = selectedm THEN
@@ -2235,18 +2278,9 @@ SUB RunMenu (selectedm, layout, titel$)
                                 END IF
                             END IF
                         LOOP UNTIL ac = alch
-                        IF Taste$ = CHR$(228) THEN 'ae
+                        IF replace$(Taste$) <> "" THEN
                             g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(132)
-                        ELSEIF Taste$ = CHR$(252) THEN 'ue
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(129)
-                        ELSEIF Taste$ = CHR$(246) THEN 'oe
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(148)
-                        ELSEIF Taste$ = CHR$(223) THEN 'ss
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(225)
+                            char$(selectedm, g(selectedm)) = replace$(Taste$)
                         END IF
                     END IF
                     IF gbf(selectedm) <> g(selectedm) THEN
@@ -2261,6 +2295,7 @@ SUB RunMenu (selectedm, layout, titel$)
                         PRINT "|  "
                     ELSE
                         LOCATE firstline + yoffset(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + g(selectedm) + 2
+                        COLOR colour&("bg"), colour&("bg")
                         PRINT "   "
                     END IF
                     IF change(m) = 1 AND selectedm <> m THEN
@@ -2280,18 +2315,9 @@ SUB RunMenu (selectedm, layout, titel$)
                                 char$(selectedm, g(selectedm)) = Taste$
                             END IF
                         LOOP UNTIL ac = alch
-                        IF Taste$ = CHR$(228) THEN 'ae
+                        IF replace$(Taste$) <> "" THEN
                             g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(132)
-                        ELSEIF Taste$ = CHR$(252) THEN 'ue
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(129)
-                        ELSEIF Taste$ = CHR$(246) THEN 'oe
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(148)
-                        ELSEIF Taste$ = CHR$(223) THEN 'ss
-                            g(selectedm) = g(selectedm) + 1
-                            char$(selectedm, g(selectedm)) = CHR$(225)
+                            char$(selectedm, g(selectedm)) = replace$(Taste$)
                         END IF
                         IF gbf(selectedm) <> g(selectedm) AND g(selectedm) > 0 THEN
                             change(selectedm) = 1
@@ -2381,6 +2407,25 @@ SUB RunMenu (selectedm, layout, titel$)
     EmptyMenu
 END SUB
 
+FUNCTION replace$ (chor$)
+    SELECT CASE chor$
+        CASE IS = CHR$(228) 'ae
+            replace$ = CHR$(132)
+        CASE IS = CHR$(196) 'AE
+            replace$ = CHR$(142)
+        CASE IS = CHR$(252) 'ue
+            replace$ = CHR$(129)
+        CASE IS = CHR$(220) 'UE
+            replace$ = CHR$(154)
+        CASE IS = CHR$(246) 'oe
+            replace$ = CHR$(148)
+        CASE IS = CHR$(214) 'OE
+            replace$ = CHR$(153)
+        CASE IS = CHR$(223) 'ss
+            replace$ = CHR$(225)
+    END SELECT
+END FUNCTION
+
 SUB writeTemp (templist$)
     temp = temp + 1
     OPEN netpath$ + "data\temp\" + templist$ + ".tmp" FOR OUTPUT AS #100
@@ -2395,8 +2440,8 @@ SUB printStatus
     _FONT b&
     st = 0: DO: st = st + 1
         COLOR colour&(color$(st)), colour&("bg")
-        LOCATE firstline + st, maxrows - LEN(sttext$(st)) - 5
-        PRINT sttext$(st)
+        LOCATE firstline + st, maxrows - LEN(sttext$(st)) - 10
+        PRINT SPC(5) + sttext$(st)
     LOOP UNTIL st = maxst
     _FONT r&
 END SUB
