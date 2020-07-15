@@ -32,7 +32,6 @@ CLOSE
 CLEAR
 
 ON ERROR GOTO errorhandler
-
 DIM SHARED netpath$
 DIM SHARED settingspath$
 netpath$ = "\\NASBREMER\Bremer Allgemein\_BREMER_Programm\"
@@ -78,16 +77,19 @@ ELSE
     rfontheight = 16
 END IF
 
+DIM SHARED canvas&
 DIM SHARED maxx 'fensterbreite
 DIM SHARED maxy 'fensterhohe
 IF bigwindow = 0 THEN
     SCREEN _NEWIMAGE(_DESKTOPWIDTH / 1.5, _DESKTOPHEIGHT / 2.2, 32)
+    canvas& = _NEWIMAGE(_DESKTOPWIDTH / 1.5, _DESKTOPHEIGHT / 2.2, 32)
     maxx = _DESKTOPWIDTH / 1.5
     maxy = _DESKTOPHEIGHT / 2.2
     DO: LOOP UNTIL _SCREENEXISTS
     _SCREENMOVE (_DESKTOPWIDTH / 2) - (_DESKTOPWIDTH / 1.5 / 2), (_DESKTOPHEIGHT / 2) - (_DESKTOPHEIGHT / 2. / 2)
 ELSE
     SCREEN _NEWIMAGE(_DESKTOPWIDTH, _DESKTOPHEIGHT, 32)
+    canvas& = _NEWIMAGE(_DESKTOPWIDTH, _DESKTOPHEIGHT, 32)
     maxx = swidth
     maxy = sheight
     DO: LOOP UNTIL _SCREENEXISTS
@@ -98,9 +100,11 @@ framerate = 60
 _TITLE "BREMER Events & KAZ"
 
 DIM SHARED node 'aktuelle node/instanz
-DIM SHARED username$ 'benutzername des angemeldeten users
 DIM SHARED recLEN
 DIM SHARED timerdifference: DIM SHARED starttime$
+
+DIM SHARED username$ 'benutzername des angemeldeten users
+DIM SHARED login
 
 REM $INCLUDE:'code/FONTS.BI'
 REM $INCLUDE:'code/UM.BI'
@@ -120,20 +124,26 @@ maxprinters = 50
 DIM SHARED default$(maxprinters)
 DIM SHARED printer$(maxprinters)
 
-'fetchEvents
-'SLEEP
-'SYSTEM
+FOR i = 1 TO _COMMANDCOUNT
+    SELECT CASE LEFT$(COMMAND$(i), INSTR(COMMAND$(i), "="))
+        CASE "username=": username$ = MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1)
+        CASE "login=": login = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
+        CASE "darkmode=": darkmode = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
+        CASE "bigwindow=": bigwindow = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
+    END SELECT
+NEXT
 
 loadall
 
 loginmenu:
 listID = 0
-login = 0
-NewInput 1, 0, "Benutzername:   ", "", 0
-NewInput 2, 0, "Passwort:       ", "", 0
-NewMenItem 4, 0, "Anmelden", "login"
-NewMenItem 4, 12, "Programm beenden", "system"
-RunMenu 1, 0, "LOGIN"
+IF login <> 1 THEN
+    NewInput 1, 0, "Benutzername:   ", "", 0
+    NewInput 2, 0, "Passwort:       ", "", 0
+    NewMenItem 4, 0, "Anmelden", "login"
+    NewMenItem 4, 12, "Programm beenden", "system"
+    RunMenu 1, 0, "LOGIN"
+END IF
 
 IF endparameter$ <> "system" THEN
     u = 0
@@ -182,7 +192,7 @@ DO
     suchbegriff$ = ""
     listID = 0
     SELECT CASE endparameter$ 'alle endparameter mussten hier zu finden sein
-        CASE IS = "start"
+        CASE "start"
             NewMenItem 1, 0, "PK", "pk"
             NewMenItem 2, 0, "KAZ", "kaz"
             NewMenItem 3, 0, "Benutzer", "usr"
@@ -192,18 +202,18 @@ DO
             NewMenItem 6 + admin, 0, "Programm beenden", "system"
             NewMenItem 0, maxrows - 16, "Abmelden", "logout"
             RunMenu 1, 0, "START"
-        CASE IS = "pk"
+        CASE "pk"
             NewMenItem 1, 0, "Veranstaltungen", "ver"
             NewMenItem 2, 0, "Veranstalter", "vea"
             NewMenItem 3, 0, "Rubriken", "rbk"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "PK"
-        CASE IS = "ka"
+        CASE "ka"
             NewMenItem 1, 0, "Kleinanzeigen", "kaz"
             NewMenItem 2, 0, "Kategorien", "kat"
             NewMenItem 3, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "KAZ"
-        CASE IS = "ver"
+        CASE "ver"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Exportieren", "export"
@@ -211,14 +221,14 @@ DO
             newStatus "Anzahl: " + LST$(max(11)), "yellow"
             IF max(11) > 0 THEN newStatus "Neueste: " + RTRIM$(Veranstaltung(max(11)).Titel), "yellow"
             RunMenu 1, 0, "VERANSTALTUNGEN"
-        CASE IS = "asg"
+        CASE "asg"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(3)), "yellow"
             IF max(3) > 0 THEN newStatus "Neueste: " + LST$(Ausgabe(max(3)).Monat), "yellow"
             RunMenu 1, 0, "AUSGABEN"
-        CASE IS = "kaz"
+        CASE "kaz"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Exportieren", "export"
@@ -226,7 +236,7 @@ DO
             newStatus "Anzahl: " + LST$(max(10)), "yellow"
             IF max(10) > 0 THEN newStatus "Neueste: " + RTRIM$(Kleinanzeige(max(10)).Titel), "yellow"
             RunMenu 1, 0, "KLEINANZEIGEN"
-        CASE IS = "vea"
+        CASE "vea"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
@@ -234,7 +244,7 @@ DO
             newStatus "Anzahl: " + LST$(max(9)), "yellow"
             IF max(9) > 0 THEN newStatus "Neuester: " + RTRIM$(Veranstalter(max(9)).Name), "yellow"
             RunMenu 1, 0, "VERANSTALTER"
-        CASE IS = "usr"
+        CASE "usr"
             IF admin = 1 THEN NewMenItem 1, 0, "Suche", "search"
             IF admin = 1 THEN NewMenItem 2, 0, "Neu", "new"
             NewMenItem 1 + (admin * 2), 0, "Bearbeiten", "edit"
@@ -243,79 +253,82 @@ DO
             u = 0: DO: u = u + 1
                 IF RTRIM$(User(u).Name) = username$ THEN node = u
             LOOP UNTIL u >= maxu(1)
-        CASE IS = "rbk"
+        CASE "rbk"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "RUBRIKEN"
-        CASE IS = "aov"
+        CASE "aov"
             NewMenItem 1, 0, "Postleitzahlen", "plz"
             NewMenItem 2, 0, "Orte", "ort"
             NewMenItem 3, 0, "Adressen", "adr"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, ""
-        CASE IS = "ort"
+        CASE "ort"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "ADRESSEN"
-        CASE IS = "plz"
+        CASE "plz"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "POSTLEITZAHLEN"
-        CASE IS = "adr"
+        CASE "adr"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "ADRESSEN"
-        CASE IS = "kat"
+        CASE "kat"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "KATEGORIEN"
-        CASE IS = "settings"
+        CASE "settings"
             NewToggle 1, 0, "Dunkles Design", "darkmode"
             NewToggle 2, 0, "Grosses Fenster", "size"
             NewSlider 3, 0, 0, 100, "Skalierung", "scale", ((fontheight - 16) / (20 - 16)) * 100
             IF admin = 1 AND timerdifference < 0.2 THEN
-                NewText 4, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", colour&("white"), "r"
+                NewText 4, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", colour&("fg"), "r"
             ELSEIF admin = 1 THEN
-                NewText 4, 0, "Startzeit: " + starttime$ + " Sekunden.", colour&("white"), "r"
+                NewText 4, 0, "Startzeit: " + starttime$ + " Sekunden.", colour&("fg"), "r"
             END IF
             NewMenItem 4 + admin, 0, "<- Abbrechen", "start"
-            NewMenItem 4 + admin, 16, "Speichern", "logout"
+            NewMenItem 4 + admin, 16, "Speichern", "save"
             RunMenu 1, 0, "EINSTELLUNGEN"
-            IF endparameter$ = "logout" THEN
+            IF endparameter$ = "save" THEN
                 rfontheight = 16 + ((20 - 16) * (value(3) / 100))
                 OPEN settingspath$ + "settings.bremer" FOR OUTPUT AS #1
                 WRITE #1, _DEFLATE$(LST$(darkmode))
                 WRITE #1, _DEFLATE$(LST$(bigwindow))
                 WRITE #1, _DEFLATE$(LST$(rfontheight))
                 CLOSE #1
+                restartparameter$ = " username=" + username$ + " login=1 "
+                SHELL _DONTWAIT CHR$(34) + COMMAND$(0) + CHR$(34) + restartparameter$
+                SYSTEM
             END IF
-        CASE IS = "print"
+        CASE "print"
             OPEN "toprinter.txt" FOR OUTPUT AS #6
             PRINT #6, "Gedruckt von: " + username$ + " @ " + DATE$ + " um " + TIME$
             PRINT #6, ""
             SELECT CASE endparameterbfbf$
-                CASE IS = "vea"
+                CASE "vea"
                     PRINT #6, "VERANSTALTER"
                     PRINT #6, ""
                     PRINT #6, "K" + CHR$(129) + "rzel" + SPC(4) + "Name" + SPC(26) + "Telefon"
                     IF max(9) > 0 THEN
-                        va = 0: DO: va = va + 1
-                            PRINT #6, RTRIM$(Veranstalter(va).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(va).Kuerzel))) + RTRIM$(Veranstalter(va).Name) + SPC(30 - LEN(RTRIM$(Veranstalter(va).Name))) + LST$((Veranstalter(va).Telefon))
-                        LOOP UNTIL va = max(9)
+                        VA = 0: DO: VA = VA + 1
+                            PRINT #6, RTRIM$(Veranstalter(VA).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(VA).Kuerzel))) + RTRIM$(Veranstalter(VA).Name) + SPC(30 - LEN(RTRIM$(Veranstalter(VA).Name))) + LST$((Veranstalter(VA).Telefon))
+                        LOOP UNTIL VA = max(9)
                         PRINT #6, longchar$("-", 80)
                         PRINT #6, "Anzahl Veranstalter: " + LST$(max(9))
                     END IF
-                CASE IS = "rbk"
+                CASE "rbk"
                     PRINT #6, "RUBRIKEN"
                     PRINT #6, ""
                     PRINT #6, "K" + CHR$(129) + "rzel" + SPC(4) + "Objekt" + SPC(4) + "Name"
@@ -326,7 +339,7 @@ DO
                         PRINT #6, longchar$("-", 80)
                         PRINT #6, "Anzahl Rubriken: " + LST$(max(8))
                     END IF
-                CASE IS = "ort"
+                CASE "ort"
                     PRINT #6, "ORTE"
                     PRINT #6, ""
                     PRINT #6, "K" + CHR$(129) + "rzel" + SPC(10) + "Name"
@@ -337,7 +350,7 @@ DO
                         PRINT #6, longchar$("-", 80)
                         PRINT #6, "Anzahl Orte: " + LST$(max(4))
                     END IF
-                CASE IS = "plz"
+                CASE "plz"
                     PRINT #6, "POSTLEITZAHLEN"
                     PRINT #6, ""
                     PRINT #6, "Land" + SPC(16) + "Ort" + SPC(27) + "PLZ"
@@ -355,7 +368,7 @@ DO
             RunMenu 1, 0, "DRUCKEN"
             _DELAY 2
             endparameter$ = "start"
-        CASE IS = "export"
+        CASE "export"
             NewSelector 1, 0, "Ziel:        ", 1, "", 1
             arraydata$(1, 1) = "Quark": arraydata$(1, 2) = ".csv - The Events Calendar (Wordpress)": maxad(1) = 2
             NewSelector 2, 0, "Ausgabe:     ", 2, "asg", 1
@@ -365,43 +378,60 @@ DO
             RunMenu 1, 0, "EXPORT"
             IF endparameter$ = "confirm" THEN
                 SELECT CASE selected(1)
-                    CASE IS = 1
+                    CASE 1
                         exportToQuark endparameterbfbf$, LST$(Ausgabe(selected(2)).Monat), Ausgabe(selected(2)).Anfang, Ausgabe(selected(2)).Ende
-                    CASE IS = 2
+                    CASE 2
                         formatting$ = "eventscalendar"
                         exportToCsv endparameterbfbf$, LST$(Ausgabe(selected(2)).Monat), formatting$
                 END SELECT
             END IF
             endparameter$ = "start"
-        CASE IS = "logout"
+        CASE "import"
+            NewSelector 1, 0, "Quelle:      ", 1, "", 1
+            arraydata$(1, 1) = ".csv - TEC Format": arraydata$(1, 2) = ".doc - Format in Guide": arraydata$(1, 3) = ".txt - Format in Guide": maxad(1) = 3
+            NewMenItem 3, 0, "Importieren", "confirm"
+            NewMenItem 4, 0, "<- Abbrechen", "start"
+            RunMenu 1, 0, "IMPORT"
+            IF endparameter$ = "confirm" THEN
+                SELECT CASE selected(1)
+                    CASE 1
+                        importEvent "csv"
+                    CASE 2
+                        importEvent "doc"
+                    CASE 3
+                        importEvent "txt"
+                END SELECT
+            END IF
+            endparameter$ = "start"
+        CASE "logout"
             GOTO restart
-        CASE IS = "search"
+        CASE "search"
             node = search(endparameterbfbf$, "")
             SELECT CASE node
-                CASE IS = 0 'exited
+                CASE 0 'exited
                     endparameter$ = "start"
                 CASE IS > 0 'display
                     display endparameterbfbf$, node
                     endparameterbf$ = endparameterbfbf$
-                CASE IS = -1 'edit
+                CASE -1 'edit
                     edit endparameterbfbf$, node
                     endparameterbf$ = endparameterbfbf$
-                CASE IS = -2 'close program
+                CASE -2 'close program
                     endparameter$ = "system"
             END SELECT
-        CASE IS = "display"
+        CASE "display"
             display endparameterbfbf$, node
             endparameterbf$ = endparameterbfbf$
-        CASE IS = "edit"
+        CASE "edit"
             edit endparameterbfbf$, node
             endparameterbf$ = endparameterbfbf$
             IF endparameter$ = "save" THEN dontadd = 1
-        CASE IS = "delete"
+        CASE "delete"
             delete endparameterbfbf$, node
             endparameterbf$ = endparameterbfbf$
-        CASE IS = "new"
+        CASE "new"
             SELECT CASE endparameterbfbf$
-                CASE IS = "ver"
+                CASE "ver"
                     NewSelector 1, 0, "Ausgabe:        ", 1, "asg", max(3)
                     a = 0: DO: a = a + 1: arraydata$(1, a) = LST$(Ausgabe(a).Monat): LOOP UNTIL a = max(3): maxad(1) = max(3)
                     NewDate 2, 0, "Datum:          ", DATE$
@@ -409,11 +439,11 @@ DO
                     ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
                     IF max(9) > 0 THEN
                         NewSelector 4, 0, "Veranstalter:   ", 3, "vea", 1
-                        va = 0: DO: va = va + 1
-                            IF Veranstalter(va).Name <> "" AND Veranstalter(va).Kuerzel <> "" THEN
-                                arraydata$(3, va) = LTRIM$(RTRIM$(Veranstalter(va).Kuerzel)) + ", " + LTRIM$(RTRIM$(Veranstalter(va).Name))
+                        VA = 0: DO: VA = VA + 1
+                            IF Veranstalter(VA).Name <> "" AND Veranstalter(VA).Kuerzel <> "" THEN
+                                arraydata$(3, VA) = LTRIM$(RTRIM$(Veranstalter(VA).Kuerzel)) + ", " + LTRIM$(RTRIM$(Veranstalter(VA).Name))
                             END IF
-                        LOOP UNTIL va = max(9): maxad(3) = max(9)
+                        LOOP UNTIL VA = max(9): maxad(3) = max(9)
                     ELSE
                         NewMenItem 4, 0, "Neuen Veranstalter erstellen", "new"
                     END IF
@@ -432,7 +462,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 11
                     RunMenu 1, 0, "NEUE VERANSTALTUNG"
-                CASE IS = "kaz"
+                CASE "kaz"
                     NewSelector 1, 0, "Kategorie 1:    ", 1, "kat", 1
                     kt = 0: DO: kt = kt + 1: arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): LOOP UNTIL kt = max(12): maxad(1) = max(12)
                     NewSelector 2, 0, "Kategorie 2:    ", 2, "kat", 1
@@ -455,7 +485,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 10
                     RunMenu 1, 0, "NEUE KLEINANZEIGE"
-                CASE IS = "vea"
+                CASE "vea"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewInput 2, 0, "Name:           ", "", 0
                     IF max(6) > 0 THEN
@@ -475,7 +505,7 @@ DO
                     listID = 9
                     RunMenu 1, 0, "NEUER VERANSTALTER"
                     IF endparameter$ = "new" THEN endparameterbf$ = "adr"
-                CASE IS = "adr"
+                CASE "adr"
                     NewSelector 1, 0, "Postleitzahl:   ", 1, "plz", 1
                     p = 0: DO: p = p + 1: arraydata$(1, p) = LST$(PLZ(p).PLZ): LOOP UNTIL p = max(5): maxad(1) = max(5)
                     NewSelector 2, 0, "Ort:            ", 2, "ort", 1
@@ -488,7 +518,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 6
                     RunMenu 1, 0, "NEUE ADRESSE"
-                CASE IS = "rbk"
+                CASE "rbk"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewSelector 2, 0, "Objekt:         ", 1, "obj", 1
                     o = 0: DO: o = o + 1: arraydata$(1, o) = RTRIM$(Objekt(o).Name): LOOP UNTIL o = max(2): maxad(2) = max(2)
@@ -499,7 +529,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 8
                     RunMenu 1, 0, "NEUE RUBRIK"
-                CASE IS = "usr"
+                CASE "usr"
                     NewInput 1, 0, "Name:           ", "", 0
                     NewInput 2, 0, "Passwort:       ", "", 0
                     NewSelector 3, 0, "Zugang:         ", 1, "", 1: SetArrayData 1, 1
@@ -511,7 +541,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 1
                     RunMenu 1, 0, "NEUER BENUTZER"
-                CASE IS = "ort"
+                CASE "ort"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewInput 2, 0, "Name:           ", "", 0
                     NewMenItem 4, 0, "Speichern", "save"
@@ -520,7 +550,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 4
                     RunMenu 1, 0, "NEUER ORT"
-                CASE IS = "plz"
+                CASE "plz"
                     NewInput 1, 0, "Postleitzahl:   ", "", 1
                     NewSelector 2, 0, "Ort:            ", 2, "ort", 1
                     ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
@@ -531,7 +561,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 5
                     RunMenu 1, 0, "NEUE POSTLEITZAHL"
-                CASE IS = "asg"
+                CASE "asg"
                     NewSelector 1, 0, "Objekt:         ", 1, "obj", 1
                     o = 0: DO: o = o + 1: arraydata$(1, o) = RTRIM$(Objekt(o).Name): LOOP UNTIL o = max(2): maxad(2) = max(2)
                     NewInput 2, 0, "Monat:          ", MID$(DATE$, 7, 4) + MID$(DATE$, 1, 2), 1
@@ -543,7 +573,7 @@ DO
                     NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 3
                     RunMenu 1, 0, "NEUE AUSGABE"
-                CASE IS = "kat"
+                CASE "kat"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewSelector 2, 0, "Objekt:         ", 1, "obj", 1
                     o = 0: DO: o = o + 1: arraydata$(1, o) = RTRIM$(Objekt(o).Name): LOOP UNTIL o = max(2): maxad(2) = max(2)
@@ -555,9 +585,9 @@ DO
                     listID = 12
                     RunMenu 1, 0, "NEUE KATEGORIE"
             END SELECT
-        CASE IS = "save"
+        CASE "save"
             SELECT CASE endparameterbfbfbf$
-                CASE IS = "ver"
+                CASE "ver"
                     IF dontadd = 0 THEN
                         IF max(11) > 0 THEN
                             v = 0: DO: v = v + 1
@@ -591,7 +621,7 @@ DO
                         END IF
                         _DELAY 0.2: endparameter$ = "new": endparameterbf$ = "ver"
                     END IF
-                CASE IS = "kaz"
+                CASE "kaz"
                     IF dontadd = 0 THEN
                         max(10) = max(10) + 1
                         Kleinanzeige(max(10)).ID = Kleinanzeige(max(10) - 1).ID + 1
@@ -614,16 +644,16 @@ DO
                     END IF
                     _DELAY 1: endparameter$ = "new"
                     endparameterbf$ = "kaz"
-                CASE IS = "vea"
+                CASE "vea"
                     IF dontadd = 0 THEN
-                        va = 0: DO: va = va + 1
-                            IF Veranstalter(va).Kuerzel = UserInput$(1) THEN
+                        VA = 0: DO: VA = VA + 1
+                            IF Veranstalter(VA).Kuerzel = UserInput$(1) THEN
                                 NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
-                            IF Veranstalter(va).Name = UserInput$(2) THEN
+                            IF Veranstalter(VA).Name = UserInput$(2) THEN
                                 NewText 1, 0, "Dieser Veranstalter existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
-                        LOOP UNTIL va = max(9)
+                        LOOP UNTIL VA = max(9)
                     END IF
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
@@ -650,7 +680,7 @@ DO
                         _DELAY 1: endparameter$ = "new"
                         endparameterbf$ = "vea"
                     END IF
-                CASE IS = "adr"
+                CASE "adr"
                     IF dontadd = 0 THEN
                         d = 0: DO: d = d + 1
                             IF LST$(Adresse(d).PLZ) = UserInput$(1) AND RTRIM$(Adresse(d).Ort) = UserInput$(2) AND RTRIM$(Adresse(d).Land) = UserInput$(3) AND RTRIM$(Adresse(d).Strasse) = UserInput$(4) THEN
@@ -675,7 +705,7 @@ DO
                     END IF
                     _DELAY 1: endparameter$ = "new"
                     endparameterbf$ = "adr"
-                CASE IS = "rbk"
+                CASE "rbk"
                     IF dontadd = 0 THEN
                         r = 0: DO: r = r + 1
                             IF Rubrik(r).Kuerzel = UserInput$(1) THEN
@@ -701,7 +731,7 @@ DO
                         _DELAY 1: endparameter$ = "new"
                         endparameterbf$ = "rbk"
                     END IF
-                CASE IS = "usr"
+                CASE "usr"
                     IF dontadd = 0 THEN
                         u = 0: DO: u = u + 1
                             IF User(u).Name = UserInput$(1) THEN
@@ -729,7 +759,7 @@ DO
                         _DELAY 2: endparameter$ = "start"
                         endparameterbf$ = "usr"
                     END IF
-                CASE IS = "ort"
+                CASE "ort"
                     IF dontadd = 0 THEN
                         ot = 0: DO: ot = ot + 1
                             IF Ort(ot).Name = UserInput$(2) THEN
@@ -751,7 +781,7 @@ DO
                         _DELAY 2: endparameter$ = "start"
                         endparameterbf$ = "ort"
                     END IF
-                CASE IS = "plz"
+                CASE "plz"
                     IF dontadd = 0 THEN
                         p = 0: DO: p = p + 1
                             IF PLZ(max(5)).PLZ = VAL(UserInput$(1)) THEN
@@ -774,7 +804,7 @@ DO
                         _DELAY 2: endparameter$ = "start"
                         endparameterbf$ = "plz"
                     END IF
-                CASE IS = "asg"
+                CASE "asg"
                     IF dontadd = 0 THEN
                         IF max(3) > 0 THEN
                             a = 0: DO: a = a + 1
@@ -799,7 +829,7 @@ DO
                         _DELAY 2: endparameter$ = "start"
                         endparameterbf$ = "asg"
                     END IF
-                CASE IS = "kat"
+                CASE "kat"
                     IF dontadd = 0 THEN
                         kt = 0: DO: kt = kt + 1
                             IF Kategorie(kt).Kuerzel = UserInput$(1) THEN
@@ -827,11 +857,15 @@ DO
                     END IF
             END SELECT
             dontadd = 0
-        CASE IS = "back"
+        CASE "back"
             endparameter$ = endparameterbfbfbf$
-        CASE IS = "up"
+        CASE "up"
             endparameter$ = "start"
-        CASE IS = "restart"
+        CASE "restart"
+            restartparameter$ = " username=" + username$ + " login=1 "
+            OPEN _STARTDIR$ + "\temp.temp" FOR OUTPUT AS #200
+            PRINT #200, restartparameter$
+            CLOSE #200
             GOTO restart
     END SELECT
 LOOP UNTIL endparameter$ = "system"
@@ -843,143 +877,143 @@ END SUB
 
 SUB display (listID$, node)
     SELECT CASE listID$
-        CASE IS = "ver"
-            NewText 1, 0, "Ausgabe:      " + LST$(Veranstaltung(node).Ausgabe), colour&("white"), "r"
-            NewText 2, 0, "Datum:        " + RTRIM$(Veranstaltung(node).Datum), colour&("white"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(Veranstaltung(node).Ort), colour&("white"), "r"
-            NewText 4, 0, "Veranstalter: " + RTRIM$(Veranstaltung(node).Veranstalter), colour&("white"), "r"
-            NewText 5, 0, "Rubriken:     " + RTRIM$(Veranstaltung(node).Rubrik), colour&("white"), "r"
-            NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), colour&("white"), "r"
-            NewText 7, 0, "Zeitcode:     " + RTRIM$(Veranstaltung(node).Zeitcode), colour&("white"), "r"
-            NewText 8, 0, "Titel:        " + RTRIM$(Veranstaltung(node).Titel), colour&("white"), "r"
-            NewText 9, 0, "Text:         " + RTRIM$(Veranstaltung(node).Text), colour&("white"), "r"
-            NewText 10, 0, "Langer Text: " + RTRIM$(Veranstaltung(node).TextLang), colour&("white"), "r"
+        CASE "ver"
+            NewText 1, 0, "Ausgabe:      " + LST$(Veranstaltung(node).Ausgabe), colour&("fg"), "r"
+            NewText 2, 0, "Datum:        " + RTRIM$(Veranstaltung(node).Datum), colour&("fg"), "r"
+            NewText 3, 0, "Ort:          " + RTRIM$(Veranstaltung(node).Ort), colour&("fg"), "r"
+            NewText 4, 0, "Veranstalter: " + RTRIM$(Veranstaltung(node).Veranstalter), colour&("fg"), "r"
+            NewText 5, 0, "Rubriken:     " + RTRIM$(Veranstaltung(node).Rubrik), colour&("fg"), "r"
+            NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), colour&("fg"), "r"
+            NewText 7, 0, "Zeitcode:     " + RTRIM$(Veranstaltung(node).Zeitcode), colour&("fg"), "r"
+            NewText 8, 0, "Titel:        " + RTRIM$(Veranstaltung(node).Titel), colour&("fg"), "r"
+            NewText 9, 0, "Text:         " + RTRIM$(Veranstaltung(node).Text), colour&("fg"), "r"
+            NewText 10, 0, "Langer Text: " + RTRIM$(Veranstaltung(node).TextLang), colour&("fg"), "r"
             NewMenItem 12, 0, "<- Abbrechen", "back"
             NewMenItem 12, 16, "Bearbeiten", "edit"
             NewMenItem 12, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 1, 41, "Kopieren", "copy"
             RunMenu 1, 0, "VERANSTALTUNG"
-        CASE IS = "kaz"
-            NewText 1, 0, "Kategorien:     " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), colour&("white"), "r"
-            NewText 2, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), colour&("white"), "r"
-            NewText 3, 0, "Titel:        " + RTRIM$(Kleinanzeige(node).Titel), colour&("white"), "r"
+        CASE "kaz"
+            NewText 1, 0, "Kategorien:     " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), colour&("fg"), "r"
+            NewText 2, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), colour&("fg"), "r"
+            NewText 3, 0, "Titel:        " + RTRIM$(Kleinanzeige(node).Titel), colour&("fg"), "r"
             o = 0: DO: o = o + 1
                 PRINT Objekt(o).ID, Kleinanzeige(node).Objekt
                 IF Objekt(o).ID = Kleinanzeige(node).Objekt THEN
-                    NewText 4, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), colour&("white"), "r"
+                    NewText 4, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), colour&("fg"), "r"
                 END IF
             LOOP UNTIL o = max(2)
             SLEEP
-            NewText 5, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), colour&("white"), "r"
-            NewText 6, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), colour&("white"), "r"
-            NewText 7, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), colour&("white"), "r"
-            NewText 8, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), colour&("white"), "r"
+            NewText 5, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), colour&("fg"), "r"
+            NewText 6, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), colour&("fg"), "r"
+            NewText 7, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), colour&("fg"), "r"
+            NewText 8, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), colour&("fg"), "r"
             NewMenItem 10, 0, "<- Abbrechen", "back"
             NewMenItem 10, 16, "Bearbeiten", "edit"
             NewMenItem 10, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 10, 41, "Kopieren", "copy"
             RunMenu 1, 0, "KLEINANZEIGE"
-        CASE IS = "vea"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Veranstalter(node).Kuerzel), colour&("white"), "r"
-            NewText 2, 0, "Name:         " + RTRIM$(Veranstalter(node).Name), colour&("white"), "r"
+        CASE "vea"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Veranstalter(node).Kuerzel), colour&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Veranstalter(node).Name), colour&("fg"), "r"
             d = 0: DO: d = d + 1
                 IF Veranstalter(node).Adresse = Adresse(d).ID THEN
-                    NewText 3, 0, "Adresse:      " + RTRIM$(Adresse(d).Ort) + ", " + RTRIM$(Adresse(d).Strasse), colour&("white"), "r"
+                    NewText 3, 0, "Adresse:      " + RTRIM$(Adresse(d).Ort) + ", " + RTRIM$(Adresse(d).Strasse), colour&("fg"), "r"
                 END IF
             LOOP UNTIL d = max(6)
-            NewText 4, 0, "Telefon:      " + LST$(Veranstalter(node).Telefon), colour&("white"), "r"
-            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(node).Telefax), colour&("white"), "r"
-            NewText 6, 0, "Anrede:       " + RTRIM$(Veranstalter(node).Anrede), colour&("white"), "r"
-            NewText 7, 0, "Notiz:        " + RTRIM$(Veranstalter(node).Notiz), colour&("white"), "r"
+            NewText 4, 0, "Telefon:      " + LST$(Veranstalter(node).Telefon), colour&("fg"), "r"
+            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(node).Telefax), colour&("fg"), "r"
+            NewText 6, 0, "Anrede:       " + RTRIM$(Veranstalter(node).Anrede), colour&("fg"), "r"
+            NewText 7, 0, "Notiz:        " + RTRIM$(Veranstalter(node).Notiz), colour&("fg"), "r"
             NewMenItem 9, 0, "<- Abbrechen", "back"
             NewMenItem 9, 16, "Bearbeiten", "edit"
             NewMenItem 9, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 9, 41, "Kopieren", "copy"
             RunMenu 1, 0, "VERANSTALTER"
-        CASE IS = "adr"
-            NewText 1, 0, "ID:           " + LST$(Adresse(node).ID), colour&("white"), "r"
-            NewText 2, 0, "Postleitzahl: " + LST$(Adresse(node).PLZ), colour&("white"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(Adresse(node).Ort), colour&("white"), "r"
-            NewText 4, 0, "Land:         " + RTRIM$(Adresse(node).Land), colour&("white"), "r"
-            NewText 5, 0, "Strasse:      " + RTRIM$(Adresse(node).Strasse), colour&("white"), "r"
+        CASE "adr"
+            NewText 1, 0, "ID:           " + LST$(Adresse(node).ID), colour&("fg"), "r"
+            NewText 2, 0, "Postleitzahl: " + LST$(Adresse(node).PLZ), colour&("fg"), "r"
+            NewText 3, 0, "Ort:          " + RTRIM$(Adresse(node).Ort), colour&("fg"), "r"
+            NewText 4, 0, "Land:         " + RTRIM$(Adresse(node).Land), colour&("fg"), "r"
+            NewText 5, 0, "Strasse:      " + RTRIM$(Adresse(node).Strasse), colour&("fg"), "r"
             NewMenItem 7, 0, "<- Abbrechen", "back"
             NewMenItem 7, 16, "Bearbeiten", "edit"
             NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 7, 41, "Kopieren", "copy"
             RunMenu 1, 0, "ADRESSE"
-        CASE IS = "rbk"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Rubrik(node).Kuerzel), colour&("white"), "r"
-            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Rubrik(node).Objekt).Name), colour&("white"), "r"
-            NewText 3, 0, "Name:         " + RTRIM$(Rubrik(node).Name), colour&("white"), "r"
+        CASE "rbk"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Rubrik(node).Kuerzel), colour&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Rubrik(node).Objekt).Name), colour&("fg"), "r"
+            NewText 3, 0, "Name:         " + RTRIM$(Rubrik(node).Name), colour&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
             RunMenu 1, 0, "RUBRIK"
-        CASE IS = "usr"
-            NewText 1, 0, "Benutzername:  " + RTRIM$(User(node).Name), colour&("white"), "r"
+        CASE "usr"
+            NewText 1, 0, "Benutzername:  " + RTRIM$(User(node).Name), colour&("fg"), "r"
             IF LEN(RTRIM$(User(node).Passwort)) > 0 THEN stars$ = longchar$("*", LEN(RTRIM$(User(node).Passwort)))
-            NewText 2, 0, "Passwort:      " + stars$, colour&("white"), "r"
+            NewText 2, 0, "Passwort:      " + stars$, colour&("fg"), "r"
             SetArrayData 30, 1
-            NewText 3, 0, "Zugang:        " + arraydata$(User(node).Zugang, 1), colour&("white"), "r"
-            NewText 4, 0, "Abteilung:     " + RTRIM$(User(node).Abteilung), colour&("white"), "r"
-            NewText 5, 0, "Telefon:      " + STR$(User(node).Telefon), colour&("white"), "r"
-            NewText 6, 0, "Letzter Login: " + RTRIM$(User(node).LetzterLogin), colour&("white"), "r"
+            NewText 3, 0, "Zugang:        " + arraydata$(User(node).Zugang, 1), colour&("fg"), "r"
+            NewText 4, 0, "Abteilung:     " + RTRIM$(User(node).Abteilung), colour&("fg"), "r"
+            NewText 5, 0, "Telefon:      " + STR$(User(node).Telefon), colour&("fg"), "r"
+            NewText 6, 0, "Letzter Login: " + RTRIM$(User(node).LetzterLogin), colour&("fg"), "r"
             NewMenItem 8, 0, "<- Abbrechen", "back"
             NewMenItem 8, 16, "Bearbeiten", "edit"
             NewMenItem 8, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 8, 41, "Kopieren", "copy"
             RunMenu 1, 0, "BENUTZER"
-        CASE IS = "ort"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Ort(node).Kuerzel), colour&("white"), "r"
-            NewText 2, 0, "Name:         " + RTRIM$(Ort(node).Name), colour&("white"), "r"
+        CASE "ort"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Ort(node).Kuerzel), colour&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Ort(node).Name), colour&("fg"), "r"
             NewMenItem 4, 0, "<- Abbrechen", "back"
             NewMenItem 4, 16, "Bearbeiten", "edit"
             NewMenItem 4, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 4, 41, "Kopieren", "copy"
             RunMenu 1, 0, "ORT"
-        CASE IS = "plz"
-            NewText 1, 0, "Postleitzahl: " + LST$(PLZ(node).PLZ), colour&("white"), "r"
-            NewText 2, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("white"), "r"
-            NewText 3, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("white"), "r"
+        CASE "plz"
+            NewText 1, 0, "Postleitzahl: " + LST$(PLZ(node).PLZ), colour&("fg"), "r"
+            NewText 2, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("fg"), "r"
+            NewText 3, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
             RunMenu 1, 0, "ORT"
-        CASE IS = "adr"
-            NewText 1, 0, "ID:          " + STR$(Adresse(node).ID), colour&("white"), "r"
-            NewText 2, 0, "Postleitzahl:" + STR$(Adresse(node).PLZ), colour&("white"), "r"
-            NewText 3, 0, "Ort:         " + RTRIM$(Adresse(node).Ort), colour&("white"), "r"
-            NewText 4, 0, "Land:        " + RTRIM$(Adresse(node).Land), colour&("white"), "r"
-            NewText 5, 0, "Strasse:     " + RTRIM$(Adresse(node).Strasse), colour&("white"), "r"
+        CASE "adr"
+            NewText 1, 0, "ID:          " + STR$(Adresse(node).ID), colour&("fg"), "r"
+            NewText 2, 0, "Postleitzahl:" + STR$(Adresse(node).PLZ), colour&("fg"), "r"
+            NewText 3, 0, "Ort:         " + RTRIM$(Adresse(node).Ort), colour&("fg"), "r"
+            NewText 4, 0, "Land:        " + RTRIM$(Adresse(node).Land), colour&("fg"), "r"
+            NewText 5, 0, "Strasse:     " + RTRIM$(Adresse(node).Strasse), colour&("fg"), "r"
             NewMenItem 7, 0, "<- Abbrechen", "back"
             NewMenItem 7, 16, "Bearbeiten", "edit"
             NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 7, 41, "Kopieren", "copy"
             RunMenu 1, 0, "ADRESSE"
-        CASE IS = "plz"
-            NewText 1, 0, "Postleitzahl:" + STR$(PLZ(node).PLZ), colour&("white"), "r"
-            NewText 2, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("white"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("white"), "r"
+        CASE "plz"
+            NewText 1, 0, "Postleitzahl:" + STR$(PLZ(node).PLZ), colour&("fg"), "r"
+            NewText 2, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("fg"), "r"
+            NewText 3, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
             RunMenu 1, 0, "POSTLEITZAHL"
-        CASE IS = "asg"
-            NewText 1, 0, "ID:         " + STR$(Ausgabe(node).ID), colour&("white"), "r"
-            NewText 2, 0, "Objekt:      " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), colour&("white"), "r"
-            NewText 3, 0, "Monat:      " + STR$(Ausgabe(node).Monat), colour&("white"), "r"
+        CASE "asg"
+            NewText 1, 0, "ID:         " + STR$(Ausgabe(node).ID), colour&("fg"), "r"
+            NewText 2, 0, "Objekt:      " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), colour&("fg"), "r"
+            NewText 3, 0, "Monat:      " + STR$(Ausgabe(node).Monat), colour&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
             RunMenu 1, 0, "AUSGABE"
-        CASE IS = "kat"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Kategorie(node).Kuerzel), colour&("white"), "r"
-            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Kategorie(node).Objekt).Name), colour&("white"), "r"
-            NewText 3, 0, "Name:         " + RTRIM$(Kategorie(node).Name), colour&("white"), "r"
+        CASE "kat"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Kategorie(node).Kuerzel), colour&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Kategorie(node).Objekt).Name), colour&("fg"), "r"
+            NewText 3, 0, "Name:         " + RTRIM$(Kategorie(node).Name), colour&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
@@ -990,7 +1024,7 @@ END SUB
 
 SUB edit (listID$, node)
     SELECT CASE listID$
-        CASE IS = "ver"
+        CASE "ver"
             a = 0: DO: a = a + 1
                 arraydata$(1, a) = LST$(Ausgabe(a).Monat): IF Ausgabe(a).Monat = Veranstaltung(node).Ausgabe THEN standard = a
             LOOP UNTIL a = max(3): maxad(1) = max(3)
@@ -1024,7 +1058,7 @@ SUB edit (listID$, node)
             NewMenItem 14, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "VERANSTALTUNG BEARBEITEN"
-        CASE IS = "kaz"
+        CASE "kaz"
             kt = 0: DO: kt = kt + 1
                 arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): IF Kategorie(kt).Name = RTRIM$(Kleinanzeige(node).Kategorie1) THEN standard = kt
             LOOP UNTIL kt = max(12): maxad(1) = max(12)
@@ -1056,7 +1090,7 @@ SUB edit (listID$, node)
             NewMenItem 13, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "KLEINANZEIGE BEARBEITEN"
-        CASE IS = "vea"
+        CASE "vea"
             NewInput 1, 0, "K" + CHR$(129) + "rzel", RTRIM$(Veranstalter(node).Kuerzel), 0
             NewInput 2, 0, "Name", RTRIM$(Veranstalter(node).Name), 0
             IF max(6) > 0 THEN
@@ -1076,7 +1110,7 @@ SUB edit (listID$, node)
             NewMenItem 9, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "VERANSTALTER BEARBEITEN"
-        CASE IS = "adr"
+        CASE "adr"
             NewSelector 1, 0, "Postleitzahl", 1, "adr", 1
             p = 0: DO
                 p = p + 1: arraydata$(1, p) = LST$(PLZ(p).PLZ): IF PLZ(p).PLZ = Adresse(node).PLZ THEN standard = p
@@ -1091,8 +1125,8 @@ SUB edit (listID$, node)
             NewMenItem 6, 13, "<- Abbrechen", "back"
             NewMenItem 6, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "NEUE ADRESSE"
-        CASE IS = "rbk"
+            RunMenu 1, 0, "ADRESSE BEARBEITEN"
+        CASE "rbk"
             NewInput 1, 0, "K" + CHR$(129) + "rzel", RTRIM$(Rubrik(node).Kuerzel), 0
             o = 0: DO: o = o + 1
                 arraydata$(1, o) = RTRIM$(Objekt(o).Name): IF Objekt(o).ID = Rubrik(node).Objekt THEN standard = o
@@ -1104,7 +1138,7 @@ SUB edit (listID$, node)
             NewMenItem 5, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "RUBRIK BEARBEITEN"
-        CASE IS = "usr"
+        CASE "usr"
             IF node = 0 THEN
                 DO: node = node + 1
                     IF RTRIM$(User(node).Name) = username$ THEN
@@ -1129,7 +1163,7 @@ SUB edit (listID$, node)
             NewMenItem 7, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "BENUTZER BEARBEITEN"
-        CASE IS = "ort"
+        CASE "ort"
             NewInput 1, 0, "K" + CHR$(129) + "rzel", RTRIM$(Ort(node).Kuerzel), 0
             NewInput 2, 0, "Name", RTRIM$(Ort(node).Name), 0
             NewMenItem 4, 0, "Speichern", "save"
@@ -1137,7 +1171,7 @@ SUB edit (listID$, node)
             NewMenItem 4, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "ORT BEARBEITEN"
-        CASE IS = "plz"
+        CASE "plz"
             NewInput 1, 0, "Postleitzahl", LST$(PLZ(node).PLZ), 1
             ot = 0: DO: ot = ot + 1
                 arraydata$(1, ot) = RTRIM$(Ort(node).Name): IF arraydata$(1, ot) = RTRIM$(PLZ(node).Ort) THEN standard = ot
@@ -1149,7 +1183,7 @@ SUB edit (listID$, node)
             NewMenItem 5, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "POSTLEITZAHL BEARBEITEN"
-        CASE IS = "asg"
+        CASE "asg"
             o = 0: DO: o = o + 1
                 arraydata$(1, o) = RTRIM$(Objekt(o).Name): IF Objekt(o).ID = Ausgabe(node).Objekt THEN standard = o
             LOOP UNTIL o = max(2): maxad(2) = max(2)
@@ -1160,7 +1194,7 @@ SUB edit (listID$, node)
             NewMenItem 4, 29, "L" + CHR$(148) + "schen", "delete"
             NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
             RunMenu 1, 0, "AUSGABE BEARBEITEN"
-        CASE IS = "kat"
+        CASE "kat"
             NewInput 1, 0, "K" + CHR$(129) + "rzel", RTRIM$(Kategorie(node).Kuerzel), 0
             o = 0: DO: o = o + 1
                 arraydata$(1, o) = RTRIM$(Objekt(o).Name): IF Objekt(o).ID = Kategorie(node).Objekt THEN standard = o
@@ -1299,41 +1333,41 @@ FUNCTION search (listID$, placeholder$)
                     node = node + 1
                     'Suchalgorithmus
                     SELECT CASE listID$
-                        CASE IS = "usr"
+                        CASE "usr"
                             SetArrayData 30, 1
                             searched$(1) = User(node).Name: searched$(2) = arraydata$(30, User(node).Zugang): searched$(3) = User(node).Abteilung: searched$(4) = LST$(User(node).Telefon): searched$(5) = LST$(User(node).Zugang)
                             searchpart 5
-                        CASE IS = "obj"
+                        CASE "obj"
                             searched$(1) = Objekt(node).Name: searched$(2) = Objekt(node).Waehrung:
                             searchpart 2
-                        CASE IS = "asg"
+                        CASE "asg"
                             searched$(1) = Objekt(Ausgabe(node).Objekt).Name: searched$(2) = LST$(Ausgabe(node).Monat)
                             searchpart 2
-                        CASE IS = "ort"
+                        CASE "ort"
                             searched$(1) = Ort(node).Kuerzel: searched$(2) = Ort(node).Name
                             searchpart 2
-                        CASE IS = "plz"
+                        CASE "plz"
                             searched$(1) = LST$(PLZ(node).PLZ): searched$(2) = PLZ(node).Land: searched$(3) = PLZ(node).Ort
                             searchpart 3
-                        CASE IS = "adr"
+                        CASE "adr"
                             searched$(1) = LST$(Adresse(node).PLZ): searched$(2) = Adresse(node).Ort: searched$(3) = Adresse(node).Land: searched$(4) = Adresse(node).Strasse
                             searchpart 4
-                        CASE IS = "knt"
+                        CASE "knt"
                             searched$(1) = Konto(node).BIC: searched$(2) = Konto(node).IBAN: searched$(3) = Konto(node).Inhaber
                             searchpart 3
-                        CASE IS = "rbk"
+                        CASE "rbk"
                             searched$(1) = Rubrik(node).Kuerzel: searched$(2) = Objekt(Rubrik(node).Objekt).Name: searched$(3) = Rubrik(node).Name
                             searchpart 3
-                        CASE IS = "vea"
+                        CASE "vea"
                             searched$(1) = Veranstalter(node).Kuerzel: searched$(2) = Veranstalter(node).Name: searched$(3) = LST$(Veranstalter(node).Telefon): searched$(4) = LST$(Veranstalter(node).Telefax): searched$(5) = Veranstalter(node).Sachbearbeiter: searched$(6) = Veranstalter(node).Anrede: searched$(7) = Veranstalter(node).Notiz
                             searchpart 7
-                        CASE IS = "ver"
+                        CASE "ver"
                             searched$(1) = LST$(Veranstaltung(node).ID): searched$(2) = LST$(Veranstaltung(node).Ausgabe): searched$(3) = Veranstaltung(node).Datum: searched$(4) = Veranstaltung(node).Veranstalter: searched$(5) = Veranstaltung(node).Rubrik: searched$(6) = Veranstaltung(node).Zeit1: searched$(7) = Veranstaltung(node).Zeit2: searched$(8) = Veranstaltung(node).Titel: searched$(9) = Veranstaltung(node).Text
                             searchpart 9
-                        CASE IS = "kaz"
+                        CASE "kaz"
                             searched$(1) = Kleinanzeige(node).Kategorie1: searched$(2) = Kleinanzeige(node).Kategorie2: searched$(3) = Kleinanzeige(node).Kategorie3: searched$(4) = Kleinanzeige(node).Text: searched$(5) = Objekt(Kleinanzeige(node).Objekt).Name: searched$(6) = LST$(Kleinanzeige(node).Ausgabe): searched$(7) = LST$(Kleinanzeige(node).Telefon): searched$(8) = Kleinanzeige(node).Name: searched$(9) = Kleinanzeige(node).Chiffre: searched$(10) = Kleinanzeige(node).Notiz: searched$(11) = Kleinanzeige(node).Titel
                             searchpart 11
-                        CASE IS = "kat"
+                        CASE "kat"
                             searched$(1) = Kategorie(node).Kuerzel: searched$(2) = Objekt(Kategorie(node).Objekt).Name: searched$(3) = Kategorie(node).Name
                             searchpart 3
                     END SELECT
@@ -1352,38 +1386,38 @@ FUNCTION search (listID$, placeholder$)
                         END IF
                         LOCATE firstline + o - selectedo + 3, firstchar
                         SELECT CASE listID 'auflistung der suchergebnisse
-                            CASE IS = 1
+                            CASE 1
                                 printsearchlist RTRIM$(User(listnode(o)).Name), 2
                                 SetArrayData 30, 1
                                 printsearchlist RTRIM$(arraydata$(30, User(listnode(o)).Zugang)), 3
                                 printsearchlist RTRIM$(User(listnode(o)).LetzterLogin), 2
-                            CASE IS = 2
+                            CASE 2
                                 printsearchlist RTRIM$(LST$(Objekt(listnode(o)).ID)), 2
                                 printsearchlist RTRIM$(Objekt(listnode(o)).Name), 2
-                            CASE IS = 3
+                            CASE 3
                                 printsearchlist RTRIM$(Objekt(Ausgabe(listnode(o)).Objekt).Name), 2
                                 printsearchlist RTRIM$(LST$(Ausgabe(listnode(o)).Monat)), 2
-                            CASE IS = 4
+                            CASE 4
                                 printsearchlist RTRIM$(Ort(listnode(o)).Kuerzel), 2
                                 printsearchlist RTRIM$(Ort(listnode(o)).Name), 2
-                            CASE IS = 5
+                            CASE 5
                                 printsearchlist RTRIM$(LST$(PLZ(listnode(o)).PLZ)), 1
                                 printsearchlist RTRIM$(PLZ(listnode(o)).Land), 2
                                 printsearchlist RTRIM$(PLZ(listnode(o)).Ort), 2
-                            CASE IS = 6
+                            CASE 6
                                 printsearchlist RTRIM$(LST$(Adresse(listnode(o)).ID)), 1
                                 printsearchlist RTRIM$(LST$(Adresse(listnode(o)).PLZ)), 1
                                 printsearchlist RTRIM$(Adresse(listnode(o)).Ort), 2
                                 printsearchlist RTRIM$(Adresse(listnode(o)).Strasse), 2
-                            CASE IS = 7
+                            CASE 7
                                 printsearchlist RTRIM$(LST$(Konto(listnode(o)).ID)), 1
                                 printsearchlist RTRIM$(Konto(listnode(o)).BIC), 2
                                 printsearchlist RTRIM$(Konto(listnode(o)).IBAN), 2
                                 printsearchlist RTRIM$(Konto(listnode(o)).Inhaber), 2
-                            CASE IS = 8
+                            CASE 8
                                 printsearchlist RTRIM$(Rubrik(listnode(o)).Kuerzel), 2
                                 printsearchlist RTRIM$(Rubrik(listnode(o)).Name), 2
-                            CASE IS = 9
+                            CASE 9
                                 printsearchlist RTRIM$(Veranstalter(listnode(o)).Kuerzel), 2
                                 printsearchlist RTRIM$(Veranstalter(listnode(o)).Name), 3
                                 d = 0: DO: d = d + 1
@@ -1391,17 +1425,17 @@ FUNCTION search (listID$, placeholder$)
                                         printsearchlist RTRIM$(Adresse(d).Ort) + ", " + RTRIM$(Adresse(d).Strasse), 3
                                     END IF
                                 LOOP UNTIL d = max(6)
-                            CASE IS = 10
+                            CASE 10
                                 printsearchlist RTRIM$(LST$(Kleinanzeige(listnode(o)).ID)), 1
                                 printsearchlist RTRIM$(LST$(Kleinanzeige(listnode(o)).Ausgabe)), 2
                                 printsearchlist RTRIM$(Kleinanzeige(listnode(o)).Name), 2
                                 printsearchlist RTRIM$(Kleinanzeige(listnode(o)).Chiffre), 2
-                            CASE IS = 11
+                            CASE 11
                                 printsearchlist RTRIM$(LST$(Veranstaltung(listnode(o)).ID)), 1
                                 printsearchlist RTRIM$(LST$(Veranstaltung(listnode(o)).Ausgabe)), 2
                                 printsearchlist RTRIM$(Veranstaltung(listnode(o)).Titel), 2
                                 printsearchlist RTRIM$(Veranstaltung(listnode(o)).Datum), 2
-                            CASE IS = 12
+                            CASE 12
                                 printsearchlist RTRIM$(Kategorie(listnode(o)).Kuerzel), 2
                                 printsearchlist RTRIM$(Kategorie(listnode(o)).Name), 2
                         END SELECT
@@ -1448,18 +1482,18 @@ SUB searchheader (listID$)
     LOCATE firstline + 1, firstchar
     COLOR colour&("fg"), colour&("transparent")
     SELECT CASE listID$
-        CASE IS = "usr": listID = 1: PRINT "Benutzername", "Zugangsberechtigung", , "Letzter Login"
-        CASE IS = "obj": listID = 2: PRINT "ID", , "Name"
-        CASE IS = "asg": listID = 3: PRINT "Objekt", , "Monat"
-        CASE IS = "ort": listID = 4: PRINT "K" + CHR$(129) + "rzel", , "Ort"
-        CASE IS = "plz": listID = 5: PRINT "PLZ", "Land", , "Ort"
-        CASE IS = "adr": listID = 6: PRINT "ID", "PLZ", "Ort", , "Strasse"
-        CASE IS = "knt": listID = 7: PRINT "ID", "BIC", "IBAN", , "Inhaber"
-        CASE IS = "rbk": listID = 8: PRINT "K" + CHR$(129) + "rzel", , "Name"
-        CASE IS = "vea": listID = 9: PRINT "K" + CHR$(129) + "rzel", , "Name", , , "Adresse"
-        CASE IS = "kaz": listID = 10: PRINT "ID", "Ausgabe", "Name", , "Chiffre"
-        CASE IS = "ver": listID = 11: PRINT "ID", "Ausgabe", "Titel", , "Datum"
-        CASE IS = "kat": listID = 12: PRINT "K" + CHR$(129) + "rzel", , "Name"
+        CASE "usr": listID = 1: PRINT "Benutzername", "Zugangsberechtigung", , "Letzter Login"
+        CASE "obj": listID = 2: PRINT "ID", , "Name"
+        CASE "asg": listID = 3: PRINT "Objekt", , "Monat"
+        CASE "ort": listID = 4: PRINT "K" + CHR$(129) + "rzel", , "Ort"
+        CASE "plz": listID = 5: PRINT "PLZ", "Land", , "Ort"
+        CASE "adr": listID = 6: PRINT "ID", "PLZ", "Ort", , "Strasse"
+        CASE "knt": listID = 7: PRINT "ID", "BIC", "IBAN", , "Inhaber"
+        CASE "rbk": listID = 8: PRINT "K" + CHR$(129) + "rzel", , "Name"
+        CASE "vea": listID = 9: PRINT "K" + CHR$(129) + "rzel", , "Name", , , "Adresse"
+        CASE "kaz": listID = 10: PRINT "ID", "Ausgabe", "Name", , "Chiffre"
+        CASE "ver": listID = 11: PRINT "ID", "Ausgabe", "Titel", , "Datum"
+        CASE "kat": listID = 12: PRINT "K" + CHR$(129) + "rzel", , "Name"
     END SELECT
 END SUB
 
@@ -1492,21 +1526,21 @@ SUB printsearchlist (tekst$, comcount) 'comcount seems to only be working if > 1
     length = LEN(tekst$)
     IF length < 14 THEN
         SELECT CASE comcount
-            CASE IS = 3
+            CASE 3
                 PRINT tekst$, , ,
-            CASE IS = 2
+            CASE 2
                 PRINT tekst$, ,
-            CASE IS = 1
+            CASE 1
                 PRINT tekst$,
         END SELECT
     ELSE
         IF length < 28 THEN
             SELECT CASE comcount
-                CASE IS = 3
+                CASE 3
                     PRINT tekst$, ,
-                CASE IS = 2
+                CASE 2
                     PRINT tekst$,
-                CASE IS = 1
+                CASE 1
                     PRINT tekst$,
             END SELECT
         ELSE
@@ -1517,27 +1551,27 @@ END SUB
 
 FUNCTION colour& (color$)
     SELECT CASE color$
-        CASE IS = "bg"
+        CASE "bg"
             IF darkmode = 1 THEN colour& = colour&("black") ELSE colour& = colour&("white")
-        CASE IS = "fg"
+        CASE "fg"
             IF darkmode = 1 THEN colour& = colour&("white") ELSE colour& = colour&("black")
-        CASE IS = "offfocus"
+        CASE "offfocus"
             IF darkmode = 1 THEN colour& = colour&("light grey") ELSE colour& = colour&("dark grey")
-        CASE IS = "white"
+        CASE "white"
             colour& = _RGBA(220, 220, 220, 255)
-        CASE IS = "black"
+        CASE "black"
             colour& = _RGBA(15, 15, 15, 255)
-        CASE IS = "red"
+        CASE "red"
             colour& = _RGBA(255, 30, 30, 255)
-        CASE IS = "yellow"
+        CASE "yellow"
             colour& = _RGBA(249, 194, 0, 255)
-        CASE IS = "green"
+        CASE "green"
             colour& = _RGBA(94, 233, 61, 255)
-        CASE IS = "dark grey"
+        CASE "dark grey"
             colour& = _RGBA(50, 50, 50, 255)
-        CASE IS = "light grey"
+        CASE "light grey"
             colour& = _RGBA(170, 170, 170, 255)
-        CASE IS = "transparent"
+        CASE "transparent"
             colour& = _RGBA(0, 0, 0, 0)
     END SELECT
 END SUB
@@ -1545,7 +1579,7 @@ END SUB
 SUB RunGraph (endparameter$)
     empty = 1
     SELECT CASE endparameter$
-        CASE IS = "kaz"
+        CASE "kaz"
             grapha = -1: DO: grapha = grapha + 1
                 IF max(10) > 0 THEN
                     ka = 0: DO: ka = ka + 1
@@ -1556,7 +1590,7 @@ SUB RunGraph (endparameter$)
                     LOOP UNTIL ka = max(10)
                 END IF
             LOOP UNTIL grapha = max(3) - 1 OR grapha = 11
-        CASE IS = "ver"
+        CASE "ver"
             grapha = -1: DO: grapha = grapha + 1
                 IF max(11) > 0 THEN
                     va = 0: DO: va = va + 1
@@ -1617,6 +1651,7 @@ SUB RunGraph (endparameter$)
 END SUB
 
 SUB RunMenu (selectedm, layout, titel$)
+    _DEST canvas&
     IF m > 0 THEN
         endmenu = 0
         maxm = m
@@ -1625,7 +1660,7 @@ SUB RunMenu (selectedm, layout, titel$)
         IF maxtemparray(listID) > 0 AND listID <> 0 THEN
             m2 = 0: DO: m2 = m2 + 1
                 SELECT CASE type$(m2)
-                    CASE IS = "input"
+                    CASE "input"
                         IF LEN(temparray$(listID, m2)) > 0 THEN
                             p = 0: DO: p = p + 1
                                 char$(m2, p) = MID$(temparray$(listID, m2), p, 1)
@@ -1633,7 +1668,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             g(m2) = p
                             gbf(m2) = p
                         END IF
-                    CASE IS = "selector"
+                    CASE "selector"
                         ad = 0: DO: ad = ad + 1
                             IF LEN(temparray$(listID, m2)) < LEN(arraydata$(array(m2), ad)) THEN
                                 p = 0: DO: p = p + 1
@@ -1645,13 +1680,13 @@ SUB RunMenu (selectedm, layout, titel$)
                                 selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
                             END IF
                         LOOP UNTIL ad = maxad(array(m2))
-                    CASE IS = "date"
+                    CASE "date"
                         IF LEN(temparray$(listID, m2)) > 10 THEN
                             year(m2) = VAL(MID$(temparray$(listID, m2), 1, 4))
                             month(m2) = VAL(MID$(temparray$(listID, m2), 6, 2))
                             day(m2) = VAL(MID$(temparray$(listID, m2), 9, 2))
                         END IF
-                    CASE IS = "time"
+                    CASE "time"
                         IF LEN(temparray$(listID, m2)) >= 5 THEN
                             hour(m2) = VAL(MID$(temparray$(listID, m2), 1, 2))
                             minute(m2) = VAL(MID$(temparray$(listID, m2), 4, 2))
@@ -1686,7 +1721,7 @@ SUB RunMenu (selectedm, layout, titel$)
                     END IF
                     _FINISHDROP
                     SELECT CASE droptype$
-                        CASE IS = "file"
+                        CASE "file"
                             p = 0: DO: p = p + 1
                                 IF MID$(df$, p, 1) = "\" THEN
                                     u = p
@@ -1735,6 +1770,17 @@ SUB RunMenu (selectedm, layout, titel$)
                             END IF
                         END IF
                     END IF
+
+                    mousewheel = _MOUSEWHEEL
+                    IF mousewheel <> 0 THEN
+                        IF _MOUSEX > melementxl(selectedm, selected(selectedm)) AND _MOUSEX < melementxr(selectedm, selected(selectedm)) THEN
+                            IF mousewheel = -1 THEN
+                                GOTO increase
+                            ELSE
+                                GOTO decrease
+                            END IF
+                        END IF
+                    END IF
                 ELSEIF _MOUSEBUTTON(1) = 0 THEN
                     mousetrigger = 0
                 END IF
@@ -1757,9 +1803,9 @@ SUB RunMenu (selectedm, layout, titel$)
                     IF hitk = 99 OR hitk = 67 THEN 'ctrl + c
                         maxcliparray = 0
                         SELECT CASE type$(selectedm)
-                            CASE IS = "text"
+                            CASE "text"
                                 _CLIPBOARD$ = cutcontent$(text$(m2))
-                            CASE IS = "input"
+                            CASE "input"
                                 UIn$ = ""
                                 IF g(selectedm) > 0 THEN
                                     g = 0: DO: g = g + 1
@@ -1776,7 +1822,7 @@ SUB RunMenu (selectedm, layout, titel$)
                         IF maxcliparray > 0 THEN
                             m2 = 0: DO: m2 = m2 + 1
                                 SELECT CASE type$(m2)
-                                    CASE IS = "input"
+                                    CASE "input"
                                         IF LEN(cliparray$(m2)) > 0 THEN
                                             p = 0: DO: p = p + 1
                                                 char$(m2, p) = MID$(cliparray$(m2), p, 1)
@@ -1784,7 +1830,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                             g(m2) = p
                                             gbf(m2) = p
                                         END IF
-                                    CASE IS = "selector"
+                                    CASE "selector"
                                         ad = 0: DO: ad = ad + 1
                                             IF LEN(cliparray$(m2)) < LEN(arraydata$(array(m2), ad)) THEN
                                                 p = 0: DO: p = p + 1
@@ -1796,13 +1842,13 @@ SUB RunMenu (selectedm, layout, titel$)
                                                 selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
                                             END IF
                                         LOOP UNTIL ad = maxad(array(m2))
-                                    CASE IS = "date"
+                                    CASE "date"
                                         IF LEN(cliparray$(m2)) > 10 THEN
                                             year(m2) = VAL(MID$(cliparray$(m2), 1, 4))
                                             month(m2) = VAL(MID$(cliparray$(m2), 6, 2))
                                             day(m2) = VAL(MID$(cliparray$(m2), 9, 2))
                                         END IF
-                                    CASE IS = "time"
+                                    CASE "time"
                                         IF LEN(cliparray$(m2)) >= 5 THEN
                                             hour(m2) = VAL(MID$(cliparray$(m2), 1, 2))
                                             minute(m2) = VAL(MID$(cliparray$(m2), 4, 2))
@@ -1833,7 +1879,7 @@ SUB RunMenu (selectedm, layout, titel$)
                         _CLIPBOARD$ = ""
                         m2 = 0: DO: m2 = m2 + 1
                             SELECT CASE type$(m2)
-                                CASE IS = "text"
+                                CASE "text"
                                     IF LEN(text$(m2)) > 0 THEN
                                         cliparray$(m2) = cutcontent$(text$(m2))
                                         IF LEN(cliparray$(m2)) = 50 THEN
@@ -1842,7 +1888,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                     ELSE
                                         cliparray$(m2) = ""
                                     END IF
-                                CASE IS = "input"
+                                CASE "input"
                                     UIn$ = ""
                                     IF g(m2) > 0 THEN
                                         g = 0: DO: g = g + 1
@@ -1858,14 +1904,18 @@ SUB RunMenu (selectedm, layout, titel$)
                         newStatus "Alles Kopiert.", "green"
                     END IF
                 END IF
+                IF _KEYHIT = 15360 THEN
+                    _CLIPBOARDIMAGE = canvas&
+                    newStatus "Screenshot kopiert.", "green"
+                END IF
                 Taste$ = INKEY$
                 IF Taste$ <> "" THEN
                     SELECT CASE Taste$
-                        CASE IS = CHR$(0) + CHR$(80) 'arrow down
+                        CASE CHR$(0) + CHR$(80) 'arrow down
                             decrease:
                             IF type$(selectedm) = "date" THEN
                                 SELECT CASE selected(selectedm)
-                                    CASE IS = 1
+                                    CASE 1
                                         IF year(selectedm) > VAL(MID$(DATE$, 7, 4)) THEN
                                             year(selectedm) = year(selectedm) - 1
                                             IF day(selectedm) = maxday(year(selectedm) + 1, month(selectedm)) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
@@ -1873,7 +1923,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                             year(selectedm) = VAL(MID$(DATE$, 7, 4)) + 5
                                             IF day(selectedm) = maxday(VAL(MID$(DATE$, 7, 4)), month(selectedm)) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
                                         END IF
-                                    CASE IS = 2
+                                    CASE 2
                                         IF month(selectedm) > 1 THEN
                                             month(selectedm) = month(selectedm) - 1
                                             IF day(selectedm) = maxday(year(selectedm), month(selectedm) + 1) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
@@ -1881,7 +1931,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                             month(selectedm) = 12
                                             IF day(selectedm) = maxday(year(selectedm), 1) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
                                         END IF
-                                    CASE IS = 3
+                                    CASE 3
                                         IF day(selectedm) > 1 THEN
                                             day(selectedm) = day(selectedm) - 1
                                         ELSE
@@ -1891,20 +1941,20 @@ SUB RunMenu (selectedm, layout, titel$)
                                 change(selectedm) = 1
                             ELSEIF type$(selectedm) = "time" THEN
                                 SELECT CASE selected(selectedm)
-                                    CASE IS = 1
+                                    CASE 1
                                         IF hour(selectedm) > 0 THEN hour(selectedm) = hour(selectedm) - 1 ELSE hour(selectedm) = 23
-                                    CASE IS = 2
+                                    CASE 2
                                         IF minute(selectedm) > 0 THEN minute(selectedm) = minute(selectedm) - 5 ELSE minute(selectedm) = 55
                                 END SELECT
                                 change(selectedm) = 1
                             ELSE
                                 IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                             END IF
-                        CASE IS = CHR$(0) + CHR$(72) 'arrow up
+                        CASE CHR$(0) + CHR$(72) 'arrow up
                             increase:
                             IF type$(selectedm) = "date" THEN
                                 SELECT CASE selected(selectedm)
-                                    CASE IS = 1
+                                    CASE 1
                                         IF year(selectedm) < VAL(MID$(DATE$, 7, 4)) + 10 THEN
                                             year(selectedm) = year(selectedm) + 1
                                             IF day(selectedm) = maxday(year(selectedm) - 1, month(selectedm)) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
@@ -1912,7 +1962,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                             year(selectedm) = VAL(MID$(DATE$, 7, 4))
                                             IF day(selectedm) = maxday(VAL(MID$(DATE$, 7, 4)) + 10, month(selectedm)) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
                                         END IF
-                                    CASE IS = 2
+                                    CASE 2
                                         IF month(selectedm) < 12 THEN
                                             month(selectedm) = month(selectedm) + 1
                                             IF day(selectedm) = maxday(year(selectedm), month(selectedm) - 1) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
@@ -1920,7 +1970,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                             month(selectedm) = 1
                                             IF day(selectedm) = maxday(year(selectedm), 12) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
                                         END IF
-                                    CASE IS = 3
+                                    CASE 3
                                         IF day(selectedm) < maxday(year(selectedm), month(selectedm)) THEN
                                             day(selectedm) = day(selectedm) + 1
                                         ELSE
@@ -1930,16 +1980,16 @@ SUB RunMenu (selectedm, layout, titel$)
                                 change(selectedm) = 1
                             ELSEIF type$(selectedm) = "time" THEN
                                 SELECT CASE selected(selectedm)
-                                    CASE IS = 1
+                                    CASE 1
                                         IF hour(selectedm) < 23 THEN hour(selectedm) = hour(selectedm) + 1 ELSE hour(selectedm) = 0
-                                    CASE IS = 2
+                                    CASE 2
                                         IF minute(selectedm) < 54 THEN minute(selectedm) = minute(selectedm) + 5 ELSE minute(selectedm) = 0
                                 END SELECT
                                 change(selectedm) = 1
                             ELSE
                                 IF selectedm > 1 THEN selectedm = selectedm - 1 ELSE selectedm = maxm
                             END IF
-                        CASE IS = CHR$(0) + CHR$(77) 'arrow right
+                        CASE CHR$(0) + CHR$(77) 'arrow right
                             IF type$(selectedm) = "selector" THEN
                                 IF selected(selectedm) < maxad(array(selectedm)) THEN
                                     selected(selectedm) = selected(selectedm) + 1
@@ -1968,7 +2018,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                 IF selectedm < maxm THEN selectedm = selectedm + 1: change(selectedm - 1) = 1 ELSE selectedm = 1
                                 change(1) = 1
                             END IF
-                        CASE IS = CHR$(0) + CHR$(75) 'arrow left
+                        CASE CHR$(0) + CHR$(75) 'arrow left
                             IF type$(selectedm) = "selector" OR type$(selectedm) = "date" OR type$(selectedm) = "time" THEN
                                 IF selected(selectedm) > 1 THEN
                                     selected(selectedm) = selected(selectedm) - 1
@@ -1979,9 +2029,9 @@ SUB RunMenu (selectedm, layout, titel$)
                             ELSE
                                 IF selectedm > 1 THEN selectedm = selectedm - 1 ELSE selectedm = maxm
                             END IF
-                        CASE IS = CHR$(9)
+                        CASE CHR$(9)
                             IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
-                        CASE IS = CHR$(13)
+                        CASE CHR$(13)
                             IF type$(selectedm) = "input" AND selectedm < maxm AND type$(selectedm + 1) = "input" THEN
                                 LOCATE firstline + yoffset(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + gbf(selectedm) + 2
                                 PRINT "   "
@@ -1996,7 +2046,7 @@ SUB RunMenu (selectedm, layout, titel$)
 
                             engageonm: 'wird getriggert, wenn auf m geklickt wird oder enter gedruckt wird
                             SELECT CASE type$(selectedm)
-                                CASE IS = "slider"
+                                CASE "slider"
                                     IF _MOUSEBUTTON(1) = -1 THEN
                                         DO
                                             IF _MOUSEINPUT = -1 AND _MOUSEX > basex(selectedm) AND _MOUSEX < endx(selectedm) THEN
@@ -2024,48 +2074,41 @@ SUB RunMenu (selectedm, layout, titel$)
                                             END IF
                                         LOOP UNTIL _MOUSEBUTTON(1) = 0
                                     END IF
-                                CASE IS = "selector"
+                                CASE "selector"
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
-                                CASE IS = "date"
+                                CASE "date"
                                     IF selected(selectedm) < maxad(array(selectedm)) THEN
                                         selected(selectedm) = selected(selectedm) + 1: change(selectedm) = 1
                                     ELSE
                                         IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                     END IF
-                                CASE IS = "time"
+                                CASE "time"
                                     IF selected(selectedm) < maxad(array(selectedm)) THEN
                                         selected(selectedm) = selected(selectedm) + 1: change(selectedm) = 1
                                     ELSE
                                         IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                     END IF
-                                CASE IS = "menu"
+                                CASE "menu"
                                     IF destination$(selectedm) = "system" THEN
                                         SYSTEM
                                     ELSE
                                         SELECT CASE destination$(selectedm)
-                                            CASE IS = "copy": change(m) = 1: GOTO copy
-                                            CASE IS = "paste": change(m) = 1: GOTO paste
+                                            CASE "copy": change(m) = 1: GOTO copy
+                                            CASE "paste": change(m) = 1: GOTO paste
                                         END SELECT
                                         endparameter$ = destination$(selectedm): endmenu = 1
                                     END IF
-                                CASE IS = "toggle"
+                                CASE "toggle"
                                     endmenu = 0
                                     IF state(selectedm) = 1 THEN state(selectedm) = 0 ELSE state(selectedm) = 1
                                     SELECT CASE setting$(selectedm)
-                                        CASE IS = "darkmode"
+                                        CASE "darkmode"
                                             IF darkmode = 1 THEN darkmode = 0 ELSE darkmode = 1
-                                        CASE IS = "size"
+                                        CASE "size"
                                             IF bigwindow = 1 THEN bigwindow = 0 ELSE bigwindow = 1
-                                            restart = 1
                                     END SELECT: change(selectedm) = 1
-                                    OPEN settingspath$ + "settings.bremer" FOR OUTPUT AS #1
-                                    WRITE #1, _DEFLATE$(LST$(darkmode))
-                                    WRITE #1, _DEFLATE$(LST$(bigwindow))
-                                    WRITE #1, _DEFLATE$(LST$(rfontheight))
-                                    CLOSE #1
-                                    endparameter$ = "restart": endmenu = 1
                             END SELECT
-                        CASE IS = CHR$(27)
+                        CASE CHR$(27)
                             endmenu = 1: endparameter$ = "up"
                     END SELECT
                 END IF
@@ -2082,7 +2125,7 @@ SUB RunMenu (selectedm, layout, titel$)
                         change = 0
                     END IF
                     SELECT CASE type$(m)
-                        CASE IS = "slider"
+                        CASE "slider"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             COLOR colour&("fg"), colour&("bg")
                             PRINT text$(m)
@@ -2097,7 +2140,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             xvalue = firstchar + xoffset(m) + LEN(text$(m)) + ((maxx / 4) / fontwidth) + 2
                             LOCATE firstline + yoffset(m), xvalue
                             PRINT value(m); "   "
-                        CASE IS = "date"
+                        CASE "date"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             COLOR colour&("fg"), colour&("transparent")
                             PRINT text$(m) + " ";
@@ -2119,7 +2162,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             'triangles
                             drawTriangle changevalxl(m), increasevalyu(m), triscale, -1
                             drawTriangle changevalxl(m), decreasevalyu(m), triscale, 1
-                        CASE IS = "time"
+                        CASE "time"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             COLOR colour&("fg"), colour&("transparent")
                             PRINT text$(m) + " ";
@@ -2139,7 +2182,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             'triangles
                             drawTriangle changevalxl(m), increasevalyu(m), triscale, -1
                             drawTriangle changevalxl(m), decreasevalyu(m), triscale, 1
-                        CASE IS = "selector"
+                        CASE "selector"
                             'zeigt nicht editierbaren text an
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             COLOR colour&("fg"), colour&("bg")
@@ -2158,7 +2201,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             PRINT "-" + suche$ + SPC(50 - LEN(arraydata$(array(m), selected(m))) - LEN(suche$))
                             rectangle (firstchar + xoffset(m) + LEN(text$(m)) - 0.5) * fontwidth, (firstline + yoffset(m) - 1) * fontheight - 6, (firstchar + xoffset(m) + LEN(arraydata$(array(m), selected(m))) + LEN(text$(m)) + 5) * fontwidth, (firstline + yoffset(m)) * fontheight + 4, UMround, colour&("fg"), "B"
                             endx(m) = basex(m) + (LEN(text$(m)) + LEN(arraydata$(array(m), selected(m))) + 11) * fontwidth + (fontwidth / 2)
-                        CASE IS = "toggle"
+                        CASE "toggle"
                             LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("bg"), BF
                             IF selectedm = m THEN
                                 LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("red"), B
@@ -2175,11 +2218,10 @@ SUB RunMenu (selectedm, layout, titel$)
                                 END IF
                             ELSE
                                 rectangle basex(m) + (endx(m) - basex(m)) / 2 + 2, basey(m) + 2, endx(m) - 2, endy(m) - 2, UMround, colour&("red"), "BF"
-                                'LINE (basex(m) + (endx(m) - basex(m)) / 2 + 2, basey(m) + 2)-(endx(m) - 2, endy(m) - 2), colour&("red"), BF
                             END IF
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             PRINT text$(m)
-                        CASE IS = "input"
+                        CASE "input"
                             'zeigt nicht editierbaren text an
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             IF selectedm <> m THEN
@@ -2218,7 +2260,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             END IF
                             PRINT " "
                             endx(m) = basex(m) + (LEN(text$(m)) + g(m) + 2) * fontwidth + (fontwidth / 2)
-                        CASE IS = "menu"
+                        CASE "menu"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             IF m <> selectedm THEN
                                 rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("fg"), "B"
@@ -2228,11 +2270,11 @@ SUB RunMenu (selectedm, layout, titel$)
                                 COLOR colour&("white"), colour&("transparent")
                             END IF
                             PRINT text$(m)
-                        CASE IS = "text"
+                        CASE "text"
                             SELECT CASE weight$(m)
-                                CASE IS = "r"
+                                CASE "r"
                                     _FONT r&
-                                CASE IS = "b"
+                                CASE "b"
                                     _FONT b&
                             END SELECT
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
@@ -2357,12 +2399,15 @@ SUB RunMenu (selectedm, layout, titel$)
                 END IF
                 fps = 0
             END IF
+            _DEST 0
+            _PUTIMAGE (0, 0), canvas&
             _DISPLAY
+            _DEST canvas&
             _LIMIT framerate
         LOOP UNTIL endmenu = 1 OR interactable = 0
         m = 0: DO: m = m + 1
             SELECT CASE type$(m)
-                CASE IS = "input"
+                CASE "input"
                     g(m) = 0
                     IF gbf(m) > 0 THEN
                         DO
@@ -2371,19 +2416,19 @@ SUB RunMenu (selectedm, layout, titel$)
                             char$(m, g(m)) = ""
                         LOOP UNTIL g(m) = gbf(m)
                     END IF
-                CASE IS = "selector"
+                CASE "selector"
                     UserInput$(m) = arraydata$(array(m), selected(m))
                     IF g(m) > 0 THEN
                         g = 0: DO: g = g + 1: char$(m, g) = "": LOOP UNTIL g = g(m)
                     END IF
                     g(m) = 0
                     gbf(m) = 0
-                CASE IS = "date"
+                CASE "date"
                     year$ = convyear$(year(m))
                     month$ = convmonth$(month(m))
                     day$ = convday$(day(m))
                     UserInput$(m) = year$ + "-" + month$ + "-" + day$
-                CASE IS = "time"
+                CASE "time"
                     hour$ = convhour$(hour(m))
                     minute$ = convminute$(minute(m))
                     UserInput$(m) = hour$ + ":" + minute$
@@ -2402,6 +2447,7 @@ SUB RunMenu (selectedm, layout, titel$)
         END IF
     END IF
     _AUTODISPLAY
+    _DEST 0
     clearStatus
     writeTemp templist$
     EmptyMenu
@@ -2409,19 +2455,19 @@ END SUB
 
 FUNCTION replace$ (chor$)
     SELECT CASE chor$
-        CASE IS = CHR$(228) 'ae
+        CASE CHR$(228) 'ae
             replace$ = CHR$(132)
-        CASE IS = CHR$(196) 'AE
+        CASE CHR$(196) 'AE
             replace$ = CHR$(142)
-        CASE IS = CHR$(252) 'ue
+        CASE CHR$(252) 'ue
             replace$ = CHR$(129)
-        CASE IS = CHR$(220) 'UE
+        CASE CHR$(220) 'UE
             replace$ = CHR$(154)
-        CASE IS = CHR$(246) 'oe
+        CASE CHR$(246) 'oe
             replace$ = CHR$(148)
-        CASE IS = CHR$(214) 'OE
+        CASE CHR$(214) 'OE
             replace$ = CHR$(153)
-        CASE IS = CHR$(223) 'ss
+        CASE CHR$(223) 'ss
             replace$ = CHR$(225)
     END SELECT
 END FUNCTION
@@ -2584,9 +2630,9 @@ SUB NewToggle (yoffset, xoffset, text$, setting$)
     type$(m) = "toggle"
     setting$(m) = setting$
     SELECT CASE setting$(m)
-        CASE IS = "darkmode"
+        CASE "darkmode"
             state(m) = darkmode
-        CASE IS = "size"
+        CASE "size"
             state(m) = bigwindow
     END SELECT
     text$(m) = text$
@@ -2666,9 +2712,9 @@ SUB Background (layout, titel$, maintrigger)
             PRINT "Nicht angemeldet"
         END IF
         SELECT CASE layout
-            CASE IS = 0
+            CASE 0
                 ' :)
-            CASE IS = 1
+            CASE 1
                 LINE ((maxx / 2) - maxx / 6, (firstline - 1) * fontheight)-((maxx / 2) + maxx / 7, (maxlines - 2) * fontheight), colour&("fg"), B
                 LINE ((maxx / 2) + maxx / 6, (firstline - 1) * fontheight)-(maxx - 20, (maxlines / 2) * fontheight), colour&("fg"), B
                 LINE ((maxx / 2) + maxx / 6, (maxlines / 2 + 1) * fontheight)-(maxx - 20, (maxlines - 2) * fontheight), colour&("fg"), B
@@ -2729,7 +2775,7 @@ END SUB
 
 SUB progressBar (position, progress, maxprogress)
     SELECT CASE position
-        CASE IS = 0 'center
+        CASE 0 'center
             LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 + 200, maxy / 2 - 45), colour&("red"), B
             LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 - 200 + ((progress / maxprogress) * 400), maxy / 2 - 45), colour&("red"), BF
     END SELECT
@@ -2747,12 +2793,12 @@ END SUB
 
 SUB quickprint (y, x, text$, snapping, logging)
     SELECT CASE snapping
-        CASE IS = 0 'left bound
+        CASE 0 'left bound
             LOCATE y, x
-        CASE IS = 1 'centered
+        CASE 1 'centered
             LOCATE y, x - (LEN(text$) / 2) - 10
             PRINT "          ";
-        CASE IS = 2 'right bound
+        CASE 2 'right bound
             LOCATE y, x - LEN(text$)
     END SELECT
     PRINT text$ + "                 "
@@ -2763,14 +2809,18 @@ END SUB
 
 SUB rectangle (lx, ly, ux, uy, round, clr&, outline$)
     SELECT CASE outline$
-        CASE IS = "BF"
+        CASE "BF"
             rectangleoutline lx, ly, ux, uy, round, clr&
             PAINT (lx + ((ux - lx) / 2), ly + ((uy - ly) / 2)), clr&, clr&
             IF shading = 1 THEN
                 IF clr& = colour&("white") THEN
                     shader& = _RGBA(0, 0, 0, 80)
                 ELSE
-                    shader& = _RGBA(255, 255, 255, 255)
+                    IF colour&("bg") <> colour&("white") THEN
+                        shader& = colour&("white")
+                    ELSE
+                        shader& = _RGBA(0, 0, 0, 80)
+                    END IF
                 END IF
                 'top right
                 x = -0.25 * _PI
@@ -2788,7 +2838,7 @@ SUB rectangle (lx, ly, ux, uy, round, clr&, outline$)
                 LINE (lx + round, ly)-(ux - round, ly), shader&
                 LINE (ux, ly + round)-(ux, uy - round), shader&
             END IF
-        CASE IS = "B"
+        CASE "B"
             rectangleoutline lx, ly, ux, uy, round, clr&
     END SELECT
 END SUB
@@ -2828,7 +2878,7 @@ END SUB
 
 SUB publishPost (title$, content$, comman$)
     SELECT CASE category$
-        CASE IS = ""
+        CASE ""
     END SELECT
     adminpw$ = CHR$(34) + "bremer_admin:Hcjk 3Enh JZXE 05zl vy20 QdMH" + CHR$(34)
     url$ = "http://bremer.de/wp-json/wp/v2/posts "
@@ -2851,9 +2901,9 @@ SUB fetchEvents
             PRINT "Lade " + url$ + " herunter..."
             SHELL "wget -l 2 -nd -r -k -A html " + url$ + " -P import/site"
             SELECT CASE name$ 'opens downloaded .html/.php or whatever file
-                CASE IS = "Kulturzentrum Lagerhaus"
+                CASE "Kulturzentrum Lagerhaus"
                     OPEN "import/site/index.html" FOR INPUT AS #101
-                CASE IS = "Kulturzentrum Schlachthof"
+                CASE "Kulturzentrum Schlachthof"
                     OPEN "import/site/programm.html" FOR INPUT AS #101
             END SELECT
             PRINT "Lese Tags f" + CHR$(129) + "r " + name$ + "..."
@@ -2862,7 +2912,7 @@ SUB fetchEvents
                 DO
                     LINE INPUT #101, line$
                     SELECT CASE name$
-                        CASE IS = "Kulturzentrum Lagerhaus"
+                        CASE "Kulturzentrum Lagerhaus"
                             p = 0: DO: p = p + 1
                                 IF MID$(line$, p, 1) = "<" THEN
                                     u = p
@@ -2915,7 +2965,7 @@ SUB fetchEvents
                         runcode = 0: DO: runcode = runcode + 1
                             p = 0: DO: p = p + 1
                                 SELECT CASE MID$(content$(t), p, 1)
-                                    CASE IS = "&" 'replaces html codes
+                                    CASE "&" 'replaces html codes
                                         u = p
                                         DO: p = p + 1
                                         LOOP UNTIL MID$(content$(t), p, 1) = ";" OR p = LEN(content$(t))
@@ -2926,21 +2976,21 @@ SUB fetchEvents
                                         END IF
                                 END SELECT
                                 SELECT CASE MID$(content$(t), p, 2)
-                                    CASE IS = CHR$(195) + CHR$(164) 'ae
+                                    CASE CHR$(195) + CHR$(164) 'ae
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(132) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                                    CASE IS = CHR$(195) + CHR$(182) 'oe
+                                    CASE CHR$(195) + CHR$(182) 'oe
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(148) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                                    CASE IS = CHR$(195) + CHR$(188) 'ue
+                                    CASE CHR$(195) + CHR$(188) 'ue
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(129) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
-                                    CASE IS = CHR$(195) + CHR$(170) 'e
+                                    CASE CHR$(195) + CHR$(170) 'e
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(136) + MID$(content$(t), p + 2, LEN(content$(t)) - p)
                                 END SELECT
                                 SELECT CASE MID$(content$(t), p, 3) ' *sigh*
-                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(158) '"-down
+                                    CASE CHR$(226) + CHR$(128) + CHR$(158) '"-down
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
-                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(156) '"-up
+                                    CASE CHR$(226) + CHR$(128) + CHR$(156) '"-up
                                         content$(t) = MID$(content$(t), 1, p - 1) + CHR$(34) + MID$(content$(t), p + 3, LEN(content$(t)) - p)
-                                    CASE IS = CHR$(226) + CHR$(128) + CHR$(153) 'apostrophe
+                                    CASE CHR$(226) + CHR$(128) + CHR$(153) 'apostrophe
                                         content$(t) = MID$(content$(t), 1, p - 1) + "'" + MID$(content$(t), p + 3, LEN(content$(t)) - p)
                                 END SELECT
                             LOOP UNTIL p >= LEN(content$(t))
@@ -2951,7 +3001,7 @@ SUB fetchEvents
                     LOOP UNTIL t >= maxt
                     t = 0: DO: t = t + 1
                         SELECT CASE name$
-                            CASE IS = "Kulturzentrum Lagerhaus"
+                            CASE "Kulturzentrum Lagerhaus"
                                 IF MID$(tag$(t), 1, 23) = "<a rel=" + CHR$(34) + "bookmark" + CHR$(34) + " href=" THEN 'starting tag for event (titel)
                                     IF content$(t) <> "Das Lagerhaus" AND content$(t) <> "Impressum" AND content$(t) <> "Kontakt" AND content$(t) <> "Datenschutz" AND content$(t) <> "Projekte" THEN 'exclude static cases
                                         iv = iv + 1
@@ -2977,7 +3027,7 @@ SUB fetchEvents
                                         END IF
                                     END IF
                                 END IF
-                            CASE IS = "Kulturzentrum Schlachthof"
+                            CASE "Kulturzentrum Schlachthof"
 
                         END SELECT
                     LOOP UNTIL t = maxt
@@ -3018,12 +3068,12 @@ END SUB
 
 FUNCTION htmlreplace$ (htmlcode$)
     SELECT CASE htmlcode$
-        CASE IS = "&#160;": htmlreplace$ = " "
-        CASE IS = "&amp;": htmlreplace$ = "&"
-        CASE IS = "&nbsp;": htmlreplace$ = " "
-        CASE IS = "&#8217;": htmlreplace$ = "'"
-        CASE IS = "&#8211;": htmlreplace$ = "-"
-        CASE IS = "&#8230;": htmlreplace$ = "..."
+        CASE "&#160;": htmlreplace$ = " "
+        CASE "&amp;": htmlreplace$ = "&"
+        CASE "&nbsp;": htmlreplace$ = " "
+        CASE "&#8217;": htmlreplace$ = "'"
+        CASE "&#8211;": htmlreplace$ = "-"
+        CASE "&#8230;": htmlreplace$ = "..."
     END SELECT
     EXIT FUNCTION
 END FUNCTION
@@ -3069,9 +3119,20 @@ SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.p
     KILL "copies.txt": KILL "printername.txt": KILL "cancel.txt": KILL "printdialog.ps1"
 END SUB
 
+SUB importEvent (source$)
+    SELECT CASE source$
+        CASE "csv"
+
+        CASE "doc"
+
+        CASE "txt"
+
+    END SELECT
+END SUB
+
 SUB exportToQuark (listID$, ausgabe$, start$, end$)
     SELECT CASE listID$
-        CASE IS = "kaz"
+        CASE "kaz"
             IF max(10) > 0 THEN
                 FORMkaztitel$ = "@KAZ_Titel:<$z6.5f" + CHR$(34) + "Swis721 BlkCn BT" + CHR$(34) + ">"
                 FORMkaztext$ = "<$z6.5f" + CHR$(34) + "Swis721 Cn BT" + CHR$(34) + ">"
@@ -3097,23 +3158,23 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                         END IF
                     LOOP UNTIL ka = max(10)
                     SELECT CASE kt 'rewrite to new categories
-                        CASE IS = 4
+                        CASE 4
                             PRINT #5, FORMkazkat1$ + "Kontakte"
-                        CASE IS = 12
+                        CASE 12
                             PRINT #5, FORMkazkat1$ + "Vermietung"
-                        CASE IS = 13
+                        CASE 13
                             PRINT #5, FORMkazkat1$ + "Stellenmarkt"
-                        CASE IS = 16
+                        CASE 16
                             PRINT #5, FORMkazkat1$ + "Fahrzeuge"
-                        CASE IS = 17
+                        CASE 17
                             PRINT #5, FORMkazkat1$ + "Handel"
-                        CASE IS = 19
+                        CASE 19
                             PRINT #5, FORMkazkat1$ + "Treffs"
-                        CASE IS = 20
+                        CASE 20
                             PRINT #5, FORMkazkat1$ + "Musik"
-                        CASE IS = 21
+                        CASE 21
                             PRINT #5, FORMkazkat1$ + "Reisen"
-                        CASE IS = 23
+                        CASE 23
                             PRINT #5, FORMkazkat1$ + RTRIM$(Kategorie(kt + 1).Name)
                     END SELECT
                 LOOP UNTIL kt = max(12) - 1
@@ -3124,7 +3185,7 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
             ELSE
 
             END IF
-        CASE IS = "ver"
+        CASE "ver"
             IF max(11) > 0 THEN
                 FORMvertitel$ = "@VER_titel:<$z6.5f" + CHR$(34) + "Swis721 BlkCn BT" + CHR$(34) + ">"
                 FORMvertext$ = "<$z6.5f" + CHR$(34) + "Swis721 Cn BT" + CHR$(34) + ">"
@@ -3203,9 +3264,9 @@ END SUB
 
 SUB exportToCsv (listID$, ausgabe$, formatting$)
     SELECT CASE formatting$
-        CASE IS = "eventscalendar"
+        CASE "eventscalendar"
             SELECT CASE listID$
-                CASE IS = "ver"
+                CASE "ver"
                     OPEN netpath$ + "export\" + UCASE$(listID$) + "_" + ausgabe$ + ".csv" FOR OUTPUT AS #6
                     IF max(11) > 0 THEN
                         PRINT #6, "EVENT NAME,VENUE NAME,ORGANIZER NAME,START DATE,START TIME,END DATE,END TIME,ALL DAY EVENT?,CATEGORIES,EVENT COST,EVENT PHONE,EVENT WEBSITE,SHOW MAP LINK?,SHOW MAP?,EVENT DESCRIPTION"
@@ -3280,18 +3341,18 @@ END FUNCTION
 
 FUNCTION monthstr$ (m)
     SELECT CASE m
-        CASE IS = 1: month$ = "Januar"
-        CASE IS = 2: month$ = "Februar"
-        CASE IS = 3: month$ = "M" + CHR$(228) + "rz"
-        CASE IS = 4: month$ = "April"
-        CASE IS = 5: month$ = "Mai"
-        CASE IS = 6: month$ = "Juni"
-        CASE IS = 7: month$ = "Juli"
-        CASE IS = 8: month$ = "August"
-        CASE IS = 9: month$ = "September"
-        CASE IS = 10: month$ = "Oktober"
-        CASE IS = 11: month$ = "November"
-        CASE IS = 12: month$ = "Dezember"
+        CASE 1: month$ = "Januar"
+        CASE 2: month$ = "Februar"
+        CASE 3: month$ = "M" + CHR$(228) + "rz"
+        CASE 4: month$ = "April"
+        CASE 5: month$ = "Mai"
+        CASE 6: month$ = "Juni"
+        CASE 7: month$ = "Juli"
+        CASE 8: month$ = "August"
+        CASE 9: month$ = "September"
+        CASE 10: month$ = "Oktober"
+        CASE 11: month$ = "November"
+        CASE 12: month$ = "Dezember"
     END SELECT
 END FUNCTION
 
@@ -3309,23 +3370,23 @@ END FUNCTION
 
 FUNCTION maxday (year, month)
     SELECT CASE month
-        CASE IS = 2
+        CASE 2
             IF isLeap(year) = 1 THEN
                 maxday = 29
             ELSE
                 maxday = 28
             END IF
-        CASE IS = 1: maxday = 31
-        CASE IS = 3: maxday = 31
-        CASE IS = 5: maxday = 31
-        CASE IS = 7: maxday = 31
-        CASE IS = 8: maxday = 31
-        CASE IS = 10: maxday = 31
-        CASE IS = 12: maxday = 31
-        CASE IS = 4: maxday = 30
-        CASE IS = 6: maxday = 30
-        CASE IS = 9: maxday = 30
-        CASE IS = 11: maxday = 30
+        CASE 1: maxday = 31
+        CASE 3: maxday = 31
+        CASE 5: maxday = 31
+        CASE 7: maxday = 31
+        CASE 8: maxday = 31
+        CASE 10: maxday = 31
+        CASE 12: maxday = 31
+        CASE 4: maxday = 30
+        CASE 6: maxday = 30
+        CASE 9: maxday = 30
+        CASE 11: maxday = 30
     END SELECT
 END FUNCTION
 
@@ -3336,18 +3397,18 @@ SUB writeBinary (type$)
     OPEN netpath$ + "data\" + type$ + ".bremer" FOR RANDOM AS #1 LEN = recLEN
     obscure type$
     SELECT CASE type$
-        CASE IS = "usr": IF max(1) > 0 THEN u = 0: DO: u = u + 1: PUT #1, u, User(u): LOOP UNTIL u = max(1)
-        CASE IS = "obj": IF max(2) > 0 THEN o = 0: DO: o = o + 1: PUT #1, o, Objekt(o): LOOP UNTIL o = max(2)
-        CASE IS = "asg": IF max(3) > 0 THEN a = 0: DO: a = a + 1: PUT #1, a, Ausgabe(a): LOOP UNTIL a = max(3)
-        CASE IS = "ort": IF max(4) > 0 THEN ot = 0: DO: ot = ot + 1: PUT #1, ot, Ort(ot): LOOP UNTIL ot = max(4)
-        CASE IS = "plz": IF max(5) > 0 THEN p = 0: DO: p = p + 1: PUT #1, p, PLZ(p): LOOP UNTIL p = max(5)
-        CASE IS = "adr": IF max(6) > 0 THEN d = 0: DO: d = d + 1: PUT #1, d, Adresse(d): LOOP UNTIL d = max(6)
-        CASE IS = "knt": IF max(7) > 0 THEN k = 0: DO: k = k + 1: PUT #1, k, Konto(k): LOOP UNTIL k = max(7)
-        CASE IS = "rbk": IF max(8) > 0 THEN r = 0: DO: r = r + 1: PUT #1, r, Rubrik(r): LOOP UNTIL r = max(8)
-        CASE IS = "vea": IF max(9) > 0 THEN va = 0: DO: va = va + 1: PUT #1, va, Veranstalter(va): LOOP UNTIL va = max(9)
-        CASE IS = "kaz": IF max(10) > 0 THEN ka = 0: DO: ka = ka + 1: PUT #1, ka, Kleinanzeige(ka): LOOP UNTIL ka = max(10)
-        CASE IS = "ver": IF max(11) > 0 THEN v = 0: DO: v = v + 1: PUT #1, v, Veranstaltung(v): LOOP UNTIL v = max(11)
-        CASE IS = "kat": IF max(12) > 0 THEN kt = 0: DO: kt = kt + 1: PUT #1, kt, Kategorie(kt): LOOP UNTIL kt = max(12)
+        CASE "usr": IF max(1) > 0 THEN u = 0: DO: u = u + 1: PUT #1, u, User(u): LOOP UNTIL u = max(1)
+        CASE "obj": IF max(2) > 0 THEN o = 0: DO: o = o + 1: PUT #1, o, Objekt(o): LOOP UNTIL o = max(2)
+        CASE "asg": IF max(3) > 0 THEN a = 0: DO: a = a + 1: PUT #1, a, Ausgabe(a): LOOP UNTIL a = max(3)
+        CASE "ort": IF max(4) > 0 THEN ot = 0: DO: ot = ot + 1: PUT #1, ot, Ort(ot): LOOP UNTIL ot = max(4)
+        CASE "plz": IF max(5) > 0 THEN p = 0: DO: p = p + 1: PUT #1, p, PLZ(p): LOOP UNTIL p = max(5)
+        CASE "adr": IF max(6) > 0 THEN d = 0: DO: d = d + 1: PUT #1, d, Adresse(d): LOOP UNTIL d = max(6)
+        CASE "knt": IF max(7) > 0 THEN k = 0: DO: k = k + 1: PUT #1, k, Konto(k): LOOP UNTIL k = max(7)
+        CASE "rbk": IF max(8) > 0 THEN r = 0: DO: r = r + 1: PUT #1, r, Rubrik(r): LOOP UNTIL r = max(8)
+        CASE "vea": IF max(9) > 0 THEN va = 0: DO: va = va + 1: PUT #1, va, Veranstalter(va): LOOP UNTIL va = max(9)
+        CASE "kaz": IF max(10) > 0 THEN ka = 0: DO: ka = ka + 1: PUT #1, ka, Kleinanzeige(ka): LOOP UNTIL ka = max(10)
+        CASE "ver": IF max(11) > 0 THEN v = 0: DO: v = v + 1: PUT #1, v, Veranstaltung(v): LOOP UNTIL v = max(11)
+        CASE "kat": IF max(12) > 0 THEN kt = 0: DO: kt = kt + 1: PUT #1, kt, Kategorie(kt): LOOP UNTIL kt = max(12)
     END SELECT
     CLOSE #1
 END SUB
@@ -3359,84 +3420,84 @@ SUB delete (type$, node)
     OPEN netpath$ + "data\" + type$ + ".bremer" FOR RANDOM AS #1 LEN = recLEN
     obscure type$
     SELECT CASE type$
-        CASE IS = "usr"
+        CASE "usr"
             IF max(1) > 0 THEN
                 u = 0: DO: u = u + 1
                     IF u <> node THEN PUT #1, u, User(u)
                 LOOP UNTIL u = max(1)
                 max(1) = max(1) - 1
             END IF
-        CASE IS = "obj"
+        CASE "obj"
             IF max(2) > 0 THEN
                 o = 0: DO: o = o + 1
                     IF o <> node THEN PUT #1, o, Objekt(o)
                 LOOP UNTIL o = max(2)
                 max(2) = max(2) - 1
             END IF
-        CASE IS = "asg"
+        CASE "asg"
             IF max(3) > 0 THEN
                 a = 0: DO: a = a + 1
                     IF a <> node THEN PUT #1, a, Ausgabe(a)
                 LOOP UNTIL a = max(3)
                 max(3) = max(3) - 1
             END IF
-        CASE IS = "ort"
+        CASE "ort"
             IF max(4) > 0 THEN
                 ot = 0: DO: ot = ot + 1
                     IF ot <> node THEN PUT #1, ot, Ort(ot)
                 LOOP UNTIL ot = max(4)
                 max(4) = max(4) - 1
             END IF
-        CASE IS = "plz"
+        CASE "plz"
             IF max(5) > 0 THEN
                 p = 0: DO: p = p + 1
                     IF p <> node THEN PUT #1, p, PLZ(p)
                 LOOP UNTIL p = max(5)
                 max(5) = max(5) - 1
             END IF
-        CASE IS = "adr"
+        CASE "adr"
             IF max(6) > 0 THEN
                 d = 0: DO: d = d + 1
                     IF d <> node THEN PUT #1, d, Adresse(d)
                 LOOP UNTIL d = max(6)
                 max(6) = max(6) - 1
             END IF
-        CASE IS = "knt"
+        CASE "knt"
             IF max(7) > 0 THEN
                 k = 0: DO: k = k + 1
                     IF k <> node THEN PUT #1, k, Konto(k)
                 LOOP UNTIL k = max(7)
                 max(7) = max(7) - 1
             END IF
-        CASE IS = "rbk"
+        CASE "rbk"
             IF max(8) > 0 THEN
                 r = 0: DO: r = r + 1
                     IF r <> node THEN PUT #1, r, Rubrik(r)
                 LOOP UNTIL r = max(8)
                 max(8) = max(8) - 1
             END IF
-        CASE IS = "vea"
+        CASE "vea"
             IF max(9) > 0 THEN
                 va = 0: DO: va = va + 1
                     IF va <> node THEN PUT #1, va, Veranstalter(va)
                 LOOP UNTIL va = max(9)
                 max(9) = max(9) - 1
             END IF
-        CASE IS = "kaz"
+        CASE "kaz"
             IF max(10) > 0 THEN
                 ka = 0: DO: ka = ka + 1
                     IF ka <> node THEN PUT #1, ka, Kleinanzeige(ka)
                 LOOP UNTIL ka = max(10)
                 max(10) = max(10) - 1
             END IF
-        CASE IS = "ver"
+        CASE "ver"
             IF max(11) > 0 THEN
                 v = 0: DO: v = v + 1
                     IF v <> node THEN PUT #1, v, Veranstaltung(v)
                 LOOP UNTIL v = max(11)
                 max(11) = max(11) - 1
             END IF
-        CASE IS = "kat"
+        CASE "kat"
             IF max(12) > 0 THEN
                 kt = 0: DO: kt = kt + 1
                     IF kt <> node THEN PUT #1, kt, Kategorie(kt)
@@ -3458,18 +3519,18 @@ FUNCTION readBinary (type$)
     END IF
     IF recLEN > 0 AND LOF(1) <> 0 THEN
         SELECT CASE type$
-            CASE IS = "usr": u = 0: DO: u = u + 1: GET #1, u, User(u): LOOP UNTIL u = LOF(1) \ recLEN: max(1) = u
-            CASE IS = "obj": o = 0: DO: o = o + 1: GET #1, o, Objekt(o): LOOP UNTIL o = LOF(1) \ recLEN: max(2) = o
-            CASE IS = "asg": a = 0: DO: a = a + 1: GET #1, a, Ausgabe(a): LOOP UNTIL a = LOF(1) \ recLEN: max(3) = a
-            CASE IS = "ort": ot = 0: DO: ot = ot + 1: GET #1, ot, Ort(ot): LOOP UNTIL ot = LOF(1) \ recLEN: max(4) = ot
-            CASE IS = "plz": p = 0: DO: p = p + 1: GET #1, p, PLZ(p): LOOP UNTIL p = LOF(1) \ recLEN: max(5) = p
-            CASE IS = "adr": d = 0: DO: d = d + 1: GET #1, d, Adresse(d): LOOP UNTIL d = LOF(1) \ recLEN: max(6) = d
-            CASE IS = "knt": k = 0: DO: k = k + 1: GET #1, k, Konto(k): LOOP UNTIL k = LOF(1) \ recLEN: max(7) = k
-            CASE IS = "rbk": r = 0: DO: r = r + 1: GET #1, r, Rubrik(r): LOOP UNTIL r = LOF(1) \ recLEN: max(8) = r
-            CASE IS = "vea": va = 0: DO: va = va + 1: GET #1, va, Veranstalter(va): LOOP UNTIL va = LOF(1) \ recLEN: max(9) = va
-            CASE IS = "kaz": ka = 0: DO: ka = ka + 1: GET #1, ka, Kleinanzeige(ka): LOOP UNTIL ka = LOF(1) \ recLEN: max(10) = ka
-            CASE IS = "ver": v = 0: DO: v = v + 1: GET #1, v, Veranstaltung(v): LOOP UNTIL v = LOF(1) \ recLEN: max(11) = v
-            CASE IS = "kat": kt = 0: DO: kt = kt + 1: GET #1, kt, Kategorie(kt): LOOP UNTIL kt = LOF(1) \ recLEN: max(12) = kt
+            CASE "usr": u = 0: DO: u = u + 1: GET #1, u, User(u): LOOP UNTIL u = LOF(1) \ recLEN: max(1) = u
+            CASE "obj": o = 0: DO: o = o + 1: GET #1, o, Objekt(o): LOOP UNTIL o = LOF(1) \ recLEN: max(2) = o
+            CASE "asg": a = 0: DO: a = a + 1: GET #1, a, Ausgabe(a): LOOP UNTIL a = LOF(1) \ recLEN: max(3) = a
+            CASE "ort": ot = 0: DO: ot = ot + 1: GET #1, ot, Ort(ot): LOOP UNTIL ot = LOF(1) \ recLEN: max(4) = ot
+            CASE "plz": p = 0: DO: p = p + 1: GET #1, p, PLZ(p): LOOP UNTIL p = LOF(1) \ recLEN: max(5) = p
+            CASE "adr": d = 0: DO: d = d + 1: GET #1, d, Adresse(d): LOOP UNTIL d = LOF(1) \ recLEN: max(6) = d
+            CASE "knt": k = 0: DO: k = k + 1: GET #1, k, Konto(k): LOOP UNTIL k = LOF(1) \ recLEN: max(7) = k
+            CASE "rbk": r = 0: DO: r = r + 1: GET #1, r, Rubrik(r): LOOP UNTIL r = LOF(1) \ recLEN: max(8) = r
+            CASE "vea": va = 0: DO: va = va + 1: GET #1, va, Veranstalter(va): LOOP UNTIL va = LOF(1) \ recLEN: max(9) = va
+            CASE "kaz": ka = 0: DO: ka = ka + 1: GET #1, ka, Kleinanzeige(ka): LOOP UNTIL ka = LOF(1) \ recLEN: max(10) = ka
+            CASE "ver": v = 0: DO: v = v + 1: GET #1, v, Veranstaltung(v): LOOP UNTIL v = LOF(1) \ recLEN: max(11) = v
+            CASE "kat": kt = 0: DO: kt = kt + 1: GET #1, kt, Kategorie(kt): LOOP UNTIL kt = LOF(1) \ recLEN: max(12) = kt
         END SELECT: CLOSE #1: clearobs type$: readBinary = 1
     ELSE: CLOSE #1: readBinary = 2
     END IF
@@ -3477,37 +3538,37 @@ END SUB
 
 SUB detRecLen (type$)
     SELECT CASE type$
-        CASE IS = "usr": recLEN = LEN(User(0))
-        CASE IS = "obj": recLEN = LEN(Objekt(0))
-        CASE IS = "asg": recLEN = LEN(Ausgabe(0))
-        CASE IS = "ort": recLEN = LEN(Ort(0))
-        CASE IS = "plz": recLEN = LEN(PLZ(0))
-        CASE IS = "adr": recLEN = LEN(Adresse(0))
-        CASE IS = "knt": recLEN = LEN(Konto(0))
-        CASE IS = "rbk": recLEN = LEN(Rubrik(0))
-        CASE IS = "vea": recLEN = LEN(Veranstalter(0))
-        CASE IS = "kaz": recLEN = LEN(Kleinanzeige(0))
-        CASE IS = "ver": recLEN = LEN(Veranstaltung(0))
-        CASE IS = "kat": recLEN = LEN(Kategorie(0))
+        CASE "usr": recLEN = LEN(User(0))
+        CASE "obj": recLEN = LEN(Objekt(0))
+        CASE "asg": recLEN = LEN(Ausgabe(0))
+        CASE "ort": recLEN = LEN(Ort(0))
+        CASE "plz": recLEN = LEN(PLZ(0))
+        CASE "adr": recLEN = LEN(Adresse(0))
+        CASE "knt": recLEN = LEN(Konto(0))
+        CASE "rbk": recLEN = LEN(Rubrik(0))
+        CASE "vea": recLEN = LEN(Veranstalter(0))
+        CASE "kaz": recLEN = LEN(Kleinanzeige(0))
+        CASE "ver": recLEN = LEN(Veranstaltung(0))
+        CASE "kat": recLEN = LEN(Kategorie(0))
     END SELECT
 END SUB
 
 SUB SetArrayData (currentm, hardcodelist)
     SELECT CASE hardcodelist
-        CASE IS = 1 'Zugang
+        CASE 1 'Zugang
             arraydata$(currentm, 1) = "Administrator"
             arraydata$(currentm, 2) = "Buchhalter"
             arraydata$(currentm, 3) = "Mitarbeiter"
             arraydata$(currentm, 4) = "Gast"
             maxad(currentm) = 4
-        CASE IS = 2 'Abteilungen
+        CASE 2 'Abteilungen
             arraydata$(currentm, 1) = "Redaktion"
             arraydata$(currentm, 2) = "Grafik"
             arraydata$(currentm, 3) = "Akquise"
             arraydata$(currentm, 4) = "Marketing"
             arraydata$(currentm, 5) = "Management"
             maxad(currentm) = 5
-        CASE IS = 3 'Waehrungen
+        CASE 3 'Waehrungen
             arraydata$(currentm, 1) = "EUR"
             arraydata$(currentm, 2) = "USD"
             arraydata$(currentm, 3) = "JPY"
@@ -3528,7 +3589,7 @@ END SUB
 
 SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
     SELECT CASE type$
-        CASE IS = "usr"
+        CASE "usr"
             IF max(1) > 0 THEN
                 u = 0: DO: u = u + 1
                     User(u).Name = Ost$(User(u).Name)
@@ -3539,7 +3600,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     User(u).LetzterLogin = Ost$(User(u).LetzterLogin)
                 LOOP UNTIL u = max(1)
             END IF
-        CASE IS = "obj"
+        CASE "obj"
             IF max(2) > 0 THEN
                 o = 0: DO: o = o + 1
                     Objekt(o).ID = Ova(Objekt(o).ID)
@@ -3548,7 +3609,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Objekt(o).Waehrung = Ost$(Objekt(o).Waehrung)
                 LOOP UNTIL o = max(2)
             END IF
-        CASE IS = "asg"
+        CASE "asg"
             IF max(3) > 0 THEN
                 a = 0: DO: a = a + 1
                     Ausgabe(a).ID = Ova(Ausgabe(a).ID)
@@ -3558,14 +3619,14 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Ausgabe(a).Ende = Ost$(Ausgabe(a).Ende)
                 LOOP UNTIL a = max(3)
             END IF
-        CASE IS = "ort"
+        CASE "ort"
             IF max(4) > 0 THEN
                 ot = 0: DO: ot = ot + 1
                     Ort(ot).Kuerzel = Ost$(Ort(ot).Kuerzel)
                     Ort(ot).Name = Ost$(Ort(ot).Name)
                 LOOP UNTIL ot = max(4)
             END IF
-        CASE IS = "plz"
+        CASE "plz"
             IF max(5) > 0 THEN
                 p = 0: DO: p = p + 1
                     PLZ(p).PLZ = Ova(PLZ(p).PLZ)
@@ -3573,7 +3634,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     PLZ(p).Ort = Ost$(PLZ(p).Ort)
                 LOOP UNTIL p = max(5)
             END IF
-        CASE IS = "adr"
+        CASE "adr"
             IF max(6) > 0 THEN
                 d = 0: DO: d = d + 1
                     Adresse(d).ID = Ova(Adresse(d).ID)
@@ -3583,7 +3644,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Adresse(d).Strasse = Ost$(Adresse(d).Strasse)
                 LOOP UNTIL d = max(6)
             END IF
-        CASE IS = "knt"
+        CASE "knt"
             IF max(7) > 0 THEN
                 k = 0: DO: k = k + 1
                     Konto(k).ID = Ova(Konto(k).ID)
@@ -3593,7 +3654,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Konto(k).Adresse = Ova(Konto(k).Adresse)
                 LOOP UNTIL k = max(7)
             END IF
-        CASE IS = "rbk"
+        CASE "rbk"
             IF max(8) > 0 THEN
                 r = 0: DO: r = r + 1
                     Rubrik(r).Kuerzel = Ost$(Rubrik(r).Kuerzel)
@@ -3601,7 +3662,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Rubrik(r).Name = Ost$(Rubrik(r).Name)
                 LOOP UNTIL r = max(8)
             END IF
-        CASE IS = "vea"
+        CASE "vea"
             IF max(9) > 0 THEN
                 va = 0: DO: va = va + 1
                     Veranstalter(va).Kuerzel = Ost$(Veranstalter(va).Kuerzel)
@@ -3614,7 +3675,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Veranstalter(va).Notiz = Ost$(Veranstalter(va).Notiz)
                 LOOP UNTIL va = max(9)
             END IF
-        CASE IS = "kaz"
+        CASE "kaz"
             IF max(10) > 0 THEN
                 ka = 0: DO: ka = ka + 1
                     Kleinanzeige(ka).ID = Ova(Kleinanzeige(ka).ID)
@@ -3631,7 +3692,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Kleinanzeige(ka).Notiz = Ost$(Kleinanzeige(ka).Notiz)
                 LOOP UNTIL ka = max(10)
             END IF
-        CASE IS = "ver"
+        CASE "ver"
             IF max(11) > 0 THEN
                 v = 0: DO: v = v + 1
                     Veranstaltung(v).ID = Ova(Veranstaltung(v).ID)
@@ -3649,7 +3710,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Veranstaltung(v).TextLang = Ost$(Veranstaltung(v).TextLang)
                 LOOP UNTIL v = max(11)
             END IF
-        CASE IS = "kat"
+        CASE "kat"
             IF max(12) > 0 THEN
                 kt = 0: DO: kt = kt + 1
                     Kategorie(kt).Kuerzel = Ost$(Kategorie(kt).Kuerzel)
@@ -3670,7 +3731,7 @@ END FUNCTION
 
 SUB clearobs (type$)
     SELECT CASE type$
-        CASE IS = "usr"
+        CASE "usr"
             IF max(1) > 0 THEN
                 u = 0: DO: u = u + 1
                     User(u).Name = Cst$(User(u).Name)
@@ -3681,7 +3742,7 @@ SUB clearobs (type$)
                     User(u).LetzterLogin = Cst$(User(u).LetzterLogin)
                 LOOP UNTIL u = max(1)
             END IF
-        CASE IS = "obj"
+        CASE "obj"
             IF max(2) > 0 THEN
                 o = 0: DO: o = o + 1
                     Objekt(o).ID = Cva(Objekt(o).ID)
@@ -3690,7 +3751,7 @@ SUB clearobs (type$)
                     Objekt(o).Waehrung = Cst$(Objekt(o).Waehrung)
                 LOOP UNTIL o = max(2)
             END IF
-        CASE IS = "asg"
+        CASE "asg"
             IF max(3) > 0 THEN
                 a = 0: DO: a = a + 1
                     Ausgabe(a).ID = Cva(Ausgabe(a).ID)
@@ -3700,14 +3761,14 @@ SUB clearobs (type$)
                     Ausgabe(a).Ende = Cst$(Ausgabe(a).Ende)
                 LOOP UNTIL a = max(3)
             END IF
-        CASE IS = "ort"
+        CASE "ort"
             IF max(4) > 0 THEN
                 ot = 0: DO: ot = ot + 1
                     Ort(ot).Kuerzel = Cst$(Ort(ot).Kuerzel)
                     Ort(ot).Name = Cst$(Ort(ot).Name)
                 LOOP UNTIL ot = max(4)
             END IF
-        CASE IS = "plz"
+        CASE "plz"
             IF max(5) > 0 THEN
                 p = 0: DO: p = p + 1
                     PLZ(p).PLZ = Cva(PLZ(p).PLZ)
@@ -3715,7 +3776,7 @@ SUB clearobs (type$)
                     PLZ(p).Ort = Cst$(PLZ(p).Ort)
                 LOOP UNTIL p = max(5)
             END IF
-        CASE IS = "adr"
+        CASE "adr"
             IF max(6) > 0 THEN
                 d = 0: DO: d = d + 1
                     Adresse(d).ID = Cva(Adresse(d).ID)
@@ -3725,7 +3786,7 @@ SUB clearobs (type$)
                     Adresse(d).Strasse = Cst$(Adresse(d).Strasse)
                 LOOP UNTIL d = max(6)
             END IF
-        CASE IS = "knt"
+        CASE "knt"
             IF max(7) > 0 THEN
                 k = 0: DO: k = k + 1
                     Konto(k).ID = Cva(Konto(k).ID)
@@ -3735,7 +3796,7 @@ SUB clearobs (type$)
                     Konto(k).Adresse = Cva(Konto(k).Adresse)
                 LOOP UNTIL k = max(7)
             END IF
-        CASE IS = "rbk"
+        CASE "rbk"
             IF max(8) > 0 THEN
                 r = 0: DO: r = r + 1
                     Rubrik(r).Kuerzel = Cst$(Rubrik(r).Kuerzel)
@@ -3743,7 +3804,7 @@ SUB clearobs (type$)
                     Rubrik(r).Name = Cst$(Rubrik(r).Name)
                 LOOP UNTIL r = max(8)
             END IF
-        CASE IS = "vea"
+        CASE "vea"
             IF max(9) > 0 THEN
                 va = 0: DO: va = va + 1
                     Veranstalter(va).Kuerzel = Cst$(Veranstalter(va).Kuerzel)
@@ -3756,7 +3817,7 @@ SUB clearobs (type$)
                     Veranstalter(va).Notiz = Cst$(Veranstalter(va).Notiz)
                 LOOP UNTIL va = max(9)
             END IF
-        CASE IS = "kaz"
+        CASE "kaz"
             IF max(10) > 0 THEN
                 ka = 0: DO: ka = ka + 1
                     Kleinanzeige(ka).ID = Cva(Kleinanzeige(ka).ID)
@@ -3773,7 +3834,7 @@ SUB clearobs (type$)
                     Kleinanzeige(ka).Notiz = Cst$(Kleinanzeige(ka).Notiz)
                 LOOP UNTIL ka = max(10)
             END IF
-        CASE IS = "ver"
+        CASE "ver"
             IF max(11) > 0 THEN
                 v = 0: DO: v = v + 1
                     Veranstaltung(v).ID = Cva(Veranstaltung(v).ID)
@@ -3791,7 +3852,7 @@ SUB clearobs (type$)
                     Veranstaltung(v).TextLang = Cst$(Veranstaltung(v).TextLang)
                 LOOP UNTIL v = max(11)
             END IF
-        CASE IS = "kat"
+        CASE "kat"
             IF max(12) > 0 THEN
                 kt = 0: DO: kt = kt + 1
                     Kategorie(kt).Kuerzel = Cst$(Kategorie(kt).Kuerzel)
@@ -3822,13 +3883,13 @@ END FUNCTION
 
 SUB resetToStandard (type$)
     SELECT CASE type$
-        CASE IS = "usr"
+        CASE "usr"
             u = 1: max(1) = 1
             User(1).Name = "Alex": User(1).Passwort = "5642": User(1).Zugang = 1: User(1).Abteilung = "Management": User(1).Telefon = 4915162842083: User(1).LetzterLogin = "07-10-2470@00:50:00"
-        CASE IS = "obj"
+        CASE "obj"
             o = 1: max(2) = 1
             Objekt(1).ID = 1: Objekt(1).Name = "BREMER": Objekt(1).Ausgabenfrequenz = 12: Objekt(1).Waehrung = "EUR"
-        CASE IS = "asg"
+        CASE "asg"
             a = 18: max(3) = a
             Ausgabe(1).ID = 1: Ausgabe(1).Objekt = 1: Ausgabe(1).Monat = 201901
             Ausgabe(2).ID = 2: Ausgabe(2).Objekt = 1: Ausgabe(2).Monat = 201902
@@ -3848,7 +3909,7 @@ SUB resetToStandard (type$)
             Ausgabe(16).ID = 16: Ausgabe(16).Objekt = 1: Ausgabe(16).Monat = 202004
             Ausgabe(17).ID = 17: Ausgabe(17).Objekt = 1: Ausgabe(17).Monat = 202005
             Ausgabe(18).ID = 18: Ausgabe(18).Objekt = 1: Ausgabe(18).Monat = 202006
-        CASE IS = "ort"
+        CASE "ort"
             ot = 29: max(4) = 29
             Ort(1).Kuerzel = "ACH": Ort(1).Name = "Achim"
             Ort(2).Kuerzel = "AUR": Ort(2).Name = "Aurich"
@@ -3879,7 +3940,7 @@ SUB resetToStandard (type$)
             Ort(27).Kuerzel = "WST": Ort(27).Name = "Westerstede"
             Ort(28).Kuerzel = "ZET": Ort(28).Name = "Zetel"
             Ort(29).Kuerzel = "ZEV": Ort(29).Name = "Zeven"
-        CASE IS = "plz"
+        CASE "plz"
             p = 36: max(5) = 36
             PLZ(1).PLZ = 28195: PLZ(1).Land = "Deutschland": PLZ(1).Ort = "Bremen"
             PLZ(2).PLZ = 28203: PLZ(2).Land = "Deutschland": PLZ(2).Ort = "Bremen"
@@ -3917,7 +3978,7 @@ SUB resetToStandard (type$)
             PLZ(34).PLZ = 28759: PLZ(34).Land = "Deutschland": PLZ(34).Ort = "Bremen"
             PLZ(35).PLZ = 28865: PLZ(35).Land = "Deutschland": PLZ(35).Ort = "Lilienthal"
             PLZ(36).PLZ = 27578: PLZ(36).Land = "Deutschland": PLZ(36).Ort = "Bremerhaven"
-        CASE IS = "adr"
+        CASE "adr"
             d = 7: max(6) = d
             Adresse(1).ID = 1: Adresse(1).PLZ = 28195: Adresse(1).Ort = "Bremen": Adresse(1).Land = "Deutschland": Adresse(1).Strasse = "Altenwall 9"
             Adresse(2).ID = 2: Adresse(2).PLZ = 28865: Adresse(2).Ort = "Lilienthal": Adresse(2).Land = "Deutschland": Adresse(2).Strasse = "Klosterstr. 21"
@@ -3926,10 +3987,10 @@ SUB resetToStandard (type$)
             Adresse(5).ID = 5: Adresse(5).PLZ = 28203: Adresse(5).Ort = "Bremen": Adresse(5).Land = "Deutschland": Adresse(5).Strasse = "Sonnenstr. 8"
             Adresse(6).ID = 6: Adresse(6).PLZ = 27578: Adresse(6).Ort = "Bremerhaven": Adresse(6).Land = "Deutschland": Adresse(6).Strasse = "Mecklenburger Weg 180"
             Adresse(7).ID = 7: Adresse(7).PLZ = 27576: Adresse(7).Ort = "Bremerhaven": Adresse(7).Land = "Deutschland": Adresse(7).Strasse = "Eupener Str. 36"
-        CASE IS = "knt"
+        CASE "knt"
             k = 1: max(7) = k
             Konto(1).ID = 1: Konto(1).BIC = "SBRE DE22": Konto(1).IBAN = "DE88 2905 0101 0001 0676 85": Konto(1).Inhaber = "BREMER Blatt Verlags GmbH": Konto(1).Adresse = 1
-        CASE IS = "rbk"
+        CASE "rbk"
             r = 16: max(8) = r
             Rubrik(1).Kuerzel = "MU": Rubrik(1).Objekt = 1: Rubrik(1).Name = "Musik"
             Rubrik(2).Kuerzel = "KL": Rubrik(2).Objekt = 1: Rubrik(2).Name = "Klassik"
@@ -3947,7 +4008,7 @@ SUB resetToStandard (type$)
             Rubrik(14).Kuerzel = "FL": Rubrik(14).Objekt = 1: Rubrik(14).Name = "Flohmarkt"
             Rubrik(15).Kuerzel = "LE": Rubrik(15).Objekt = 1: Rubrik(15).Name = "Lesung"
             Rubrik(16).Kuerzel = "VO": Rubrik(16).Objekt = 1: Rubrik(16).Name = "Vortrag"
-        CASE IS = "vea"
+        CASE "vea"
             va = 7: max(9) = va
             Veranstalter(1).Name = ""
             Veranstalter(2).Kuerzel = "XAA": Veranstalter(2).Name = "Altes Amtsgericht": Veranstalter(2).Adresse = 2: Veranstalter(1).Telefon = 4298929180
@@ -3956,11 +4017,11 @@ SUB resetToStandard (type$)
             Veranstalter(5).Kuerzel = "XBF": Veranstalter(5).Name = "Belladonna": Veranstalter(5).Adresse = 5
             Veranstalter(6).Kuerzel = "XBFO": Veranstalter(6).Name = "FZH-Folk-Treff": Veranstalter(6).Adresse = 6
             Veranstalter(7).Kuerzel = "XBL": Veranstalter(7).Name = "Lehe-Treff": Veranstalter(7).Adresse = 7
-        CASE IS = "kaz"
+        CASE "kaz"
             ka = 0: max(10) = 0
-        CASE IS = "ver"
+        CASE "ver"
             v = 0: max(11) = 0
-        CASE IS = "kat"
+        CASE "kat"
             kt = 24: max(12) = kt
             Kategorie(1).Kuerzel = "KW": Kategorie(1).Objekt = 1: Kategorie(1).Name = "Kurse/Workshops/Seminare"
             Kategorie(2).Kuerzel = "UW": Kategorie(2).Objekt = 1: Kategorie(2).Name = "Unterricht/Weiterbildung"
