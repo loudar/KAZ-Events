@@ -1,5 +1,8 @@
 DIM SHARED inputcount 'anzahl von input-menuitems
 DIM SHARED endparameter$ 'hat einen wert pro menu, wird genutzt, um zu schauen, was das menu beendet hat
+DIM SHARED endparameterbf$
+DIM SHARED endparameterbfbf$
+DIM SHARED endparameterbfbfbf$
 
 DIM SHARED menulimit
 menulimit = 50 'maximale anzahl von gleichzeitig moglichen menuitems
@@ -84,8 +87,8 @@ DIM SHARED titel$ 'uberschrift fur alles
 DIM SHARED maxcliparray
 DIM SHARED cliparray$(menulimit)
 'tempsave
-DIM SHARED maxtemparray(0 TO 12)
-DIM SHARED temparray$(12, menulimit)
+DIM SHARED maxtemparray(0 TO 1000)
+DIM SHARED temparray$(1000, menulimit)
 'status
 statuslimit = 20
 DIM SHARED sttext$(statuslimit)

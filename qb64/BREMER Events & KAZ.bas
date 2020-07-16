@@ -8,6 +8,8 @@ DIM SHARED restart
 GOTO restart
 
 errorhandler:
+_AUTODISPLAY
+_DEST 0
 COLOR colour&("fg"), colour&("bg")
 logThis "[ Fehler" + STR$(ERR) + "in Zeile" + STR$(_ERRORLINE) + " ]"
 IF ERR <> 5 AND ERR <> 6 AND ERR <> 7 AND ERR <> 9 AND ERR <> 14 AND ERR <> 17 AND ERR <> 19 AND ERR <> 51 AND ERR <> 70 AND ERR <> 71 AND ERR <> 72 AND ERR <> 75 THEN
@@ -34,7 +36,7 @@ CLEAR
 ON ERROR GOTO errorhandler
 DIM SHARED netpath$
 DIM SHARED settingspath$
-netpath$ = "\\NASBREMER\Bremer Allgemein\_BREMER_Programm\"
+netpath$ = "\\NASBREMER\Software\_BREMER_Programm\"
 settingspath$ = _DIR$("local application data") + "\BREMER Events + KAZ\"
 CHDIR netpath$
 
@@ -190,7 +192,6 @@ DO
     endparameterbfbf$ = endparameterbf$
     endparameterbf$ = endparameter$
     suchbegriff$ = ""
-    listID = 0
     SELECT CASE endparameter$ 'alle endparameter mussten hier zu finden sein
         CASE "start"
             NewMenItem 1, 0, "PK", "pk"
@@ -217,7 +218,8 @@ DO
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Exportieren", "export"
-            NewMenItem 4, 0, "<- Abbrechen", "start"
+            IF admin = 1 THEN NewMenItem 4, 0, "Importieren", "import"
+            NewMenItem 4 + admin, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(11)), "yellow"
             IF max(11) > 0 THEN newStatus "Neueste: " + RTRIM$(Veranstaltung(max(11)).Titel), "yellow"
             RunMenu 1, 0, "VERANSTALTUNGEN"
@@ -320,34 +322,48 @@ DO
                 CASE "vea"
                     PRINT #6, "VERANSTALTER"
                     PRINT #6, ""
-                    PRINT #6, "K" + CHR$(129) + "rzel" + SPC(4) + "Name" + SPC(26) + "Telefon"
+                    PRINT #6, "Kuerzel" + SPC(3) + "Name" + SPC(31) + "Adresse"
+                    PRINT #6, longchar$("-", 79)
                     IF max(9) > 0 THEN
-                        VA = 0: DO: VA = VA + 1
-                            PRINT #6, RTRIM$(Veranstalter(VA).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(VA).Kuerzel))) + RTRIM$(Veranstalter(VA).Name) + SPC(30 - LEN(RTRIM$(Veranstalter(VA).Name))) + LST$((Veranstalter(VA).Telefon))
+                        VA = 2: DO: VA = VA + 1
+                            PRINT #6, RTRIM$(Veranstalter(VA).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(VA).Kuerzel))) + RTRIM$(Veranstalter(VA).Name) + SPC(35 - LEN(RTRIM$(Veranstalter(VA).Name)));
+                            'IF Veranstalter(VA).Telefon <> 0 THEN
+                            '    PRINT #6, LST$((Veranstalter(VA).Telefon)) + SPC(16 - LEN(LST$((Veranstalter(VA).Telefon))));
+                            'ELSE
+                            '    PRINT #6, SPC(16);
+                            'END IF
+                            IF max(6) > 0 THEN
+                                d = 0: DO: d = d + 1
+                                    IF Adresse(d).ID = Veranstalter(VA).Adresse THEN
+                                        PRINT #6, LST$(Adresse(d).PLZ) + " " + _TRIM$(Adresse(d).Ort)
+                                        d = max(6)
+                                    END IF
+                                LOOP UNTIL d = max(6)
+                            END IF
                         LOOP UNTIL VA = max(9)
-                        PRINT #6, longchar$("-", 80)
+                        PRINT #6, longchar$("-", 79)
                         PRINT #6, "Anzahl Veranstalter: " + LST$(max(9))
                     END IF
                 CASE "rbk"
                     PRINT #6, "RUBRIKEN"
                     PRINT #6, ""
-                    PRINT #6, "K" + CHR$(129) + "rzel" + SPC(4) + "Objekt" + SPC(4) + "Name"
+                    PRINT #6, "Kuerzel" + SPC(4) + "Objekt" + SPC(4) + "Name"
                     IF max(8) > 0 THEN
                         r = 0: DO: r = r + 1
                             PRINT #6, RTRIM$(Rubrik(r).Kuerzel) + SPC(10 - LEN(RTRIM$(Rubrik(r).Kuerzel))) + LST$(Rubrik(r).Objekt) + SPC(10 - LEN(LST$(Rubrik(r).Objekt))) + (Rubrik(r).Name)
                         LOOP UNTIL r = max(8)
-                        PRINT #6, longchar$("-", 80)
+                        PRINT #6, longchar$("-", 79)
                         PRINT #6, "Anzahl Rubriken: " + LST$(max(8))
                     END IF
                 CASE "ort"
                     PRINT #6, "ORTE"
                     PRINT #6, ""
-                    PRINT #6, "K" + CHR$(129) + "rzel" + SPC(10) + "Name"
+                    PRINT #6, "Kuerzel" + SPC(10) + "Name"
                     IF max(4) > 0 THEN
                         ot = 0: DO: ot = ot + 1
                             PRINT #6, RTRIM$(Ort(ot).Kuerzel) + SPC(16 - LEN(RTRIM$(Ort(ot).Kuerzel))) + RTRIM$(Ort(ot).Name)
                         LOOP UNTIL ot = max(4)
-                        PRINT #6, longchar$("-", 80)
+                        PRINT #6, longchar$("-", 79)
                         PRINT #6, "Anzahl Orte: " + LST$(max(4))
                     END IF
                 CASE "plz"
@@ -358,7 +374,7 @@ DO
                         p = 0: DO: p = p + 1
                             PRINT #6, RTRIM$(PLZ(p).Land) + SPC(20 - LEN(RTRIM$(PLZ(p).Land))) + RTRIM$(PLZ(p).Ort) + SPC(30 - LEN(RTRIM$(PLZ(p).Ort))) + LST$(PLZ(p).PLZ)
                         LOOP UNTIL p = max(5)
-                        PRINT #6, longchar$("-", 80)
+                        PRINT #6, longchar$("-", 79)
                         PRINT #6, "Anzahl Postleitzahlen: " + LST$(max(5))
                     END IF
             END SELECT
@@ -600,23 +616,24 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(11) = max(11) + 1
-                            Veranstaltung(max(11)).ID = Veranstaltung(max(11) - 1).ID + 1
-                            Veranstaltung(max(11)).Ausgabe = VAL(UserInput$(1))
-                            Veranstaltung(max(11)).Datum = UserInput$(2)
-                            Veranstaltung(max(11)).Ort = UserInput$(3)
-                            Veranstaltung(max(11)).Veranstalter = UserInput$(4)
-                            Veranstaltung(max(11)).Rubrik = UserInput$(5)
-                            Veranstaltung(max(11)).Zeit1 = UserInput$(6)
-                            Veranstaltung(max(11)).Zeit2 = UserInput$(7)
-                            Veranstaltung(max(11)).Zeit3 = UserInput$(8)
-                            Veranstaltung(max(11)).Zeitcode = UserInput$(9)
-                            Veranstaltung(max(11)).Titel = UserInput$(10)
-                            Veranstaltung(max(11)).Text = UserInput$(11)
-                            Veranstaltung(max(11)).TextLang = UserInput$(12)
+                            node = max(11)
+                            Veranstaltung(node).ID = Veranstaltung(node - 1).ID + 1
                         END IF
+                        Veranstaltung(node).Ausgabe = VAL(UserInput$(1))
+                        Veranstaltung(node).Datum = UserInput$(2)
+                        Veranstaltung(node).Ort = UserInput$(3)
+                        Veranstaltung(node).Veranstalter = UserInput$(4)
+                        Veranstaltung(node).Rubrik = UserInput$(5)
+                        Veranstaltung(node).Zeit1 = UserInput$(6)
+                        Veranstaltung(node).Zeit2 = UserInput$(7)
+                        Veranstaltung(node).Zeit3 = UserInput$(8)
+                        Veranstaltung(node).Zeitcode = UserInput$(9)
+                        Veranstaltung(node).Titel = UserInput$(10)
+                        Veranstaltung(node).Text = UserInput$(11)
+                        Veranstaltung(node).TextLang = UserInput$(12)
                         writeBinary "ver"
                         IF readBinary("ver") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Veranstaltung " + RTRIM$(Veranstaltung(max(11)).Titel) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Veranstaltung " + RTRIM$(Veranstaltung(node).Titel) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Veranstaltung " + RTRIM$(Veranstaltung(node).Titel) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 0.2: endparameter$ = "new": endparameterbf$ = "ver"
@@ -624,22 +641,23 @@ DO
                 CASE "kaz"
                     IF dontadd = 0 THEN
                         max(10) = max(10) + 1
-                        Kleinanzeige(max(10)).ID = Kleinanzeige(max(10) - 1).ID + 1
-                        Kleinanzeige(max(10)).Kategorie1 = UserInput$(1)
-                        Kleinanzeige(max(10)).Kategorie2 = UserInput$(2)
-                        Kleinanzeige(max(10)).Kategorie3 = UserInput$(3)
-                        Kleinanzeige(max(10)).Text = UserInput$(4)
-                        Kleinanzeige(max(10)).Titel = UserInput$(5)
-                        Kleinanzeige(max(10)).Objekt = selected(6)
-                        Kleinanzeige(max(10)).Ausgabe = VAL(UserInput$(7))
-                        Kleinanzeige(max(10)).Telefon = VAL(UserInput$(8))
-                        Kleinanzeige(max(10)).Name = UserInput$(9)
-                        Kleinanzeige(max(10)).Chiffre = UserInput$(10)
-                        Kleinanzeige(max(10)).Notiz = UserInput$(11)
+                        node = max(10)
+                        Kleinanzeige(node).ID = Kleinanzeige(node - 1).ID + 1
                     END IF
+                    Kleinanzeige(node).Kategorie1 = UserInput$(1)
+                    Kleinanzeige(node).Kategorie2 = UserInput$(2)
+                    Kleinanzeige(node).Kategorie3 = UserInput$(3)
+                    Kleinanzeige(node).Text = UserInput$(4)
+                    Kleinanzeige(node).Titel = UserInput$(5)
+                    Kleinanzeige(node).Objekt = Objekt(selected(6)).ID
+                    Kleinanzeige(node).Ausgabe = Ausgabe(selected(7)).Monat
+                    Kleinanzeige(node).Telefon = VAL(UserInput$(8))
+                    Kleinanzeige(node).Name = UserInput$(9)
+                    Kleinanzeige(node).Chiffre = UserInput$(10)
+                    Kleinanzeige(node).Notiz = UserInput$(11)
                     writeBinary "kaz"
                     IF readBinary("kaz") = 1 THEN
-                        IF dontadd = 0 THEN NewText 1, 0, "Kleinanzeige" + STR$(Kleinanzeige(max(10)).ID) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Kleinanzeige" + STR$(Kleinanzeige(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
+                        NewText 1, 0, "Kleinanzeige" + STR$(Kleinanzeige(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
                         RunMenu 1, 0, "SPEICHERN"
                     END IF
                     _DELAY 1: endparameter$ = "new"
@@ -674,7 +692,7 @@ DO
                         Veranstalter(node).Notiz = UserInput$(8)
                         writeBinary "vea"
                         IF readBinary("vea") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(max(9)).Name) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -691,15 +709,16 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(6) = max(6) + 1
-                            Adresse(max(6)).ID = Adresse(max(6) - 1).ID + 1
-                            Adresse(max(6)).PLZ = VAL(UserInput$(1))
-                            Adresse(max(6)).Ort = UserInput$(2)
-                            Adresse(max(6)).Land = UserInput$(3)
-                            Adresse(max(6)).Strasse = UserInput$(4)
+                            node = max(6)
+                            Adresse(node).ID = Adresse(node - 1).ID + 1
                         END IF
+                        Adresse(node).PLZ = VAL(UserInput$(1))
+                        Adresse(node).Ort = UserInput$(2)
+                        Adresse(node).Land = UserInput$(3)
+                        Adresse(node).Strasse = UserInput$(4)
                         writeBinary "adr"
                         IF readBinary("adr") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Adresse " + LST$(Adresse(max(6)).ID) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Adresse " + LST$(Adresse(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Adresse " + LST$(Adresse(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                     END IF
@@ -719,13 +738,14 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(8) = max(8) + 1
-                            Rubrik(max(8)).Kuerzel = UserInput$(1)
-                            Rubrik(max(8)).Objekt = VAL(UserInput$(2))
-                            Rubrik(max(8)).Name = UserInput$(3)
+                            node = max(8)
                         END IF
+                        Rubrik(node).Kuerzel = UserInput$(1)
+                        Rubrik(node).Objekt = VAL(UserInput$(2))
+                        Rubrik(node).Name = UserInput$(3)
                         writeBinary "rbk"
                         IF readBinary("rbk") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Rubrik " + RTRIM$(Rubrik(max(8)).Name) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Rubrik " + RTRIM$(Rubrik(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Rubrik " + RTRIM$(Rubrik(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -744,16 +764,17 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(1) = max(1) + 1
-                            User(max(1)).Name = UserInput$(1)
-                            User(max(1)).Passwort = UserInput$(2)
-                            User(max(1)).Zugang = selected(3)
-                            User(max(1)).Abteilung = UserInput$(4)
-                            User(max(1)).Telefon = VAL(UserInput$(5))
-                            User(max(1)).LetzterLogin = DATE$ + "@" + TIME$
+                            node = max(1)
                         END IF
+                        User(node).Name = UserInput$(1)
+                        User(node).Passwort = UserInput$(2)
+                        User(node).Zugang = selected(3)
+                        User(node).Abteilung = UserInput$(4)
+                        User(node).Telefon = VAL(UserInput$(5))
+                        User(node).LetzterLogin = DATE$ + "@" + TIME$
                         writeBinary "usr"
                         IF readBinary("usr") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Benutzer " + RTRIM$(User(max(1)).Name) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Benutzer " + RTRIM$(User(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Benutzer " + RTRIM$(User(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -770,12 +791,13 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(4) = max(4) + 1
-                            Ort(max(4)).Kuerzel = UserInput$(1)
-                            Ort(max(4)).Name = UserInput$(2)
+                            node = max(4)
                         END IF
+                        Ort(node).Kuerzel = UserInput$(1)
+                        Ort(node).Name = UserInput$(2)
                         writeBinary "ort"
                         IF readBinary("ort") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Ort " + RTRIM$(Ort(max(4)).Name) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Ort " + RTRIM$(Ort(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Ort " + RTRIM$(Ort(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -792,13 +814,14 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(5) = max(5) + 1
-                            PLZ(max(5)).PLZ = VAL(UserInput$(1))
-                            PLZ(max(5)).Ort = UserInput$(2)
-                            PLZ(max(5)).Land = UserInput$(3)
+                            node = max(5)
                         END IF
+                        PLZ(node).PLZ = VAL(UserInput$(1))
+                        PLZ(node).Ort = UserInput$(2)
+                        PLZ(node).Land = UserInput$(3)
                         writeBinary "plz"
                         IF readBinary("plz") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Postleitzahl " + LST$(PLZ(max(5)).PLZ) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Postleitzahl " + LST$(PLZ(node).PLZ) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Postleitzahl " + LST$(PLZ(node).PLZ) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -817,13 +840,14 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(3) = max(3) + 1
-                            Ausgabe(max(3)).ID = Ausgabe(max(3 - 1)).ID + 1
-                            Ausgabe(max(3)).Objekt = selected(1)
-                            Ausgabe(max(3)).Monat = VAL(UserInput$(2))
+                            node = max(3)
+                            Ausgabe(node).ID = Ausgabe(node - 1).ID + 1
                         END IF
+                        Ausgabe(node).Objekt = selected(1)
+                        Ausgabe(node).Monat = VAL(UserInput$(2))
                         writeBinary "asg"
                         IF readBinary("asg") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Ausgabe " + LST$(Ausgabe(max(3)).Monat) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Ausgabe " + LST$(Ausgabe(node).Monat) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Ausgabe " + LST$(Ausgabe(node).Monat) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -843,13 +867,14 @@ DO
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(12) = max(12) + 1
-                            Kategorie(max(12)).Kuerzel = UserInput$(1)
-                            Kategorie(max(12)).Objekt = VAL(UserInput$(2))
-                            Kategorie(max(12)).Name = UserInput$(3)
+                            node = max(12)
                         END IF
+                        Kategorie(node).Kuerzel = UserInput$(1)
+                        Kategorie(node).Objekt = VAL(UserInput$(2))
+                        Kategorie(node).Name = UserInput$(3)
                         writeBinary "kat"
                         IF readBinary("kat") = 1 THEN
-                            IF dontadd = 0 THEN NewText 1, 0, "Kategorie " + RTRIM$(Kategorie(max(12)).Name) + " erfolgreich gespeichert.", colour&("green"), "r" ELSE NewText 1, 0, "Kategorie " + RTRIM$(Kategorie(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Kategorie " + RTRIM$(Kategorie(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -1653,49 +1678,54 @@ END SUB
 SUB RunMenu (selectedm, layout, titel$)
     _DEST canvas&
     IF m > 0 THEN
+        menID$ = endparameter$
+        topass$ = menID$
+        menID = SUM(topass$)
         endmenu = 0
         maxm = m
         firstprint = 1
         Background layout, titel$, 1
-        IF maxtemparray(listID) > 0 AND listID <> 0 THEN
-            m2 = 0: DO: m2 = m2 + 1
-                SELECT CASE type$(m2)
-                    CASE "input"
-                        IF LEN(temparray$(listID, m2)) > 0 THEN
-                            p = 0: DO: p = p + 1
-                                char$(m2, p) = MID$(temparray$(listID, m2), p, 1)
-                            LOOP UNTIL p = LEN(temparray$(listID, m2))
-                            g(m2) = p
-                            gbf(m2) = p
-                        END IF
-                    CASE "selector"
-                        ad = 0: DO: ad = ad + 1
-                            IF LEN(temparray$(listID, m2)) < LEN(arraydata$(array(m2), ad)) THEN
+        IF maxtemparray(menID) > 0 AND menID <> 0 THEN
+            IF menID$ = "edit" OR menID$ = "new" THEN
+                m2 = 0: DO: m2 = m2 + 1
+                    SELECT CASE type$(m2)
+                        CASE "input"
+                            IF LEN(temparray$(menID, m2)) > 0 THEN
                                 p = 0: DO: p = p + 1
-                                    IF MID$(arraydata$(array(m2), ad), p, LEN(temparray$(listID, m2))) = temparray$(listID, m2) THEN
-                                        selected(m2) = ad: ad = maxad(array(m2))
-                                    END IF
-                                LOOP UNTIL p >= LEN(arraydata$(array(m2), ad)) - LEN(temparray$(listID, m2)) + 1
-                            ELSEIF temparray$(listID, m2) = arraydata$(array(m2), ad) THEN
-                                selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
+                                    char$(m2, p) = MID$(temparray$(menID, m2), p, 1)
+                                LOOP UNTIL p = LEN(temparray$(menID, m2))
+                                g(m2) = p
+                                gbf(m2) = p
                             END IF
-                        LOOP UNTIL ad = maxad(array(m2))
-                    CASE "date"
-                        IF LEN(temparray$(listID, m2)) > 10 THEN
-                            year(m2) = VAL(MID$(temparray$(listID, m2), 1, 4))
-                            month(m2) = VAL(MID$(temparray$(listID, m2), 6, 2))
-                            day(m2) = VAL(MID$(temparray$(listID, m2), 9, 2))
-                        END IF
-                    CASE "time"
-                        IF LEN(temparray$(listID, m2)) >= 5 THEN
-                            hour(m2) = VAL(MID$(temparray$(listID, m2), 1, 2))
-                            minute(m2) = VAL(MID$(temparray$(listID, m2), 4, 2))
-                        END IF
-                END SELECT
-            LOOP UNTIL m2 = maxm OR m2 = maxtemparray(listID)
-            maxtemparray(listID) = 0
-            clearStatus
-            newStatus "Daten aus vorheriger Sitzung eingef" + CHR$(129) + "gt.", "green"
+                        CASE "selector"
+                            ad = 0: DO: ad = ad + 1
+                                IF LEN(temparray$(menID, m2)) < LEN(arraydata$(array(m2), ad)) THEN
+                                    p = 0: DO: p = p + 1
+                                        IF MID$(arraydata$(array(m2), ad), p, LEN(temparray$(menID, m2))) = temparray$(menID, m2) THEN
+                                            selected(m2) = ad: ad = maxad(array(m2))
+                                        END IF
+                                    LOOP UNTIL p >= LEN(arraydata$(array(m2), ad)) - LEN(temparray$(menID, m2)) + 1
+                                ELSEIF temparray$(menID, m2) = arraydata$(array(m2), ad) THEN
+                                    selected(m2) = ad: ad = maxad(array(m2)): change(m2) = 1
+                                END IF
+                            LOOP UNTIL ad = maxad(array(m2))
+                        CASE "date"
+                            IF LEN(temparray$(menID, m2)) > 10 THEN
+                                year(m2) = VAL(MID$(temparray$(menID, m2), 1, 4))
+                                month(m2) = VAL(MID$(temparray$(menID, m2), 6, 2))
+                                day(m2) = VAL(MID$(temparray$(menID, m2), 9, 2))
+                            END IF
+                        CASE "time"
+                            IF LEN(temparray$(menID, m2)) >= 5 THEN
+                                hour(m2) = VAL(MID$(temparray$(menID, m2), 1, 2))
+                                minute(m2) = VAL(MID$(temparray$(menID, m2), 4, 2))
+                            END IF
+                    END SELECT
+                LOOP UNTIL m2 = maxm OR m2 = maxtemparray(menID)
+                maxtemparray(menID) = 0
+                clearStatus
+                newStatus "Daten aus vorheriger Sitzung eingef" + CHR$(129) + "gt.", "green"
+            END IF
         END IF
         IF endparameter$ = "kaz" OR endparameter$ = "ver" THEN RunGraph endparameter$
         DO
@@ -2368,12 +2398,11 @@ SUB RunMenu (selectedm, layout, titel$)
                             ad = 0: DO: ad = ad + 1
                                 IF LEN(suche$) < LEN(arraydata$(array(selectedm), ad)) THEN
                                     p = 0: DO: p = p + 1
-                                        IF MID$(arraydata$(array(selectedm), ad), p, LEN(suche$)) = suche$ THEN
+                                        IF UCASE$(MID$(arraydata$(array(selectedm), ad), p, LEN(suche$))) = UCASE$(suche$) THEN
                                             selected(selectedm) = ad: ad = maxad(array(selectedm))
-                                            'p = LEN(arraydata$(array(selectedm), ad)) - LEN(suche$) + 1
                                         END IF
                                     LOOP UNTIL p >= LEN(arraydata$(array(selectedm), ad)) - LEN(suche$) + 1
-                                ELSEIF suche$ = arraydata$(array(selectedm), ad) THEN
+                                ELSEIF UCASE$(suche$) = UCASE$(arraydata$(array(selectedm), ad)) THEN
                                     selected(selectedm) = ad: ad = maxad(array(selectedm)): change(selectedm) = 1
                                 END IF
                             LOOP UNTIL ad = maxad(array(selectedm))
@@ -2408,6 +2437,7 @@ SUB RunMenu (selectedm, layout, titel$)
         m = 0: DO: m = m + 1
             SELECT CASE type$(m)
                 CASE "input"
+                    UserInput$(m) = ""
                     g(m) = 0
                     IF gbf(m) > 0 THEN
                         DO
@@ -2436,22 +2466,35 @@ SUB RunMenu (selectedm, layout, titel$)
         LOOP UNTIL m = maxm
 
         'tempsave
-        IF endparameter$ <> "save" AND listID <> 0 THEN
+        IF endparameter$ <> "save" AND menID$ <> "" THEN
             m2 = 0: DO: m2 = m2 + 1
-                temparray$(listID, m2) = UserInput$(m2)
-                IF LEN(temparray$(listID, m2)) = 50 THEN
-                    temparray$(listID, m2) = ""
+                temparray$(menID, m2) = UserInput$(m2)
+                IF LEN(temparray$(menID, m2)) = 50 THEN
+                    temparray$(menID, m2) = ""
                 END IF
             LOOP UNTIL m2 = maxm
-            maxtemparray(listID) = maxm
+            maxtemparray(menID) = maxm
         END IF
     END IF
     _AUTODISPLAY
     _DEST 0
     clearStatus
-    writeTemp templist$
     EmptyMenu
 END SUB
+
+FUNCTION SUM (tosum$)
+    SELECT CASE tosum$
+        CASE "new"
+            tosum$ = tosum$ + endparameterbfbf$
+    END SELECT
+    su = 0
+    IF LEN(tosum$) > 0 THEN
+        p = 0: DO: p = p + 1
+            su = su + ASC(MID$(tosum$, p, 1))
+        LOOP UNTIL p = LEN(tosum$)
+    END IF
+    SUM = su
+END FUNCTION
 
 FUNCTION replace$ (chor$)
     SELECT CASE chor$
@@ -2471,15 +2514,6 @@ FUNCTION replace$ (chor$)
             replace$ = CHR$(225)
     END SELECT
 END FUNCTION
-
-SUB writeTemp (templist$)
-    temp = temp + 1
-    OPEN netpath$ + "data\temp\" + templist$ + ".tmp" FOR OUTPUT AS #100
-    m = 0: DO: m = m + 1
-        WRITE #100, UserInput$(m)
-    LOOP UNTIL m = maxm
-    CLOSE #100
-END SUB
 
 SUB printStatus
     maxst = st
@@ -3079,8 +3113,8 @@ FUNCTION htmlreplace$ (htmlcode$)
 END FUNCTION
 
 SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.php?topic=939.msg117741#msg117741
-    IF _FILEEXISTS("printdialog.ps1") = 0 THEN
-        OPEN "printdialog.ps1" FOR OUTPUT AS #12
+    IF _FILEEXISTS(netpath$ + "printdialog.ps1") = 0 THEN
+        OPEN netpath$ + "printdialog.ps1" FOR OUTPUT AS #12
         PRINT #12, "$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'"
         PRINT #12, "Add-Type -AssemblyName System.Windows.Forms"
         PRINT #12, "$prnDlg=New-Object System.Windows.Forms.PrintDialog"
@@ -3088,10 +3122,14 @@ SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.p
         PRINT #12, "$prnDlg.PrinterSettings.Copies > copies.txt"
         PRINT #12, "$prnDlg.PrinterSettings.PrinterName > printername.txt"
         CLOSE #12
-        SHELL _HIDE _DONTWAIT "attrib +h printdialog.ps1"
+        SHELL _HIDE _DONTWAIT "attrib +h " + netpath$ + "printdialog.ps1"
     END IF
-    SHELL _HIDE "powershell -ExecutionPolicy Bypass -Command " + CHR$(34) + "&" + CHR$(34) + CHR$(34) + _STARTDIR$ + "\printdialog.ps1" + CHR$(34) + CHR$(34) + CHR$(34) 'This dialog returns whatever is selected, regardless of exiting without pressing PRINT
+    SHELL _HIDE "powershell -ExecutionPolicy Bypass -Command " + CHR$(34) + "&" + CHR$(34) + CHR$(34) + netpath$ + "\printdialog.ps1" + CHR$(34) + CHR$(34) + CHR$(34) 'This dialog returns whatever is selected, regardless of exiting without pressing PRINT
     _DELAY 0.2 'Makes program wait 0.2 seconds in order to ensure file has been deployed and ready for viewing
+    DO: LOOP UNTIL _FILEEXISTS(netpath$ + "\printdialog.ps1")
+    CLOSE #4
+    CLOSE #5
+    CLOSE #8
     OPEN "copies.txt" FOR BINARY AS #4 'Opens file to read in data from copies.txt
     OPEN "printername.txt" FOR BINARY AS #5 'Opens file to read in data from printername.txt
     OPEN "cancel.txt" FOR BINARY AS #8 'Opens file to read in data from cancel.txt
@@ -3112,7 +3150,7 @@ SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.p
     ELSE
         copies = VAL(copies$) 'Converts string value of copies$ to an integer value for counting
         DO UNTIL copies = 0 'Performs command below until copies = 0
-            SHELL _HIDE _DONTWAIT "NOTEPAD  /pt " + CHR$(34) + "toprinter" + CHR$(34) + " " + CHR$(34) + printername$ + CHR$(34) 'Opens NOTEPAD and uses the /pt switch to send file to printer
+            SHELL _HIDE _DONTWAIT "NOTEPAD /pt " + CHR$(34) + "toprinter" + CHR$(34) + " " + CHR$(34) + printername$ + CHR$(34) 'Opens NOTEPAD and uses the /pt switch to send file to printer
             copies = copies - 1 'Subtracts 1 from the copies integer
         LOOP
     END IF
@@ -3296,7 +3334,7 @@ FUNCTION OrtF$ (v)
 END SUB
 
 SUB drawTriangle (x, y, trianglescale, direction)
-    'variables for dropdown triangle (right side, you know?)
+    'variables for dropdown triangle (on the right side, you know?)
     p1x = x
     IF direction = 1 THEN p1y = y ELSE p1y = y + (((fontwidth * trianglescale) * 2 / 3))
     p2x = p1x + (fontwidth * trianglescale)
