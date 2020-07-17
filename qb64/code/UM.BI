@@ -76,6 +76,10 @@ DIM SHARED reprinto 'indiziert, ob die liste neu angezeigt werden soll
 DIM SHARED listID$
 DIM SHARED listID
 DIM SHARED buttonstatus
+DIM SHARED buttonlx
+DIM SHARED buttonux
+DIM SHARED buttonly
+DIM SHARED buttonuy
 'Graph
 DIM SHARED pcount(15)
 DIM SHARED pheight(15)

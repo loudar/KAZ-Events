@@ -1285,11 +1285,15 @@ FUNCTION search (listID$, placeholder$)
 
             IF mousex > buttonlx AND mousex < buttonux THEN
                 IF mousey > buttonly AND mousey < buttonuy THEN
-                    buttonstatus = 1: searchbutton
+                    IF buttonstatus = 0 THEN buttonstatus = 1: searchbutton
+                ELSE
+                    IF buttonstatus = 1 THEN buttonstatus = 0: searchbutton
                 END IF
+            ELSE
+                IF buttonstatus = 1 THEN buttonstatus = 0: searchbutton
             END IF
 
-            IF _MOUSEBUTTON(1) = -1 AND buttonstatus = 1 THEN endsearch = 1
+            IF _MOUSEBUTTON(1) = -1 AND buttonstatus = 1 THEN endsearch = 1: Taste$ = "Button"
             IF _MOUSEWHEEL = -1 THEN IF selectedo > 1 THEN selectedo = selectedo - 1: reprinto = 1 ELSE selectedo = maxo: reprinto = 1
             IF _MOUSEWHEEL = 1 THEN IF selectedo < maxo THEN selectedo = selectedo + 1: reprinto = 1 ELSE selectedo = 1: reprinto = 1
         END IF
@@ -1467,24 +1471,28 @@ FUNCTION search (listID$, placeholder$)
                     LOOP UNTIL o >= maxo OR o - selectedo >= maxlines - firstline - 3
 
                     'half- to nonvariable elements
-                    LINE ((firstchar - 1) * fontwidth, (firstline + o - selectedo + 3) * fontheight)-(fontwidth * (maxrows - (firstchar * 4)), (firstline + o - selectedo + 3) * fontheight), colour&("fg"), BF 'bottom line
-                    LINE (fontwidth * (maxrows - (firstchar * 2)), firstline * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - 2) * fontheight - 1), colour&("fg"), BF 'search indicator line
+                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight), colour&("fg"), BF 'top line
+                    LINE ((firstchar - 1.5) * fontwidth, (firstline + o - selectedo + 3) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + o - selectedo + 3) * fontheight), colour&("fg"), BF 'bottom line
+                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-((firstchar - 1.5) * fontwidth, (maxlines - firstline + 5) * fontheight), colour&("fg"), BF 'left line
+                    LINE (fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - firstline + 5) * fontheight), colour&("fg"), BF 'search indicator line
                     factor = (selectedo - 1) / maxo
                     difference = ((maxlines - 3) * fontheight) - (firstline * fontheight)
-                    LINE (fontwidth * (maxrows - (firstchar * 2)) - 10, (firstline * fontheight) + (factor * difference))-(fontwidth * (maxrows - (firstchar * 2)), (firstline * fontheight) + (factor * difference) + 30), colour&("fg"), BF 'search indicator
+                    LINE (fontwidth * (maxrows - (firstchar * 2)) - 10, ((firstline + 1.5) * fontheight) + (factor * difference))-(fontwidth * (maxrows - (firstchar * 2)), ((firstline + 1.5) * fontheight) + (factor * difference) + 30), colour&("fg"), BF 'search indicator
                 ELSE
                     LINE (1, (firstline) * fontheight)-(maxx, maxy), colour&("bg"), BF
                     LOCATE firstline + 1, firstchar
                     PRINT "Keine Suchergebnisse."
                 END IF
+                searchbutton
                 suchbegriffbf$ = suchbegriff$
                 _DISPLAY
             END IF
         END IF
+        '_LIMIT 30
     LOOP UNTIL endsearch = 1
     _AUTODISPLAY
     lastsearchinput$ = suchbegriff$
-    IF Taste$ <> CHR$(27) THEN
+    IF Taste$ <> CHR$(27) AND Taste$ <> "Button" THEN
         search = listnode(selectedo)
     ELSE
         search = 0
@@ -1492,15 +1500,23 @@ FUNCTION search (listID$, placeholder$)
 END FUNCTION
 
 SUB searchbutton
-    LOCATE maxlines - 4, firstchar
-    IF buttonstatus = 1 THEN
-        rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("fg"), "B"
+    LOCATE maxlines + 2, firstchar
+    buttonlx = (firstchar - 2) * fontwidth
+    buttonux = (firstchar + LEN("<- Abbrechen") + 1.5) * fontwidth
+    buttonly = ((maxlines + 1) * fontheight) - 7
+    buttonuy = (maxlines + 2) * fontheight + 3
+    IF buttonstatus = 0 THEN
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("bg"), "BF"
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("fg"), "B"
         COLOR colour&("fg"), colour&("transparent")
     ELSE
-        rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("red"), "BF"
-        COLOR colour&("black"), colour&("transparent")
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("fg"), "BF"
+        COLOR colour&("bg"), colour&("transparent")
     END IF
-    PRINT "<- Abbrechen"
+    PRINT "<- Abbrechen",
+    COLOR colour&("fg"), colour&("bg")
+    PRINT "Suchergebnisse: " + LST$(maxo) + "    "
+    _DISPLAY
 END SUB
 
 SUB searchheader (listID$)
