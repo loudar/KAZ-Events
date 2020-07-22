@@ -325,22 +325,22 @@ DO
                     PRINT #6, "Kuerzel" + SPC(3) + "Name" + SPC(31) + "Adresse"
                     PRINT #6, longchar$("-", 79)
                     IF max(9) > 0 THEN
-                        VA = 2: DO: VA = VA + 1
-                            PRINT #6, RTRIM$(Veranstalter(VA).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(VA).Kuerzel))) + RTRIM$(Veranstalter(VA).Name) + SPC(35 - LEN(RTRIM$(Veranstalter(VA).Name)));
-                            'IF Veranstalter(VA).Telefon <> 0 THEN
-                            '    PRINT #6, LST$((Veranstalter(VA).Telefon)) + SPC(16 - LEN(LST$((Veranstalter(VA).Telefon))));
+                        va = 2: DO: va = va + 1
+                            PRINT #6, RTRIM$(Veranstalter(va).Kuerzel) + SPC(10 - LEN(RTRIM$(Veranstalter(va).Kuerzel))) + RTRIM$(Veranstalter(va).Name) + SPC(35 - LEN(RTRIM$(Veranstalter(va).Name)));
+                            'IF Veranstalter(va).Telefon <> 0 THEN
+                            '    PRINT #6, LST$((Veranstalter(va).Telefon)) + SPC(16 - LEN(LST$((Veranstalter(va).Telefon))));
                             'ELSE
                             '    PRINT #6, SPC(16);
                             'END IF
                             IF max(6) > 0 THEN
                                 d = 0: DO: d = d + 1
-                                    IF Adresse(d).ID = Veranstalter(VA).Adresse THEN
+                                    IF Adresse(d).ID = Veranstalter(va).Adresse THEN
                                         PRINT #6, LST$(Adresse(d).PLZ) + " " + _TRIM$(Adresse(d).Ort)
                                         d = max(6)
                                     END IF
                                 LOOP UNTIL d = max(6)
                             END IF
-                        LOOP UNTIL VA = max(9)
+                        LOOP UNTIL va = max(9)
                         PRINT #6, longchar$("-", 79)
                         PRINT #6, "Anzahl Veranstalter: " + LST$(max(9))
                     END IF
@@ -455,11 +455,13 @@ DO
                     ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
                     IF max(9) > 0 THEN
                         NewSelector 4, 0, "Veranstalter:   ", 3, "vea", 1
-                        VA = 0: DO: VA = VA + 1
-                            IF Veranstalter(VA).Name <> "" AND Veranstalter(VA).Kuerzel <> "" THEN
-                                arraydata$(3, VA) = LTRIM$(RTRIM$(Veranstalter(VA).Kuerzel)) + ", " + LTRIM$(RTRIM$(Veranstalter(VA).Name))
+                        va = 0: DO: va = va + 1
+                            IF Veranstalter(va).Kuerzel <> longchar$(MID$(Veranstalter(va).Kuerzel, 1, 1), LEN(Veranstalter(va).Kuerzel)) AND Veranstalter(va).Name <> longchar$(MID$(Veranstalter(va).Name, 1, 1), LEN(Veranstalter(va).Name)) THEN
+                                arraydata$(3, va) = _TRIM$(Veranstalter(va).Kuerzel) + ", " + LTRIM$(RTRIM$(Veranstalter(va).Name))
+                            ELSE
+                                rejected = rejected + 1
                             END IF
-                        LOOP UNTIL VA = max(9): maxad(3) = max(9)
+                        LOOP UNTIL va = max(9): maxad(3) = max(9) - rejected
                     ELSE
                         NewMenItem 4, 0, "Neuen Veranstalter erstellen", "new"
                     END IF
@@ -664,14 +666,14 @@ DO
                     endparameterbf$ = "kaz"
                 CASE "vea"
                     IF dontadd = 0 THEN
-                        VA = 0: DO: VA = VA + 1
-                            IF Veranstalter(VA).Kuerzel = UserInput$(1) THEN
+                        va = 0: DO: va = va + 1
+                            IF Veranstalter(va).Kuerzel = UserInput$(1) THEN
                                 NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
-                            IF Veranstalter(VA).Name = UserInput$(2) THEN
+                            IF Veranstalter(va).Name = UserInput$(2) THEN
                                 NewText 1, 0, "Dieser Veranstalter existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
-                        LOOP UNTIL VA = max(9)
+                        LOOP UNTIL va = max(9)
                     END IF
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
@@ -1950,6 +1952,13 @@ SUB RunMenu (selectedm, layout, titel$)
                         newStatus "Alles Kopiert.", "green"
                     END IF
                 END IF
+                IF _KEYDOWN(100304) = -1 OR _KEYDOWN(100303) = -1 THEN 'shift
+                    hitk = _KEYHIT
+                    IF hitk = 9 THEN 'shift + tab
+                        IF selectedm > 1 THEN selectedm = selectedm - 1 ELSE selectedm = maxm
+                        shiftlog = 1
+                    END IF
+                END IF
                 IF _KEYHIT = 15360 THEN
                     _CLIPBOARDIMAGE = canvas&
                     newStatus "Screenshot kopiert.", "green"
@@ -2076,7 +2085,11 @@ SUB RunMenu (selectedm, layout, titel$)
                                 IF selectedm > 1 THEN selectedm = selectedm - 1 ELSE selectedm = maxm
                             END IF
                         CASE CHR$(9)
-                            IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                            IF shiftlog = 0 THEN
+                                IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                            ELSE
+                                shiftlog = 0
+                            END IF
                         CASE CHR$(13)
                             IF type$(selectedm) = "input" AND selectedm < maxm AND type$(selectedm + 1) = "input" THEN
                                 LOCATE firstline + yoffset(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + gbf(selectedm) + 2
@@ -3131,7 +3144,7 @@ END FUNCTION
 SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.php?topic=939.msg117741#msg117741
     IF _FILEEXISTS(netpath$ + "printdialog.ps1") = 0 THEN
         OPEN netpath$ + "printdialog.ps1" FOR OUTPUT AS #12
-        PRINT #12, "$PSDefaultParameterValues['Out-File:Encoding'] = 'utf8'"
+        PRINT #12, "$PSDefaultParametervalues['Out-File:Encoding'] = 'utf8'"
         PRINT #12, "Add-Type -AssemblyName System.Windows.Forms"
         PRINT #12, "$prnDlg=New-Object System.Windows.Forms.PrintDialog"
         PRINT #12, "$prnDlg.ShowDialog() > cancel.txt"
@@ -3935,6 +3948,39 @@ FUNCTION cutcontent$ (text$)
     cutcontent$ = ""
 END FUNCTION
 
+'the following two SUBs are by bplus
+'drwString needs sub RotoZoom2, intended for graphics screens using the default font.
+'S$ is the string to display
+'c is the color (will have a transparent background)
+'midX and midY is the center of where you want to display the string
+'xScale would multiply 8 pixel width of default font
+'yScale would multiply the 16 pixel height of the default font
+'Rotation is in Radian units, use _D2R to convert Degree units to Radian units
+SUB drwString (S$, c AS _UNSIGNED LONG, midX, midY, xScale, yScale, Rotation)
+    I& = _NEWIMAGE(8 * LEN(S$), 16, 32)
+    _DEST I&
+    COLOR c, _RGBA32(0, 0, 0, 0)
+    _PRINTSTRING (0, 0), S$
+    _DEST 0
+    RotoZoom2 midX, midY, I&, xScale, yScale, Rotation
+    _FREEIMAGE I&
+END SUB
+
+'This sub gives really nice control over displaying an Image.
+SUB RotoZoom2 (centerX AS LONG, centerY AS LONG, Image AS LONG, xScale AS SINGLE, yScale AS SINGLE, Rotation AS SINGLE)
+    DIM px(3) AS SINGLE: DIM py(3) AS SINGLE
+    W& = _WIDTH(Image&): h& = _HEIGHT(Image&)
+    px(0) = -W& / 2: py(0) = -h& / 2: px(1) = -W& / 2: py(1) = h& / 2
+    px(2) = W& / 2: py(2) = h& / 2: px(3) = W& / 2: py(3) = -h& / 2
+    sinr! = SIN(-Rotation): cosr! = COS(-Rotation)
+    FOR i& = 0 TO 3
+        x2& = (px(i&) * cosr! + sinr! * py(i&)) * xScale + centerX: y2& = (py(i&) * cosr! - px(i&) * sinr!) * yScale + centerY
+        px(i&) = x2&: py(i&) = y2&
+    NEXT
+    _MAPTRIANGLE (0, 0)-(0, h& - 1)-(W& - 1, h& - 1), Image& TO(px(0), py(0))-(px(1), py(1))-(px(2), py(2))
+    _MAPTRIANGLE (0, 0)-(W& - 1, 0)-(W& - 1, h& - 1), Image& TO(px(0), py(0))-(px(3), py(3))-(px(2), py(2))
+END SUB
+
 SUB resetToStandard (type$)
     SELECT CASE type$
         CASE "usr"
@@ -4096,7 +4142,7 @@ SUB resetToStandard (type$)
             Kategorie(17).Kuerzel = "FV": Kategorie(17).Objekt = 1: Kategorie(17).Name = "Fahrzeug-Verleih"
             Kategorie(18).Kuerzel = "SN": Kategorie(18).Objekt = 1: Kategorie(18).Name = "Sonstiger Ankauf"
             Kategorie(19).Kuerzel = "SV": Kategorie(19).Objekt = 1: Kategorie(19).Name = "Sonstiger Verkauf"
-            Kategorie(20).Kuerzel = "VA": Kategorie(20).Objekt = 1: Kategorie(20).Name = "Veranstaltungen"
+            Kategorie(20).Kuerzel = "va": Kategorie(20).Objekt = 1: Kategorie(20).Name = "Veranstaltungen"
             Kategorie(21).Kuerzel = "BA": Kategorie(21).Objekt = 1: Kategorie(21).Name = "Bands"
             Kategorie(22).Kuerzel = "PF": Kategorie(22).Objekt = 1: Kategorie(22).Name = "Pauschal/Fluege"
             Kategorie(23).Kuerzel = "FW": Kategorie(23).Objekt = 1: Kategorie(23).Name = "Ferienwohnungen"
