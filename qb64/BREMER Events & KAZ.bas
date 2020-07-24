@@ -116,7 +116,6 @@ REM $INCLUDE:'code/TYPES.BI'
 maxtags = 100000
 DIM SHARED tag$(maxtags)
 DIM SHARED content$(maxtags)
-
 'ExportToQuark
 DIM SHARED printedd(60)
 DIM SHARED printed(maxrubrik)
@@ -1390,8 +1389,15 @@ FUNCTION search (listID$, placeholder$)
                             searched$(1) = Rubrik(node).Kuerzel: searched$(2) = Objekt(Rubrik(node).Objekt).Name: searched$(3) = Rubrik(node).Name
                             searchpart 3
                         CASE "vea"
+                            d = 0: DO: d = d + 1
+                                IF Adresse(d).ID = Veranstalter(node).Adresse THEN
+                                    searched$(8) = LST$(Adresse(d).PLZ)
+                                    searched$(9) = Adresse(d).Ort
+                                    searched$(10) = Adresse(d).Strasse
+                                END IF
+                            LOOP UNTIL d = max(6)
                             searched$(1) = Veranstalter(node).Kuerzel: searched$(2) = Veranstalter(node).Name: searched$(3) = LST$(Veranstalter(node).Telefon): searched$(4) = LST$(Veranstalter(node).Telefax): searched$(5) = Veranstalter(node).Sachbearbeiter: searched$(6) = Veranstalter(node).Anrede: searched$(7) = Veranstalter(node).Notiz
-                            searchpart 7
+                            searchpart 10
                         CASE "ver"
                             searched$(1) = LST$(Veranstaltung(node).ID): searched$(2) = LST$(Veranstaltung(node).Ausgabe): searched$(3) = Veranstaltung(node).Datum: searched$(4) = Veranstaltung(node).Veranstalter: searched$(5) = Veranstaltung(node).Rubrik: searched$(6) = Veranstaltung(node).Zeit1: searched$(7) = Veranstaltung(node).Zeit2: searched$(8) = Veranstaltung(node).Titel: searched$(9) = Veranstaltung(node).Text
                             searchpart 9
