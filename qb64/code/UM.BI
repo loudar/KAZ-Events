@@ -110,3 +110,9 @@ DIM SHARED titel$(maximportv)
 DIM SHARED datum$(maximportv)
 DIM SHARED zeit$(maximportv)
 DIM SHARED ivtext$(maximportv)
+DIM SHARED closebuttonlx
+DIM SHARED closebuttonux
+DIM SHARED minbuttonlx
+DIM SHARED minbuttonux
+DIM SHARED buttonsly
+DIM SHARED buttonsuy
