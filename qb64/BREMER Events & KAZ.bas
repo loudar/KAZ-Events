@@ -79,21 +79,59 @@ ELSE
     rfontheight = 16
 END IF
 
+'Coded by Dav, JULY/2020
+'I used API information found on this page....
+'http://allapi.mentalis.org/apilist/apilist.php
+DECLARE DYNAMIC LIBRARY "user32"
+    'sets a created window region
+    'http://allapi.mentalis.org/apilist/SetWindowRgn.shtml
+    FUNCTION SetWindowRgn& (BYVAL hwnd&, BYVAL hrgn&, BYVAL bredraw%)
+END DECLARE
+
+DECLARE DYNAMIC LIBRARY "gdi32"
+    'creates a rectangular region
+    'http://allapi.mentalis.org/apilist/CreateRectRgn.shtml
+    FUNCTION CreateRectRgn& (BYVAL x1&, BYVAL y1&, BYVAL x2&, BYVAL y2&)
+    'creates an elliptical region
+    'http://allapi.mentalis.org/apilist/CreateEllipticRgn.shtml
+    FUNCTION CreateEllipticRgn& (BYVAL x1&, BYVAL y1&, BYVAL x2&, BYVAL y2&)
+    'creates a rectangular region with rounded corners
+    'http://allapi.mentalis.org/apilist/CreateRoundRectRgn.shtml
+    FUNCTION CreateRoundRectRgn& (BYVAL x1&, BYVAL y1&, BYVAL x2&, BYVAL y2&, BYVAL x3&, BYVAL y3&)
+END DECLARE
+
+hwnd& = _WINDOWHANDLE 'need the windows handle to play with it
+rounding = 30
+
 DIM SHARED canvas&
 DIM SHARED maxx 'fensterbreite
 DIM SHARED maxy 'fensterhohe
 IF bigwindow = 0 THEN
-    SCREEN _NEWIMAGE(_DESKTOPWIDTH / 1.5, _DESKTOPHEIGHT / 2.2, 32)
-    canvas& = _NEWIMAGE(_DESKTOPWIDTH / 1.5, _DESKTOPHEIGHT / 2.2, 32)
-    maxx = _DESKTOPWIDTH / 1.5
+        maxx = _DESKTOPWIDTH / 1.5
     maxy = _DESKTOPHEIGHT / 2.2
+rgn& = CreateRoundRectRgn(7, 30, maxx, maxy, rounding, rounding)
+'Set the created region...
+try& = SetWindowRgn(hwnd&, rgn&, 0)
+'Returns zero if failed...
+IF try& = 0 THEN
+   END
+END IF
+SCREEN _NEWIMAGE(maxx, maxy, 32)
+    canvas& = _NEWIMAGE(maxxmaxx, maxy, 32)
     DO: LOOP UNTIL _SCREENEXISTS
     _SCREENMOVE (_DESKTOPWIDTH / 2) - (_DESKTOPWIDTH / 1.5 / 2), (_DESKTOPHEIGHT / 2) - (_DESKTOPHEIGHT / 2. / 2)
 ELSE
-    SCREEN _NEWIMAGE(_DESKTOPWIDTH, _DESKTOPHEIGHT, 32)
-    canvas& = _NEWIMAGE(_DESKTOPWIDTH, _DESKTOPHEIGHT, 32)
-    maxx = swidth
+        maxx = swidth
     maxy = sheight
+rgn& = CreateRoundRectRgn(7, 30, maxx, maxy, rounding, rounding)
+'Set the created region...
+try& = SetWindowRgn(hwnd&, rgn&, 0)
+'Returns zero if failed...
+IF try& = 0 THEN
+   END
+END IF
+SCREEN _NEWIMAGE(maxx, maxy, 32)
+    canvas& = _NEWIMAGE(maxx, maxy, 32)
     DO: LOOP UNTIL _SCREENEXISTS
     _SCREENMOVE 0, 0
 END IF
