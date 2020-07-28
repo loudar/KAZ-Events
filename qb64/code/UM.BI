@@ -103,6 +103,10 @@ DIM SHARED shading
 shading = 1
 DIM SHARED UMround 'used for rounded shapes
 UMround = 4
+DIM SHARED UMglow 'used for glow distance
+UMglow = 5
+DIM SHARED UMopacity 'used for glow max opacity
+UMopacity = 150
 DIM SHARED detail
 detail = 2
 maximportv = 500

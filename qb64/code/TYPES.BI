@@ -16,6 +16,7 @@ maxveranstaltung = 10000
 '---------------------------------------------------
 TYPE User
     Name AS STRING * 50
+    Profilbild AS STRING * 54
     Passwort AS STRING * 50
     Zugang AS _BYTE
     Abteilung AS STRING * 50
@@ -23,6 +24,7 @@ TYPE User
     LetzterLogin AS STRING * 21
 END TYPE
 DIM SHARED User(maxuser) AS User
+DIM SHARED pfp&
 
 TYPE Objekt
     ID AS _BYTE

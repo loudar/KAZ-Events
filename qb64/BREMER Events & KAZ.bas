@@ -12,6 +12,7 @@ _AUTODISPLAY
 _DEST 0
 COLOR colour&("fg"), colour&("bg")
 CLS
+LOCATE 5, 5
 logThis "[ Fehler" + STR$(ERR) + "in Zeile" + STR$(_ERRORLINE) + " ]"
 IF ERR <> 5 AND ERR <> 6 AND ERR <> 7 AND ERR <> 9 AND ERR <> 14 AND ERR <> 17 AND ERR <> 19 AND ERR <> 51 AND ERR <> 70 AND ERR <> 71 AND ERR <> 72 AND ERR <> 75 THEN
     PRINT "[ Fehler"; ERR; "in Zeile"; _ERRORLINE; ", wird ignoriert ]"
@@ -185,6 +186,7 @@ DIM SHARED login
 REM $INCLUDE:'code/FONTS.BI'
 REM $INCLUDE:'code/UM.BI'
 REM $INCLUDE:'code/TYPES.BI'
+REM $INCLUDE:'code/SaveImage.BI'
 
 'import from site
 maxtags = 100000
@@ -550,7 +552,7 @@ DO
                     NewMenItem 14, 0, "Speichern", "save"
                     NewMenItem 14, 13, "<- Abbrechen", "back"
                     NewMenItem 14, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2) + 1, 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
                     listID = 11
                     RunMenu 1, 0, "NEUE VERANSTALTUNG"
                 CASE "kaz"
@@ -840,8 +842,16 @@ DO
                         IF dontadd = 0 THEN
                             max(1) = max(1) + 1
                             node = max(1)
+                            pfp& = Robohash(User(node).Name)
+                            Result = SaveImage(netpath$ + "data\pfp\" + User(node).Name + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
+                            IF Result = 1 THEN 'file already found on drive
+                                KILL exportimage2$ 'delete the old file
+                                Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
+                            END IF
+                            _FREEIMAGE pfp&
                         END IF
                         User(node).Name = UserInput$(1)
+                        IF dontadd = 0 THEN User(node).Profilbild = User(node).Name + ".png"
                         User(node).Passwort = UserInput$(2)
                         User(node).Zugang = selected(3)
                         User(node).Abteilung = UserInput$(4)
@@ -2924,9 +2934,21 @@ SUB Background (layout, titel$, maintrigger)
         'minimize button
         LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor) + 2), colour&("fg"), BF
         IF username$ <> "" THEN
-            usernamepos = maxrows - LEN(username$) - 17
+            usernamepos = maxrows - LEN(RTRIM$(username$)) - 17
             LOCATE firstline - 1, usernamepos
-            PRINT "Angemeldet als: " + username$
+            PRINT "Angemeldet als: " + RTRIM$(username$)
+            IF _FILEEXISTS(netpath$ + "data\pfp\" + username$ + ".png") = 0 THEN
+                pfp& = Robohash(username$)
+                Result = SaveImage(netpath$ + "data\pfp\" + username$ + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
+                IF Result = 1 THEN 'file already found on drive
+                    KILL exportimage2$ 'delete the old file
+                    Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
+                END IF
+                _FREEIMAGE pfp&
+            END IF
+            pfp& = _LOADIMAGE(netpath$ + "data\pfp\" + username$ + ".png", 32)
+            pfpsize = 4
+            _PUTIMAGE ((usernamepos - (2.5 + pfpsize)) * fontwidth, (firstline - pfpsize + 1) * fontheight)-((usernamepos - 2.5) * fontwidth, ((firstline - pfpsize + 1) * fontheight) + (pfpsize * fontwidth)), pfp&
         END IF
         SELECT CASE layout
             CASE 0
@@ -3927,6 +3949,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
             IF max(1) > 0 THEN
                 u = 0: DO: u = u + 1
                     User(u).Name = Ost$(User(u).Name)
+                    User(u).Profilbild = Ost$(User(u).Profilbild)
                     User(u).Passwort = Ost$(User(u).Passwort)
                     User(u).Zugang = Ova(User(u).Zugang)
                     User(u).Abteilung = Ost$(User(u).Abteilung)
@@ -4069,6 +4092,7 @@ SUB clearobs (type$)
             IF max(1) > 0 THEN
                 u = 0: DO: u = u + 1
                     User(u).Name = Cst$(User(u).Name)
+                    User(u).Profilbild = Cst$(User(u).Profilbild)
                     User(u).Passwort = Cst$(User(u).Passwort)
                     User(u).Zugang = Cva(User(u).Zugang)
                     User(u).Abteilung = Cst$(User(u).Abteilung)
@@ -4263,7 +4287,14 @@ SUB resetToStandard (type$)
     SELECT CASE type$
         CASE "usr"
             u = 1: max(1) = 1
-            User(1).Name = "Alex": User(1).Passwort = "5642": User(1).Zugang = 1: User(1).Abteilung = "Management": User(1).Telefon = 4915162842083: User(1).LetzterLogin = "07-10-2470@00:50:00"
+            User(1).Name = "Alex": User(1).Profilbild = "Alex.png": User(1).Passwort = "5642": User(1).Zugang = 1: User(1).Abteilung = "Management": User(1).Telefon = 4915162842083: User(1).LetzterLogin = "07-10-2470@00:50:00"
+            pfp& = Robohash(User(1).Name)
+            Result = SaveImage(netpath$ + "data\pfp\" + User(1).Name + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
+            IF Result = 1 THEN 'file already found on drive
+                KILL exportimage2$ 'delete the old file
+                Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
+            END IF
+            _FREEIMAGE pfp&
         CASE "obj"
             o = 1: max(2) = 1
             Objekt(1).ID = 1: Objekt(1).Name = "BREMER": Objekt(1).Ausgabenfrequenz = 12: Objekt(1).Waehrung = "EUR"
@@ -4427,6 +4458,37 @@ SUB resetToStandard (type$)
             Kategorie(24).Kuerzel = "VS": Kategorie(24).Objekt = 1: Kategorie(24).Name = "Verschiedenes"
     END SELECT
 END SUB
+
+FUNCTION Robohash& (stringhash AS STRING)
+    DIM URL AS STRING
+    DIM URLFile AS STRING
+    DIM a%
+    URLFile = stringhash + ".png"
+    URL = "https://robohash.org/" + stringhash
+    a% = API_request(URL, URLFile)
+    DIM U AS INTEGER
+    U = FREEFILE
+    OPEN URLFile FOR BINARY AS #U
+    IF LOF(U) <> 0 THEN
+        Robohash = _LOADIMAGE(URLFile, 32)
+    ELSE
+        CLOSE #U
+        KILL URLFile
+        Robohash = 0
+    END IF
+    CLOSE #U
+    KILL URLFile
+END FUNCTION
+
+DECLARE DYNAMIC LIBRARY "urlmon"
+    FUNCTION URLDownloadToFileA (BYVAL pCaller AS LONG, szURL AS STRING, szFileName AS STRING, BYVAL dwReserved AS LONG, BYVAL lpfnCB AS LONG)
+END DECLARE
+
+FUNCTION API_request (URL AS STRING, File AS STRING)
+    API_request = URLDownloadToFileA(0, URL + CHR$(0), File + CHR$(0), 0, 0)
+END FUNCTION
+
+REM $INCLUDE:'code/SaveImage.BM'
 
 FUNCTION colour& (color$)
     SELECT CASE color$

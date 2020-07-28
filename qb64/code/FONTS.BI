@@ -7,6 +7,7 @@ fontfileh$ = netpath$ + "data\fonts\akira_expanded.otf" 'font-datei fur uberschr
 fontheight = 32
 h& = _LOADFONT(fontfileh$, fontheight)
 fontfiler$ = netpath$ + "data\fonts\consola.ttf" 'font-datei fur regular font
+'fontfiler$ = "QD.otf"
 fontheight = rfontheight
 r& = _LOADFONT(fontfiler$, fontheight, "MONOSPACE")
 fontfileb$ = netpath$ + "data\fonts\consolab.ttf" 'font-datei fur info feld rechts
