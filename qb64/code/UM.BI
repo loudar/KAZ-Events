@@ -8,6 +8,9 @@ DIM SHARED menulimit
 menulimit = 50 'maximale anzahl von gleichzeitig moglichen menuitems
 DIM SHARED interactable
 DIM SHARED allsel(menulimit)
+DIM SHARED allowoverflow(menulimit)
+DIM SHARED overflow(menulimit)
+DIM SHARED overflowlimit(menulimit)
 DIM SHARED type$(menulimit) 'art des menuitems (toggle, text, input, menitem, function)
 DIM SHARED text$(menulimit) 'angezeigter, unveranderbarer text von m
 DIM SHARED yoffset(menulimit) 'zu platzierende zeile von m, pixel = zeile(m) / fontheight
