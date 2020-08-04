@@ -65,6 +65,7 @@ DIM SHARED darkmode
 DIM SHARED bigwindow
 DIM SHARED rfontheight
 DIM SHARED searchbottomfixed
+DIM SHARED transparency
 
 PRINT "Lade Einstellungen..."
 IF _DIREXISTS(settingspath$) = 0 THEN MKDIR settingspath$
@@ -78,15 +79,18 @@ IF _FILEEXISTS(settingspath$ + "settings.bremer") THEN
     rfontheight = VAL(_INFLATE$(scale$))
     INPUT #1, searchbottom$
     searchbottomfixed = VAL(_INFLATE$(searchbottom$))
+    INPUT #1, transparency$
+    transparency = VAL(_INFLATE$(transparency$))
     CLOSE #1
 ELSE
     OPEN settingspath$ + "settings.bremer" FOR OUTPUT AS #1
-    WRITE #1, _DEFLATE$("1"): WRITE #1, _DEFLATE$("0"): WRITE #1, _DEFLATE$("16"): WRITE #1, _DEFLATE$("1")
+    WRITE #1, _DEFLATE$("1"): WRITE #1, _DEFLATE$("0"): WRITE #1, _DEFLATE$("16"): WRITE #1, _DEFLATE$("1"): WRITE #1, _DEFLATE$("1")
     CLOSE #1
     darkmode = 1
     bigwindow = 0
     rfontheight = 16
     searchbottomfixed = 1
+    transparency = 1
 END IF
 
 'Windows API calls from Wiki / Forum
@@ -132,7 +136,11 @@ DECLARE DYNAMIC LIBRARY "kernel32"
 END DECLARE
 
 hwnd& = _WINDOWHANDLE 'need the windows handle to play with it
-SetWindowOpacity hwnd&, 245
+IF transparency = 1 THEN
+    SetWindowOpacity hwnd&, 245
+ELSE
+    SetWindowOpacity hwnd&, 255
+END IF
 IF 0 = SetWindowPos(hwnd&, HWND_TOPMOST, 200, 200, 0, 0, SWP_NOSIZE OR SWP_NOACTIVATE) THEN
     PRINT "SetWindowPos failed. 0x" + LCASE$(HEX$(GetLastError))
 END IF
@@ -215,6 +223,7 @@ FOR i = 1 TO _COMMANDCOUNT
         CASE "bigwindow=": bigwindow = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
         CASE "fontheight=": rfontheight = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
         CASE "searchbottomfixed=": searchbottomfixed = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
+        CASE "transparency=": transparency = VAL(MID$(COMMAND$(i), INSTR(COMMAND$(i), "=") + 1))
     END SELECT
 NEXT
 
@@ -380,14 +389,15 @@ DO
             NewToggle 1, 0, "Dunkles Design", "darkmode"
             NewToggle 2, 0, "Grosses Fenster", "size"
             NewToggle 3, 0, "Untere Suchkante fixiert", "searchbottom"
-            NewSlider 4, 0, 0, 100, "Skalierung", "scale", ((fontheight - 16) / (20 - 16)) * 100
+            NewToggle 4, 0, "Transparenz", "transparency"
+            NewSlider 5, 0, 0, 100, "Skalierung", "scale", ((fontheight - 16) / (20 - 16)) * 100
             IF admin = 1 AND timerdifference < 0.2 THEN
-                NewText 5, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", colour&("fg"), "r"
+                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", colour&("fg"), "r"
             ELSEIF admin = 1 THEN
-                NewText 5, 0, "Startzeit: " + starttime$ + " Sekunden.", colour&("fg"), "r"
+                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden.", colour&("fg"), "r"
             END IF
-            NewMenItem 5 + admin, 0, "<- Abbrechen", "start"
-            NewMenItem 5 + admin, 16, "Speichern", "save"
+            NewMenItem 6 + admin, 0, "<- Abbrechen", "start"
+            NewMenItem 6 + admin, 16, "Speichern", "save"
             RunMenu 1, 0, "EINSTELLUNGEN"
             IF endparameter$ = "save" THEN
                 rfontheight = 16 + ((20 - 16) * (value(3) / 100))
@@ -396,6 +406,7 @@ DO
                 WRITE #1, _DEFLATE$(LST$(bigwindow))
                 WRITE #1, _DEFLATE$(LST$(rfontheight))
                 WRITE #1, _DEFLATE$(LST$(searchbottomfixed))
+                WRITE #1, _DEFLATE$(LST$(transparency))
                 CLOSE #1
                 restartparameter$ = " username=" + username$ + " login=1 "
                 SHELL _DONTWAIT CHR$(34) + COMMAND$(0) + CHR$(34) + restartparameter$
@@ -476,10 +487,10 @@ DO
             arraydata$(1, 1) = "Quark": arraydata$(1, 2) = ".csv - The Events Calendar (Wordpress)": maxad(1) = 2
             NewSelector 2, 0, "Ausgabe:     ", 2, "asg", 1
             a = 0: DO: a = a + 1: arraydata$(2, a) = LST$(Ausgabe(a).Monat): LOOP UNTIL a = max(3): maxad(2) = max(3)
-            NewMenItem 3, 0, "Exportieren", "confirm"
+            NewMenItem 3, 0, "Exportieren", "export"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "EXPORT"
-            IF endparameter$ = "confirm" THEN
+            IF endparameter$ = "export" THEN
                 SELECT CASE selected(1)
                     CASE 1
                         exportToQuark endparameterbfbf$, LST$(Ausgabe(selected(2)).Monat), Ausgabe(selected(2)).Anfang, Ausgabe(selected(2)).Ende
@@ -492,10 +503,10 @@ DO
         CASE "import"
             NewSelector 1, 0, "Quelle:      ", 1, "", 1
             arraydata$(1, 1) = ".csv - TEC Format": arraydata$(1, 2) = ".doc - Format in Guide": arraydata$(1, 3) = ".txt - Format in Guide": maxad(1) = 3
-            NewMenItem 3, 0, "Importieren", "confirm"
+            NewMenItem 3, 0, "Importieren", "import"
             NewMenItem 4, 0, "<- Abbrechen", "start"
             RunMenu 1, 0, "IMPORT"
-            IF endparameter$ = "confirm" THEN
+            IF endparameter$ = "import" THEN
                 SELECT CASE selected(1)
                     CASE 1
                         importEvent "csv"
@@ -540,24 +551,25 @@ DO
                     NewDate 2, 0, "Datum:          ", DATE$
                     NewSelector 3, 0, "Ort:            ", 2, "ort", 1
                     ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
+                    rejected = 0
                     IF max(9) > 0 THEN
                         NewSelector 4, 0, "Veranstalter:   ", 3, "vea", 1
                         va = 0: DO: va = va + 1
                             IF Veranstalter(va).Kuerzel <> longchar$(MID$(Veranstalter(va).Kuerzel, 1, 1), LEN(Veranstalter(va).Kuerzel)) AND Veranstalter(va).Name <> longchar$(MID$(Veranstalter(va).Name, 1, 1), LEN(Veranstalter(va).Name)) THEN
                                 arraydata$(3, va) = _TRIM$(Veranstalter(va).Kuerzel) + ", " + LTRIM$(RTRIM$(Veranstalter(va).Name))
                             ELSE
-                                rejected = rejected + 1
+                                arraydata$(3, va) = ""
                             END IF
-                        LOOP UNTIL va = max(9): maxad(3) = max(9) - rejected
+                        LOOP UNTIL va = max(9): maxad(3) = max(9) ' - rejected
                     ELSE
                         NewMenItem 4, 0, "Neuen Veranstalter erstellen", "new"
                     END IF
                     NewSelector 5, 0, "Rubrik:         ", 4, "rbk", 1
                     r = 0: DO: r = r + 1: arraydata$(4, r) = RTRIM$(Rubrik(r).Name): LOOP UNTIL r = max(8): maxad(4) = max(8)
-                    NewTime 6, 0, "Zeit 1:         ", "19:00"
-                    NewTime 7, 0, "Zeit 2:         ", "21:00"
+                    NewTime 6, 0, "Zeit 1:         ", "15:00"
+                    NewTime 7, 0, "Zeit 2:         ", "00:00"
                     NewTime 8, 0, "Zeit 3:         ", "00:00"
-                    NewInput 9, 0, "Zeitcode:      ", "bis", 0
+                    NewInput 9, 0, "Zeitcode:      ", "", 0
                     NewInput 10, 0, "Titel:         ", "", 0
                     NewInput 11, 0, "Text:          ", "", 0
                     NewInput 12, 0, "Langer Text:   ", "", 0
@@ -783,10 +795,10 @@ DO
                                 d = max(6)
                             END IF
                         LOOP UNTIL d = max(6)
-                        Veranstalter(node).Telefon = VAL(UserInput$(5))
-                        Veranstalter(node).Telefax = VAL(UserInput$(6))
-                        Veranstalter(node).Anrede = UserInput$(7)
-                        Veranstalter(node).Notiz = UserInput$(8)
+                        Veranstalter(node).Telefon = VAL(UserInput$(4))
+                        Veranstalter(node).Telefax = VAL(UserInput$(5))
+                        Veranstalter(node).Anrede = UserInput$(6)
+                        Veranstalter(node).Notiz = UserInput$(7)
                         writeBinary "vea"
                         IF readBinary("vea") = 1 THEN
                             NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
@@ -946,10 +958,16 @@ DO
                         IF dontadd = 0 THEN
                             max(3) = max(3) + 1
                             node = max(3)
-                            Ausgabe(node).ID = Ausgabe(node - 1).ID + 1
+                            IF node > 0 THEN
+                                Ausgabe(node).ID = Ausgabe(node - 1).ID + 1
+                            ELSE
+                                Ausgabe(node).ID = 1
+                            END IF
                         END IF
                         Ausgabe(node).Objekt = selected(1)
                         Ausgabe(node).Monat = VAL(UserInput$(2))
+                        Ausgabe(node).Anfang = UserInput$(3)
+                        Ausgabe(node).Ende = UserInput$(4)
                         writeBinary "asg"
                         IF readBinary("asg") = 1 THEN
                             NewText 1, 0, "Ausgabe " + LST$(Ausgabe(node).Monat) + " erfolgreich gespeichert.", colour&("green"), "r"
@@ -1013,7 +1031,13 @@ SUB display (listID$, node)
             NewText 3, 0, "Ort:          " + RTRIM$(Veranstaltung(node).Ort), colour&("fg"), "r"
             NewText 4, 0, "Veranstalter: " + RTRIM$(Veranstaltung(node).Veranstalter), colour&("fg"), "r"
             NewText 5, 0, "Rubriken:     " + RTRIM$(Veranstaltung(node).Rubrik), colour&("fg"), "r"
-            NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), colour&("fg"), "r"
+            IF RTRIM$(Veranstaltung(node).Zeitcode) = "" THEN
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1), colour&("fg"), "r"
+            ELSEIF RTRIM$(Veranstaltung(node).Zeit3) = "00:00" THEN
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2), colour&("fg"), "r"
+            ELSE
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), colour&("fg"), "r"
+            END IF
             NewText 7, 0, "Zeitcode:     " + RTRIM$(Veranstaltung(node).Zeitcode), colour&("fg"), "r"
             NewText 8, 0, "Titel:        " + RTRIM$(Veranstaltung(node).Titel), colour&("fg"), "r"
             NewText 9, 0, "Text:         " + RTRIM$(Veranstaltung(node).Text), colour&("fg"), "r"
@@ -1021,7 +1045,7 @@ SUB display (listID$, node)
             NewMenItem 12, 0, "<- Abbrechen", "back"
             NewMenItem 12, 16, "Bearbeiten", "edit"
             NewMenItem 12, 30, "L" + CHR$(148) + "schen", "delete"
-            NewMenItem 1, 41, "Kopieren", "copy"
+            NewMenItem 12, 41, "Kopieren", "copy"
             RunMenu 1, 0, "VERANSTALTUNG"
         CASE "kaz"
             NewText 1, 0, "Kategorien:   " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), colour&("fg"), "r"
@@ -1130,13 +1154,15 @@ SUB display (listID$, node)
             NewMenItem 5, 41, "Kopieren", "copy"
             RunMenu 1, 0, "POSTLEITZAHL"
         CASE "asg"
-            NewText 1, 0, "ID:         " + STR$(Ausgabe(node).ID), colour&("fg"), "r"
-            NewText 2, 0, "Objekt:      " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), colour&("fg"), "r"
-            NewText 3, 0, "Monat:      " + STR$(Ausgabe(node).Monat), colour&("fg"), "r"
-            NewMenItem 5, 0, "<- Abbrechen", "back"
-            NewMenItem 5, 16, "Bearbeiten", "edit"
-            NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
-            NewMenItem 5, 41, "Kopieren", "copy"
+            NewText 1, 0, "ID:          " + STR$(Ausgabe(node).ID), colour&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), colour&("fg"), "r"
+            NewText 3, 0, "Monat:       " + STR$(Ausgabe(node).Monat), colour&("fg"), "r"
+            NewText 4, 0, "Anfangsdatum: " + Ausgabe(node).Anfang, colour&("fg"), "r"
+            NewText 5, 0, "Enddatum:     " + Ausgabe(node).Ende, colour&("fg"), "r"
+            NewMenItem 7, 0, "<- Abbrechen", "back"
+            NewMenItem 7, 16, "Bearbeiten", "edit"
+            NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
+            NewMenItem 7, 41, "Kopieren", "copy"
             RunMenu 1, 0, "AUSGABE"
         CASE "kat"
             NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Kategorie(node).Kuerzel), colour&("fg"), "r"
@@ -1177,7 +1203,7 @@ SUB edit (listID$, node)
             NewTime 6, 0, "Zeit 1:       ", RTRIM$(Veranstaltung(node).Zeit1)
             NewTime 7, 0, "Zeit 2:       ", RTRIM$(Veranstaltung(node).Zeit2)
             NewTime 8, 0, "Zeit 3:       ", RTRIM$(Veranstaltung(node).Zeit3)
-            NewInput 9, 0, "Zeitcode:     ", "bis", 0
+            NewInput 9, 0, "Zeitcode:     ", RTRIM$(Veranstaltung(node).Zeitcode), 0
             NewInput 10, 0, "Titel:        ", RTRIM$(Veranstaltung(node).Titel), 0
             NewInput 11, 0, "Text:         ", RTRIM$(Veranstaltung(node).Text), 0
             NewInput 12, 0, "Langer Text:  ", RTRIM$(Veranstaltung(node).TextLang), 0
@@ -1597,7 +1623,7 @@ FUNCTION search (listID$, placeholder$)
                                 printsearchlist RTRIM$(Kleinanzeige(listnode(o)).Titel), 2
                             CASE 11
                                 printsearchlist RTRIM$(LST$(Veranstaltung(listnode(o)).ID)), 1
-                                printsearchlist RTRIM$(LST$(Veranstaltung(listnode(o)).Ausgabe)), 2
+                                printsearchlist RTRIM$(LST$(Veranstaltung(listnode(o)).Ausgabe)), 1
                                 printsearchlist RTRIM$(Veranstaltung(listnode(o)).Titel), 2
                                 printsearchlist RTRIM$(Veranstaltung(listnode(o)).Datum), 2
                             CASE 12
@@ -1844,7 +1870,8 @@ SUB RunMenu (selectedm, layout, titel$)
                                 END IF
                             LOOP UNTIL ad = maxad(array(m2))
                         CASE "date"
-                            IF LEN(temparray$(menID, m2)) > 10 THEN
+                            IF LEN(temparray$(menID, m2)) >= 10 THEN
+                                'year$ + "-" + month$ + "-" + day$
                                 year(m2) = VAL(MID$(temparray$(menID, m2), 1, 4))
                                 month(m2) = VAL(MID$(temparray$(menID, m2), 6, 2))
                                 day(m2) = VAL(MID$(temparray$(menID, m2), 9, 2))
@@ -2338,6 +2365,8 @@ SUB RunMenu (selectedm, layout, titel$)
                                             IF bigwindow = 1 THEN bigwindow = 0 ELSE bigwindow = 1
                                         CASE "searchbottom"
                                             IF searchbottomfixed = 1 THEN searchbottomfixed = 0 ELSE searchbottomfixed = 1
+                                        CASE "transparency"
+                                            IF transparency = 1 THEN transparency = 0 ELSE transparency = 1
                                     END SELECT: change(selectedm) = 1
                             END SELECT
                         CASE CHR$(27)
@@ -2430,18 +2459,16 @@ SUB RunMenu (selectedm, layout, titel$)
                             IF g(m) > 0 AND m = selectedm THEN
                                 gbf(m) = 0: DO: gbf(m) = gbf(m) + 1: suche$ = suche$ + char$(m, gbf(m)): LOOP UNTIL gbf(m) = g(m)
                             END IF
-                            PRINT "-" + suche$ + SPC(50 - LEN(arraydata$(array(m), selected(m))) - LEN(suche$))
+                            PRINT "-" + suche$ + SPC(100 - LEN(arraydata$(array(m), selected(m))) - LEN(suche$))
                             rectangle (firstchar + xoffset(m) + LEN(text$(m)) - 0.5) * fontwidth, (firstline + yoffset(m) - 1) * fontheight - 6, (firstchar + xoffset(m) + LEN(arraydata$(array(m), selected(m))) + LEN(text$(m)) + 5) * fontwidth, (firstline + yoffset(m)) * fontheight + 4, UMround, colour&("fg"), "B"
                             endx(m) = basex(m) + (LEN(text$(m)) + LEN(arraydata$(array(m), selected(m))) + 11) * fontwidth + (fontwidth / 2)
                         CASE "toggle"
                             LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("bg"), BF
                             IF selectedm = m THEN
                                 rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("red"), "B"
-                                'LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("red"), B
                                 COLOR colour&("red"), colour&("bg")
                             ELSE
                                 rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("offfocus"), "B"
-                                'LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("offfocus"), B
                                 COLOR colour&("fg"), colour&("bg")
                             END IF
                             IF state(m) = 0 THEN
@@ -2885,12 +2912,10 @@ SUB NewToggle (yoffset, xoffset, text$, setting$)
     type$(m) = "toggle"
     setting$(m) = setting$
     SELECT CASE setting$(m)
-        CASE "darkmode"
-            state(m) = darkmode
-        CASE "size"
-            state(m) = bigwindow
-        CASE "searchbottom"
-            state(m) = searchbottomfixed
+        CASE "darkmode": state(m) = darkmode
+        CASE "size": state(m) = bigwindow
+        CASE "searchbottom": state(m) = searchbottomfixed
+        CASE "transparency": state(m) = transparency
     END SELECT
     text$(m) = text$
     yoffset(m) = yoffset * 2 - 1
@@ -2939,7 +2964,7 @@ SUB NewInput (yoffset, xoffset, text$, placeholder$, number)
     endx(m) = basex(m) + (LEN(text$(m)) + g(m) + 2.5) * fontwidth + (fontwidth / 2)
     endy(m) = (firstline + yoffset(m)) * fontheight + (fontheight / 3)
     allowoverflow(m) = 1
-    overflowlimit(m) = 50
+    overflowlimit(m) = 150
 END SUB
 
 SUB NewMenItem (yoffset, xoffset, text$, destination$)
@@ -2991,6 +3016,13 @@ SUB Background (layout, titel$, maintrigger)
         LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor) - 3), colour&("fg"), BF
         IF username$ <> "" THEN
             'name
+            IF bigwindow = 0 THEN
+                maxrows = INT((swidth / 1.5) / fontwidth)
+                maxlines = INT((sheight / 2.2) / fontheight) - 4
+            ELSE
+                maxrows = INT(swidth / fontwidth)
+                maxlines = INT(sheight / fontheight) - 4
+            END IF
             usernamepos = maxrows - LEN(_TRIM$(username$)) - 18
             LOCATE firstline - 1, usernamepos
             PRINT "Angemeldet als: " + _TRIM$(username$)
@@ -3149,7 +3181,7 @@ END SUB
 
 SUB loadall
     timerstart = TIMER(.001)
-    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Verzeichnisse...", 1, 1
+    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Verzeichnisse...", 1, 1, colour&("fg"), colour&("bg")
     'checkt, ob alle ordner und dateien da sind, wenn nicht, dann werden sie erstellt
     IF _DIREXISTS(netpath$ + "data") = 0 THEN MKDIR netpath$ + "data"
 
@@ -3157,6 +3189,7 @@ SUB loadall
     load "usr", "User": progressBar 0, 1, maxloadprogress
     load "obj", "Objekte": progressBar 0, 2, maxloadprogress
     load "asg", "Ausgaben": progressBar 0, 3, maxloadprogress
+    checkmonth
     load "ort", "Orte": progressBar 0, 4, maxloadprogress
     load "plz", "Postleitzahlen": progressBar 0, 5, maxloadprogress
     load "adr", "Adressen": progressBar 0, 6, maxloadprogress
@@ -3183,9 +3216,9 @@ SUB loadall
     progressBar 0, maxloadprogress, maxloadprogress
     timerend = TIMER(.001)
     timerdifference = timerend - timerstart
-    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Daten erfolgreich!", 1, 1
+    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Daten erfolgreich!", 1, 1, colour&("fg"), colour&("bg")
     starttime$ = LST$(timerdifference)
-    quickprint maxlines / 2 + 3, maxrows / 2, "Ladezeit: " + starttime$ + " Sekunden", 1, 1
+    quickprint maxlines / 2 + 3, maxrows / 2, "Ladezeit: " + starttime$ + " Sekunden", 1, 1, colour&("fg"), colour&("bg")
     CLS
 END SUB
 
@@ -3202,12 +3235,12 @@ SUB load (short$, plural$)
     IF readBinary(short$) <> 1 THEN
         resetToStandard (short$)
         writeBinary (short$)
-        IF readBinary(short$) = 2 THEN quickprint maxlines / 2 + 2, maxrows / 2, "Keine Daten gefunden.", 1, 1
+        IF readBinary(short$) = 2 THEN quickprint maxlines / 2 + 2, maxrows / 2, plural$ + ": Keine Daten gefunden.", 1, 1, colour&("fg"), colour&("bg")
     END IF
     'quickprint maxlines / 2 + 2, maxrows / 2, plural$ + " geladen.", 1, 1
 END SUB
 
-SUB quickprint (y, x, text$, snapping, logging)
+SUB quickprint (y, x, text$, snapping, logging, fg&, bg&)
     SELECT CASE snapping
         CASE 0 'left bound
             LOCATE y, x
@@ -3217,6 +3250,7 @@ SUB quickprint (y, x, text$, snapping, logging)
         CASE 2 'right bound
             LOCATE y, x - LEN(text$)
     END SELECT
+    COLOR fg&, bg&
     PRINT text$ + "                 "
     IF logging = 1 THEN
         logThis text$
@@ -3541,6 +3575,8 @@ SUB printviaprinter 'Code by SpriggsySpriggs: https://www.qb64.org/forum/index.p
         LOOP
     END IF
     KILL "copies.txt": KILL "printername.txt": KILL "cancel.txt": KILL "printdialog.ps1"
+    _DELAY 5
+    KILL "toprinter.txt"
 END SUB
 
 SUB importEvent (source$)
@@ -3574,7 +3610,7 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                     ka = 0: DO: ka = ka + 1
                         progressBar 0, ka + (max(10) * (kt - 1)), (max(10) * max(12))
                         COLOR colour&("fg"), colour&("bg")
-                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT((ka + (max(10) * (kt - 1))) / (max(10) * max(12)) * 100)) + "%", 1, 1
+                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT((ka + (max(10) * (kt - 1))) / (max(10) * max(12)) * 100)) + "%", 1, 1, colour&("fg"), colour&("bg")
                         IF Kleinanzeige(ka).Kategorie1 = Kategorie(kt).Name AND Kleinanzeige(ka).Ausgabe = VAL(ausgabe$) THEN
                             IF printed(kt) = 0 THEN
                                 printed(kt) = 1
@@ -3606,42 +3642,56 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                 LOOP UNTIL kt = max(12) - 1
                 progressBar 0, max(10) * max(12), (max(10) * max(12))
                 COLOR colour&("fg"), colour&("bg")
-                quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... 100%", 1, 1
+                quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... 100%", 1, 1, colour&("fg"), colour&("bg")
                 CLOSE #5
             ELSE
 
             END IF
         CASE "ver"
             IF max(11) > 0 THEN
-                FORMvertitel$ = "@VER_titel:<$z6.5f" + CHR$(34) + "Swis721 BlkCn BT" + CHR$(34) + ">"
-                FORMvertext$ = "<$z6.5f" + CHR$(34) + "Swis721 Cn BT" + CHR$(34) + ">"
-                FORMverrubrik$ = "@VER_Rubrik:<f$>"
-                FORMverstadt$ = "@VER_Stadt:<$>"
-                OPEN netpath$ + "export\VER_" + ausgabe$ + "(" + username$ + ").XTG" FOR OUTPUT AS #5
+                FORMverdatum$ = "@PK_Datum:<f$>"
+                FORMvernormal$ = "@PK_Normal:<f$>"
+                FORMverrubrik$ = "@PK_Rubrik:<f$>"
+                FORMverort$ = "@PK_Ort:<f$>"
+                OPEN netpath$ + "export\PK_" + ausgabe$ + "(" + username$ + ").XTG" FOR OUTPUT AS #5
                 'header
                 PRINT #5, "<v1.70><e1>"
-                PRINT #5, FORMRubrik$ + "Aktivit" + CHR$(228) + "ten"
                 'variable content
-                daystart = VAL(MID$(start$, 7, 2))
-                dayend = VAL(MID$(end$, 7, 2))
-                monthstart = VAL(MID$(start$, 5, 2))
-                monthend = VAL(MID$(end$, 5, 2))
+                daystart = VAL(MID$(start$, 9, 2))
+                dayend = VAL(MID$(end$, 9, 2))
+                monthstart = VAL(MID$(start$, 6, 2))
+                monthend = VAL(MID$(end$, 6, 2))
                 yearstart = VAL(MID$(start$, 1, 4))
                 yearend = VAL(MID$(end$, 1, 4))
                 y = yearstart - 1: m = monthstart - 1: d = daystart - 1
+                dif = maxday(yearstart, monthstart) * max(11) * max(4) * max(8)
+                prog = 0
                 DO: y = y + 1
                     DO: m = m + 1
                         DO: d = d + 1
                             printedd(d) = 0
-                            Datum$ = LST$(y) + "-" + LST$(m) + "-" + LST$(d)
+                            'Datum$ = LST$(y) + "-" + LST$(m) + "-" + LST$(d)
+                            Datum$ = LST$(y) + "-"
+                            IF m < 10 THEN
+                                Datum$ = Datum$ + "0" + LST$(m) + "-"
+                            ELSE
+                                Datum$ = Datum$ + LST$(m) + "-"
+                            END IF
+                            IF d < 10 THEN
+                                Datum$ = Datum$ + "0" + LST$(d)
+                            ELSE
+                                Datum$ = Datum$ + LST$(d)
+                            END IF
                             r = 0: DO: r = r + 1
                                 printed(r) = 0
                                 ot = 0: DO: ot = ot + 1
                                     printedo(ot) = 0
                                     v = 0: DO: v = v + 1
-                                        progressBar 0, v + (max(11) * (ot - 1) * (r - 1)), (max(11) * max(4) * max(8))
-                                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT((v + (max(11) * (ot - 1) * (r - 1))) / (max(11) * max(4) * max(8)) * 100)) + "%", 1, 1
+                                        prog = prog + 1
+                                        progressBar 0, prog, dif
+                                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT(prog / dif * 100)) + "%", 1, 1, colour&("fg"), colour&("bg")
                                         IF Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND Veranstaltung(v).Datum = Datum$ AND OrtF$(v) = Ort(ot).Name THEN
+                                            'headers
                                             IF printedd(d) = 0 THEN
                                                 printedd(d) = 1
                                                 PRINT #5, FORMverdatum$ + LST$(d) + ". " + monthstr$(m)
@@ -3652,9 +3702,11 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                             END IF
                                             IF printedo(ot) = 0 THEN
                                                 printedo(ot) = 1
-                                                PRINT #5, FORMverstadt$ + RTRIM$(Ort(ot).Name)
+                                                PRINT #5, FORMverort$ + RTRIM$(Ort(ot).Name)
                                             END IF
-                                            IF Veranstaltung(v).Zeit2 <> "00.00" THEN
+
+                                            'content-assembling
+                                            IF Veranstaltung(v).Zeitcode <> "" THEN
                                                 IF Veranstaltung(v).Zeit3 <> "00.00" THEN
                                                     vtime$ = RTRIM$(Veranstaltung(v).Zeit1) + RTRIM$(Veranstaltung(v).Zeitcode) + RTRIM$(Veranstaltung(v).Zeit2) + RTRIM$(Veranstaltung(v).Zeitcode) + RTRIM$(Veranstaltung(v).Zeit3) + " "
                                                 ELSE
@@ -3663,23 +3715,26 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                             ELSE
                                                 vtime$ = RTRIM$(Veranstaltung(v).Zeit1) + " "
                                             END IF
-                                            IF Veranstaltung(v).Veranstalter <> "" THEN vort$ = "; " + Veranstaltung(v).Veranstalter
+                                            IF RTRIM$(Veranstaltung(v).Veranstalter) <> "" THEN vort$ = "; " + RTRIM$(Veranstaltung(v).Veranstalter)
                                             va = 0: DO: va = va + 1
                                                 IF Veranstalter(va).Name = Veranstaltung(v).Veranstalter THEN
-                                                    d = 0: DO: d = d + 1
-                                                        IF Adresse(d).ID = Veranstalter(va).Adresse THEN
-                                                            vort$ = vort$ + ", " + Adresse(d).Strasse
+                                                    dd = 0: DO: dd = dd + 1
+                                                        IF Adresse(dd).ID = Veranstalter(va).Adresse THEN
+                                                            vort$ = vort$ + ", " + RTRIM$(Adresse(dd).Strasse)
                                                         END IF
-                                                    LOOP UNTIL d = max(6)
+                                                    LOOP UNTIL dd = max(6)
                                                 END IF
                                             LOOP UNTIL va = max(9)
+                                            'content-printing
                                             PRINT #5, FORMvertitel$ + vtime$ + RTRIM$(Veranstaltung(v).Titel) + " " + FORMvertext$ + RTRIM$(Veranstaltung(v).Text) + vort$ + vanm$
                                         END IF
                                     LOOP UNTIL v = max(11)
                                 LOOP UNTIL ot = max(4)
-                            LOOP UNTIL r = max(8) - 1
+                            LOOP UNTIL r = max(8)
                         LOOP UNTIL d = dayend OR d = maxday(y, m)
+                        d = 0
                     LOOP UNTIL m = monthend
+                    m = 0
                 LOOP UNTIL y = yearend
                 CLOSE #5
             ELSE
@@ -3713,15 +3768,15 @@ SUB exportToCsv (listID$, ausgabe$, formatting$)
 END SUB
 
 FUNCTION OrtF$ (v)
-    va = 0: DO: va = va + 1
-        IF Veranstalter(va).Name = Veranstaltung(v).Veranstalter THEN
-            d = 0: DO: d = d + 1
-                IF Adresse(d).ID = Veranstalter(va).Adresse THEN
-                    OrtF$ = Adresse(d).Ort
+    vva = 0: DO: vva = vva + 1
+        IF RTRIM$(Veranstalter(vva).Kuerzel) + ", " + RTRIM$(Veranstalter(vva).Name) = RTRIM$(Veranstaltung(v).Veranstalter) THEN
+            ddd = 0: DO: ddd = ddd + 1
+                IF Adresse(ddd).ID = Veranstalter(vva).Adresse THEN
+                    OrtF$ = Adresse(ddd).Ort
                 END IF
-            LOOP UNTIL d = max(6)
+            LOOP UNTIL ddd = max(6)
         END IF
-    LOOP UNTIL va = max(9)
+    LOOP UNTIL vva = max(9)
 END SUB
 
 SUB drawTriangle (x, y, trianglescale, direction)
@@ -4017,6 +4072,61 @@ SUB logThis (text$)
     OPEN logfile$ FOR APPEND AS #999
     PRINT #999, text$
     CLOSE #999
+END SUB
+
+SUB checkmonth
+    dontaddm = 0
+    dontaddnm = 0
+    month$ = MID$(DATE$, 7, 4) + MID$(DATE$, 1, 2)
+    IF VAL(MID$(DATE$, 1, 2)) < 10 THEN
+        nextmonth$ = MID$(DATE$, 7, 4) + "0" + LST$(VAL(MID$(DATE$, 1, 2)) + 1)
+    ELSEIF VAL(MID$(DATE$, 1, 2)) < 12 THEN
+        nextmonth$ = MID$(DATE$, 7, 4) + LST$(VAL(MID$(DATE$, 1, 2)) + 1)
+    ELSE
+        nextmonth$ = LST$(VAL(MID$(DATE$, 7, 4)) + 1) + "01"
+    END IF
+    IF max(3) > 0 THEN
+        a = 0: DO: a = a + 1
+            IF VAL(month$) = Ausgabe(a).Monat THEN
+                dontaddm = 1
+            END IF
+            IF VAL(nextmonth$) = Ausgabe(a).Monat THEN
+                dontaddnm = 1
+            END IF
+        LOOP UNTIL a = max(3)
+    END IF
+    IF dontaddm = 0 THEN
+        max(3) = max(3) + 1
+        node = max(3)
+        IF max(3) > 1 THEN
+            Ausgabe(node).ID = Ausgabe(node - 1).ID + 1
+        ELSE
+            Ausgabe(node).ID = 1
+        END IF
+        Ausgabe(node).Objekt = 1
+        Ausgabe(node).Monat = VAL(month$)
+        Ausgabe(node).Anfang = MID$(month$, 1, 4) + "-" + MID$(month$, 5, 2) + "-01"
+        Ausgabe(node).Ende = MID$(month$, 1, 4) + "-" + MID$(month$, 5, 2) + "-" + LST$(maxday(VAL(MID$(month$, 1, 4)), VAL(MID$(month$, 5, 2))))
+        writeBinary "asg"
+        IF readBinary("asg") = 1 THEN
+        END IF
+    END IF
+    IF dontaddnm = 0 THEN
+        max(3) = max(3) + 1
+        node = max(3)
+        IF node > 1 THEN
+            Ausgabe(node).ID = Ausgabe(node - 1).ID + 1
+        ELSE
+            Ausgabe(node).ID = 1
+        END IF
+        Ausgabe(node).Objekt = 1
+        Ausgabe(node).Monat = VAL(nextmonth$)
+        Ausgabe(node).Anfang = MID$(nextmonth$, 1, 4) + "-" + MID$(nextmonth$, 5, 2) + "-01"
+        Ausgabe(node).Ende = MID$(nextmonth$, 1, 4) + "-" + MID$(nextmonth$, 5, 2) + "-" + LST$(maxday(VAL(MID$(nextmonth$, 1, 4)), VAL(MID$(nextmonth$, 5, 2))))
+        writeBinary "asg"
+        IF readBinary("asg") = 1 THEN
+        END IF
+    END IF
 END SUB
 
 SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
@@ -4376,25 +4486,7 @@ SUB resetToStandard (type$)
             o = 1: max(2) = 1
             Objekt(1).ID = 1: Objekt(1).Name = "BREMER": Objekt(1).Ausgabenfrequenz = 12: Objekt(1).Waehrung = "EUR"
         CASE "asg"
-            a = 18: max(3) = a
-            Ausgabe(1).ID = 1: Ausgabe(1).Objekt = 1: Ausgabe(1).Monat = 201901
-            Ausgabe(2).ID = 2: Ausgabe(2).Objekt = 1: Ausgabe(2).Monat = 201902
-            Ausgabe(3).ID = 3: Ausgabe(3).Objekt = 1: Ausgabe(3).Monat = 201903
-            Ausgabe(4).ID = 4: Ausgabe(4).Objekt = 1: Ausgabe(4).Monat = 201904
-            Ausgabe(5).ID = 5: Ausgabe(5).Objekt = 1: Ausgabe(5).Monat = 201905
-            Ausgabe(6).ID = 6: Ausgabe(6).Objekt = 1: Ausgabe(6).Monat = 201906
-            Ausgabe(7).ID = 7: Ausgabe(7).Objekt = 1: Ausgabe(7).Monat = 201907
-            Ausgabe(8).ID = 8: Ausgabe(8).Objekt = 1: Ausgabe(8).Monat = 201908
-            Ausgabe(9).ID = 9: Ausgabe(9).Objekt = 1: Ausgabe(9).Monat = 201909
-            Ausgabe(10).ID = 10: Ausgabe(10).Objekt = 1: Ausgabe(10).Monat = 201910
-            Ausgabe(11).ID = 11: Ausgabe(11).Objekt = 1: Ausgabe(11).Monat = 201911
-            Ausgabe(12).ID = 12: Ausgabe(12).Objekt = 1: Ausgabe(12).Monat = 201912
-            Ausgabe(13).ID = 13: Ausgabe(13).Objekt = 1: Ausgabe(13).Monat = 202901
-            Ausgabe(14).ID = 14: Ausgabe(14).Objekt = 1: Ausgabe(14).Monat = 202002
-            Ausgabe(15).ID = 15: Ausgabe(15).Objekt = 1: Ausgabe(15).Monat = 202003
-            Ausgabe(16).ID = 16: Ausgabe(16).Objekt = 1: Ausgabe(16).Monat = 202004
-            Ausgabe(17).ID = 17: Ausgabe(17).Objekt = 1: Ausgabe(17).Monat = 202005
-            Ausgabe(18).ID = 18: Ausgabe(18).Objekt = 1: Ausgabe(18).Monat = 202006
+            a = 0: max(3) = a
         CASE "ort"
             ot = 29: max(4) = 29
             Ort(1).Kuerzel = "ACH": Ort(1).Name = "Achim"

@@ -21,7 +21,7 @@ TYPE User
     Zugang AS _BYTE
     Abteilung AS STRING * 50
     Telefon AS INTEGER
-    LetzterLogin AS STRING * 21
+    LetzterLogin AS STRING * 41
 END TYPE
 DIM SHARED User(maxuser) AS User
 DIM SHARED pfp&
@@ -38,8 +38,8 @@ TYPE Ausgabe
     ID AS INTEGER
     Objekt AS _BYTE
     Monat AS LONG
-    Anfang AS STRING * 10
-    Ende AS STRING * 10
+    Anfang AS STRING * 50
+    Ende AS STRING * 50
 END TYPE
 DIM SHARED Ausgabe(maxausgaben) AS Ausgabe
 
@@ -123,14 +123,14 @@ DIM SHARED Kleinanzeige(maxkleinanzeige) AS Kleinanzeige
 TYPE Veranstaltung
     ID AS INTEGER
     Ausgabe AS LONG
-    Datum AS STRING * 16
+    Datum AS STRING * 50
     Ort AS STRING * 50
     Veranstalter AS STRING * 50
     Rubrik AS STRING * 50
-    Zeit1 AS STRING * 8
-    Zeit2 AS STRING * 8
-    Zeit3 AS STRING * 8
-    Zeitcode AS STRING * 10
+    Zeit1 AS STRING * 20
+    Zeit2 AS STRING * 20
+    Zeit3 AS STRING * 20
+    Zeitcode AS STRING * 20
     Titel AS STRING * 50
     Text AS STRING * 500
     TextLang AS STRING * 2000
