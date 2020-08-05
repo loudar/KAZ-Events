@@ -109,11 +109,11 @@ TYPE Kleinanzeige
     Kategorie1 AS STRING * 50
     Kategorie2 AS STRING * 50
     Kategorie3 AS STRING * 50
-    Text AS STRING * 50
+    Text AS STRING * 500
     Titel AS STRING * 50
     Objekt AS _BYTE
     Ausgabe AS LONG
-    Telefon AS INTEGER
+    Telefon AS STRING * 20
     Name AS STRING * 50
     Chiffre AS STRING * 50
     Notiz AS STRING * 50
@@ -131,8 +131,9 @@ TYPE Veranstaltung
     Zeit2 AS STRING * 20
     Zeit3 AS STRING * 20
     Zeitcode AS STRING * 20
-    Titel AS STRING * 50
+    Titel AS STRING * 200
     Text AS STRING * 500
     TextLang AS STRING * 2000
 END TYPE
 DIM SHARED Veranstaltung(maxveranstaltung) AS Veranstaltung
+DIM SHARED vadr$

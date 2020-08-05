@@ -33,7 +33,7 @@ END IF
 
 restart:
 restart = 0
-COLOR colour&("white"), colour&("black")
+COLOR colour&("black"), colour&("white")
 CLS
 CLOSE
 CLEAR
@@ -586,14 +586,14 @@ DO
                     kt = 0: DO: kt = kt + 1: arraydata$(2, kt) = RTRIM$(Kategorie(kt).Name): LOOP UNTIL kt = max(12): maxad(2) = max(12)
                     NewSelector 3, 0, "Kategorie 3:    ", 3, "kat", 1
                     kt = 0: DO: kt = kt + 1: arraydata$(3, kt) = RTRIM$(Kategorie(kt).Name): LOOP UNTIL kt = max(12): maxad(3) = max(12)
-                    NewInput 4, 0, "Text:        ", "", 0
-                    NewInput 5, 0, "Titel:       ", "", 0
-                    NewSelector 6, 0, "Objekt:         ", 4, "obj", 1
+                    NewInput 4, 0, "Name:         ", "", 0
+                    NewInput 5, 0, "Titel:        ", "", 0
+                    NewInput 6, 0, "Text:         ", "", 0
+                    NewSelector 7, 0, "Objekt:         ", 4, "obj", 1
                     o = 0: DO: o = o + 1: arraydata$(4, o) = RTRIM$(Objekt(o).Name): LOOP UNTIL o = max(2): maxad(4) = max(2)
-                    NewSelector 7, 0, "Ausgabe:        ", 5, "asg", max(3)
+                    NewSelector 8, 0, "Ausgabe:        ", 5, "asg", max(3)
                     a = 0: DO: a = a + 1: arraydata$(5, a) = LST$(Ausgabe(a).Monat): LOOP UNTIL a = max(3): maxad(5) = max(3)
-                    NewInput 8, 0, "Telefon:      ", "", 1
-                    NewInput 9, 0, "Name:         ", "", 0
+                    NewInput 9, 0, "Telefon:      ", "", 1
                     NewInput 10, 0, "Chiffre:      ", "", 0
                     NewInput 11, 0, "Notiz:        ", "", 0
                     NewMenItem 13, 0, "Speichern", "save"
@@ -756,12 +756,12 @@ DO
                     Kleinanzeige(node).Kategorie1 = UserInput$(1)
                     Kleinanzeige(node).Kategorie2 = UserInput$(2)
                     Kleinanzeige(node).Kategorie3 = UserInput$(3)
-                    Kleinanzeige(node).Text = UserInput$(4)
+                    Kleinanzeige(node).Name = UserInput$(4)
                     Kleinanzeige(node).Titel = UserInput$(5)
-                    Kleinanzeige(node).Objekt = Objekt(selected(6)).ID
-                    Kleinanzeige(node).Ausgabe = Ausgabe(selected(7)).Monat
-                    Kleinanzeige(node).Telefon = VAL(UserInput$(8))
-                    Kleinanzeige(node).Name = UserInput$(9)
+                    Kleinanzeige(node).Text = UserInput$(6)
+                    Kleinanzeige(node).Objekt = Objekt(selected(7)).ID
+                    Kleinanzeige(node).Ausgabe = Ausgabe(selected(8)).Monat
+                    Kleinanzeige(node).Telefon = UserInput$(9)
                     Kleinanzeige(node).Chiffre = UserInput$(10)
                     Kleinanzeige(node).Notiz = UserInput$(11)
                     writeBinary "kaz"
@@ -850,7 +850,7 @@ DO
                             node = max(8)
                         END IF
                         Rubrik(node).Kuerzel = UserInput$(1)
-                        Rubrik(node).Objekt = VAL(UserInput$(2))
+                        Rubrik(node).Objekt = selected(2)
                         Rubrik(node).Name = UserInput$(3)
                         writeBinary "rbk"
                         IF readBinary("rbk") = 1 THEN
@@ -1049,21 +1049,22 @@ SUB display (listID$, node)
             RunMenu 1, 0, "VERANSTALTUNG"
         CASE "kaz"
             NewText 1, 0, "Kategorien:   " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), colour&("fg"), "r"
-            NewText 2, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), colour&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), colour&("fg"), "r"
             NewText 3, 0, "Titel:        " + RTRIM$(Kleinanzeige(node).Titel), colour&("fg"), "r"
+            NewText 4, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), colour&("fg"), "r"
             o = 0: DO: o = o + 1
                 IF Objekt(o).ID = Kleinanzeige(node).Objekt THEN
-                    NewText 4, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), colour&("fg"), "r"
+                    NewText 5, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), colour&("fg"), "r"
                 END IF
             LOOP UNTIL o = max(2)
-            NewText 5, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), colour&("fg"), "r"
-            NewText 6, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), colour&("fg"), "r"
-            NewText 7, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), colour&("fg"), "r"
-            NewText 8, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), colour&("fg"), "r"
-            NewMenItem 10, 0, "<- Abbrechen", "back"
-            NewMenItem 10, 16, "Bearbeiten", "edit"
-            NewMenItem 10, 30, "L" + CHR$(148) + "schen", "delete"
-            NewMenItem 10, 41, "Kopieren", "copy"
+            NewText 6, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), colour&("fg"), "r"
+            NewText 7, 0, "Telefon:      " + RTRIM$(Kleinanzeige(node).Telefon), colour&("fg"), "r"
+            NewText 8, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), colour&("fg"), "r"
+            NewText 9, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), colour&("fg"), "r"
+            NewMenItem 11, 0, "<- Abbrechen", "back"
+            NewMenItem 11, 16, "Bearbeiten", "edit"
+            NewMenItem 11, 30, "L" + CHR$(148) + "schen", "delete"
+            NewMenItem 11, 41, "Kopieren", "copy"
             RunMenu 1, 0, "KLEINANZEIGE"
         CASE "vea"
             NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Veranstalter(node).Kuerzel), colour&("fg"), "r"
@@ -1235,7 +1236,7 @@ SUB edit (listID$, node)
                 arraydata$(5, a) = LST$(Ausgabe(a).Monat): IF Ausgabe(a).Monat = Kleinanzeige(node).Ausgabe THEN standard = a
             LOOP UNTIL a = max(3): maxad(5) = max(3)
             NewSelector 7, 0, "Ausgabe:      ", 5, "asg", standard
-            NewInput 8, 0, "Telefon:      ", LST$(Kleinanzeige(node).Telefon), 1
+            NewInput 8, 0, "Telefon:      ", RTRIM$(Kleinanzeige(node).Telefon), 1
             NewInput 9, 0, "Name:         ", RTRIM$(Kleinanzeige(node).Name), 0
             NewInput 10, 0, "Chiffre:      ", RTRIM$(Kleinanzeige(node).Chiffre), 0
             NewInput 11, 0, "Notiz:        ", RTRIM$(Kleinanzeige(node).Notiz), 0
@@ -1539,7 +1540,9 @@ FUNCTION search (listID$, placeholder$)
                             searched$(1) = Konto(node).BIC: searched$(2) = Konto(node).IBAN: searched$(3) = Konto(node).Inhaber
                             searchpart 3
                         CASE "rbk"
-                            searched$(1) = Rubrik(node).Kuerzel: searched$(2) = Objekt(Rubrik(node).Objekt).Name: searched$(3) = Rubrik(node).Name
+                            searched$(1) = Rubrik(node).Kuerzel
+                            searched$(2) = Objekt(Rubrik(node).Objekt).Name
+                            searched$(3) = Rubrik(node).Name
                             searchpart 3
                         CASE "vea"
                             d = 0: DO: d = d + 1
@@ -1555,7 +1558,7 @@ FUNCTION search (listID$, placeholder$)
                             searched$(1) = LST$(Veranstaltung(node).ID): searched$(2) = LST$(Veranstaltung(node).Ausgabe): searched$(3) = Veranstaltung(node).Datum: searched$(4) = Veranstaltung(node).Veranstalter: searched$(5) = Veranstaltung(node).Rubrik: searched$(6) = Veranstaltung(node).Zeit1: searched$(7) = Veranstaltung(node).Zeit2: searched$(8) = Veranstaltung(node).Titel: searched$(9) = Veranstaltung(node).Text
                             searchpart 9
                         CASE "kaz"
-                            searched$(1) = Kleinanzeige(node).Kategorie1: searched$(2) = Kleinanzeige(node).Kategorie2: searched$(3) = Kleinanzeige(node).Kategorie3: searched$(4) = Kleinanzeige(node).Text: searched$(5) = Objekt(Kleinanzeige(node).Objekt).Name: searched$(6) = LST$(Kleinanzeige(node).Ausgabe): searched$(7) = LST$(Kleinanzeige(node).Telefon): searched$(8) = Kleinanzeige(node).Name: searched$(9) = Kleinanzeige(node).Chiffre: searched$(10) = Kleinanzeige(node).Notiz: searched$(11) = Kleinanzeige(node).Titel
+                            searched$(1) = Kleinanzeige(node).Kategorie1: searched$(2) = Kleinanzeige(node).Kategorie2: searched$(3) = Kleinanzeige(node).Kategorie3: searched$(4) = Kleinanzeige(node).Text: searched$(5) = Objekt(Kleinanzeige(node).Objekt).Name: searched$(6) = LST$(Kleinanzeige(node).Ausgabe): searched$(7) = Kleinanzeige(node).Telefon: searched$(8) = Kleinanzeige(node).Name: searched$(9) = Kleinanzeige(node).Chiffre: searched$(10) = Kleinanzeige(node).Notiz: searched$(11) = Kleinanzeige(node).Titel
                             searchpart 11
                         CASE "kat"
                             searched$(1) = Kategorie(node).Kuerzel: searched$(2) = Objekt(Kategorie(node).Objekt).Name: searched$(3) = Kategorie(node).Name
@@ -2566,6 +2569,7 @@ SUB RunMenu (selectedm, layout, titel$)
                 IF type$(selectedm) = "input" THEN
                     IF Taste$ <> "" THEN
                         IF Taste$ = CHR$(8) AND g(selectedm) > 0 AND allsel(selectedm) = 0 THEN
+                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
                             g(selectedm) = g(selectedm) - 1: char$(selectedm, g(selectedm) + 1) = ""
                             IF g(selectedm) < overflowlimit(selectedm) * overflow(selectedm) AND overflow(selectedm) > 0 THEN
                                 LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
@@ -2573,6 +2577,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             END IF
                             'reduce overflow here
                         ELSEIF Taste$ = CHR$(8) AND g(selectedm) > 0 AND allsel(selectedm) = 1 THEN
+                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
                             g(selectedm) = 0: DO: g(selectedm) = g(selectedm) + 1: char$(selectedm, g(selectedm)) = "": LOOP UNTIL g(selectedm) = gbf(selectedm): g(selectedm) = 0: PRINT " "
                             allsel(selectedm) = 0
                             overflow = -1: DO: overflow = overflow + 1
@@ -3602,7 +3607,7 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                 FORMkazkat2$ = "@KAZ_Rubrik2:<$>"
                 OPEN netpath$ + "export\KAZ_" + ausgabe$ + "(" + username$ + ").XTG" FOR OUTPUT AS #5
                 'header
-                PRINT #5, "<v1.70><e1>"
+                PRINT #5, "<v1.70><e10>"
                 PRINT #5, FORMkazkat1$ + "Aktivit" + CHR$(228) + "ten"
                 'variable content
                 kt = 0: DO: kt = kt + 1
@@ -3690,11 +3695,11 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                         prog = prog + 1
                                         progressBar 0, prog, dif
                                         quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT(prog / dif * 100)) + "%", 1, 1, colour&("fg"), colour&("bg")
-                                        IF Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND Veranstaltung(v).Datum = Datum$ AND OrtF$(v) = Ort(ot).Name THEN
+                                        IF (Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND RTRIM$(Veranstaltung(v).Datum) = Datum$ AND OrtF$(v) = Ort(ot).Name) OR (Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND RTRIM$(Veranstaltung(v).Datum) = Datum$ AND RTRIM$(Veranstaltung(v).Veranstalter) = "" AND RTRIM$(Veranstaltung(v).Ort) = Ort(ot).Name) THEN
                                             'headers
                                             IF printedd(d) = 0 THEN
                                                 printedd(d) = 1
-                                                PRINT #5, FORMverdatum$ + LST$(d) + ". " + monthstr$(m)
+                                                PRINT #5, FORMverdatum$ + LST$(d) + ". " + LST$(m) + "."
                                             END IF
                                             IF printed(r) = 0 THEN
                                                 printed(r) = 1
@@ -3706,7 +3711,7 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                             END IF
 
                                             'content-assembling
-                                            IF Veranstaltung(v).Zeitcode <> "" THEN
+                                            IF RTRIM$(Veranstaltung(v).Zeitcode) <> "" THEN
                                                 IF Veranstaltung(v).Zeit3 <> "00.00" THEN
                                                     vtime$ = RTRIM$(Veranstaltung(v).Zeit1) + RTRIM$(Veranstaltung(v).Zeitcode) + RTRIM$(Veranstaltung(v).Zeit2) + RTRIM$(Veranstaltung(v).Zeitcode) + RTRIM$(Veranstaltung(v).Zeit3) + " "
                                                 ELSE
@@ -3715,18 +3720,29 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                             ELSE
                                                 vtime$ = RTRIM$(Veranstaltung(v).Zeit1) + " "
                                             END IF
-                                            IF RTRIM$(Veranstaltung(v).Veranstalter) <> "" THEN vort$ = "; " + RTRIM$(Veranstaltung(v).Veranstalter)
-                                            va = 0: DO: va = va + 1
-                                                IF Veranstalter(va).Name = Veranstaltung(v).Veranstalter THEN
-                                                    dd = 0: DO: dd = dd + 1
-                                                        IF Adresse(dd).ID = Veranstalter(va).Adresse THEN
-                                                            vort$ = vort$ + ", " + RTRIM$(Adresse(dd).Strasse)
-                                                        END IF
-                                                    LOOP UNTIL dd = max(6)
-                                                END IF
-                                            LOOP UNTIL va = max(9)
+                                            IF RTRIM$(Veranstaltung(v).Veranstalter) <> "" THEN
+                                                vort$ = "; " + RTRIM$(Veranstaltung(v).Veranstalter)
+                                                va = 0: DO: va = va + 1
+                                                    IF Veranstalter(va).Name = Veranstaltung(v).Veranstalter THEN
+                                                        PRINT "1 yes"
+                                                        _DELAY 0.1
+                                                        dd = 0: DO: dd = dd + 1
+                                                            IF Adresse(dd).ID = Veranstalter(va).Adresse THEN
+                                                                PRINT "2 yes"
+                                                                SLEEP
+                                                                vort$ = vort$ + ", " + RTRIM$(Adresse(dd).Strasse)
+                                                            END IF
+                                                        LOOP UNTIL dd = max(6)
+                                                    END IF
+                                                LOOP UNTIL va = max(9)
+                                            END IF
                                             'content-printing
-                                            PRINT #5, FORMvertitel$ + vtime$ + RTRIM$(Veranstaltung(v).Titel) + " " + FORMvertext$ + RTRIM$(Veranstaltung(v).Text) + vort$ + vanm$
+                                            IF RTRIM$(Veranstaltung(v).TextLang) <> "" THEN
+                                                PRINT #5, FORMvernormal$ + "<B>" + vtime$ + RTRIM$(Veranstaltung(v).Titel) + " <P>" + FORMvertext$ + RTRIM$(Veranstaltung(v).TextLang) + vort$ + vadr$
+                                            ELSE
+                                                PRINT #5, FORMvernormal$ + "<B>" + vtime$ + RTRIM$(Veranstaltung(v).Titel) + " <P>" + FORMvertext$ + RTRIM$(Veranstaltung(v).Text) + vort$ + vadr$
+                                            END IF
+                                            vort$ = "": vadr$ = ""
                                         END IF
                                     LOOP UNTIL v = max(11)
                                 LOOP UNTIL ot = max(4)
@@ -3772,6 +3788,8 @@ FUNCTION OrtF$ (v)
         IF RTRIM$(Veranstalter(vva).Kuerzel) + ", " + RTRIM$(Veranstalter(vva).Name) = RTRIM$(Veranstaltung(v).Veranstalter) THEN
             ddd = 0: DO: ddd = ddd + 1
                 IF Adresse(ddd).ID = Veranstalter(vva).Adresse THEN
+                    vadr$ = ", " + RTRIM$(Adresse(ddd).Strasse)
+                    IF RTRIM$(Adresse(ddd).Ort) <> "Bremen" THEN vadr$ = vadr$ + ", " + LST$(Adresse(ddd).PLZ) + " " + RTRIM$(Adresse(ddd).Ort)
                     OrtF$ = Adresse(ddd).Ort
                 END IF
             LOOP UNTIL ddd = max(6)
@@ -4229,7 +4247,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Kleinanzeige(ka).Titel = Ost$(Kleinanzeige(ka).Titel)
                     Kleinanzeige(ka).Objekt = Ova(Kleinanzeige(ka).Objekt)
                     Kleinanzeige(ka).Ausgabe = Ova(Kleinanzeige(ka).Ausgabe)
-                    Kleinanzeige(ka).Telefon = Ova(Kleinanzeige(ka).Telefon)
+                    Kleinanzeige(ka).Telefon = Ost$(Kleinanzeige(ka).Telefon)
                     Kleinanzeige(ka).Name = Ost$(Kleinanzeige(ka).Name)
                     Kleinanzeige(ka).Chiffre = Ost$(Kleinanzeige(ka).Chiffre)
                     Kleinanzeige(ka).Notiz = Ost$(Kleinanzeige(ka).Notiz)
@@ -4372,7 +4390,7 @@ SUB clearobs (type$)
                     Kleinanzeige(ka).Titel = Cst$(Kleinanzeige(ka).Titel)
                     Kleinanzeige(ka).Objekt = Cva(Kleinanzeige(ka).Objekt)
                     Kleinanzeige(ka).Ausgabe = Cva(Kleinanzeige(ka).Ausgabe)
-                    Kleinanzeige(ka).Telefon = Cva(Kleinanzeige(ka).Telefon)
+                    Kleinanzeige(ka).Telefon = Cst$(Kleinanzeige(ka).Telefon)
                     Kleinanzeige(ka).Name = Cst$(Kleinanzeige(ka).Name)
                     Kleinanzeige(ka).Chiffre = Cst$(Kleinanzeige(ka).Chiffre)
                     Kleinanzeige(ka).Notiz = Cst$(Kleinanzeige(ka).Notiz)
@@ -4581,7 +4599,7 @@ SUB resetToStandard (type$)
             Rubrik(9).Kuerzel = "KU": Rubrik(9).Objekt = 1: Rubrik(9).Name = "Kunst"
             Rubrik(10).Kuerzel = "KI": Rubrik(10).Objekt = 1: Rubrik(10).Name = "Kinder"
             Rubrik(11).Kuerzel = "DI": Rubrik(11).Objekt = 1: Rubrik(11).Name = "Diverses"
-            Rubrik(12).Kuerzel = "FU": Rubrik(12).Objekt = 1: Rubrik(12).Name = "Fuhrungen"
+            Rubrik(12).Kuerzel = "FU": Rubrik(12).Objekt = 1: Rubrik(12).Name = "F" + CHR$(129) + "hrungen"
             Rubrik(13).Kuerzel = "TR": Rubrik(13).Objekt = 1: Rubrik(13).Name = "Treffs"
             Rubrik(14).Kuerzel = "FL": Rubrik(14).Objekt = 1: Rubrik(14).Name = "Flohmarkt"
             Rubrik(15).Kuerzel = "LE": Rubrik(15).Objekt = 1: Rubrik(15).Name = "Lesung"
