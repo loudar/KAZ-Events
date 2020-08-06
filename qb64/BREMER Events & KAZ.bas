@@ -33,8 +33,6 @@ END IF
 
 restart:
 restart = 0
-COLOR colour&("black"), colour&("white")
-CLS
 CLOSE
 CLEAR
 
@@ -229,6 +227,8 @@ NEXT
 
 REM $INCLUDE:'code/FONTS.BI'
 
+COLOR colour&("fg"), colour&("bg")
+CLS
 loadall
 
 loginmenu:
@@ -289,7 +289,7 @@ DO
     SELECT CASE endparameter$ 'alle endparameter mussten hier zu finden sein
         CASE "start"
             NewMenItem 1, 0, "PK", "pk"
-            NewMenItem 2, 0, "KAZ", "kaz"
+            NewMenItem 2, 0, "KAZ", "ka"
             NewMenItem 3, 0, "Benutzer", "usr"
             NewMenItem 4, 0, "Adressen", "aov"
             IF admin = 1 THEN NewMenItem 5, 0, "Ausgaben", "asg"
@@ -759,7 +759,7 @@ DO
                     Kleinanzeige(node).Name = UserInput$(4)
                     Kleinanzeige(node).Titel = UserInput$(5)
                     Kleinanzeige(node).Text = UserInput$(6)
-                    Kleinanzeige(node).Objekt = Objekt(selected(7)).ID
+                    Kleinanzeige(node).Objekt = selected(7)
                     Kleinanzeige(node).Ausgabe = Ausgabe(selected(8)).Monat
                     Kleinanzeige(node).Telefon = UserInput$(9)
                     Kleinanzeige(node).Chiffre = UserInput$(10)
@@ -993,7 +993,7 @@ DO
                             node = max(12)
                         END IF
                         Kategorie(node).Kuerzel = UserInput$(1)
-                        Kategorie(node).Objekt = VAL(UserInput$(2))
+                        Kategorie(node).Objekt = selected(2)
                         Kategorie(node).Name = UserInput$(3)
                         writeBinary "kat"
                         IF readBinary("kat") = 1 THEN
@@ -1186,19 +1186,19 @@ SUB edit (listID$, node)
             NewSelector 1, 0, "Ausgabe:      ", 1, "asg", standard
             NewDate 2, 0, "Datum:        ", RTRIM$(Veranstaltung(node).Datum)
             ot = 0: DO: ot = ot + 1
-                arraydata$(2, ot) = RTRIM$(Ort(ot).Name): IF Ort(ot).Name = RTRIM$(Veranstaltung(node).Ort) THEN standard = ot
+                arraydata$(2, ot) = RTRIM$(Ort(ot).Name): IF RTRIM$(Ort(ot).Name) = RTRIM$(Veranstaltung(node).Ort) THEN standard = ot
             LOOP UNTIL ot = max(4): maxad(2) = max(4)
             NewSelector 3, 0, "Ort:          ", 2, "ort", standard
             IF max(9) > 0 THEN
                 va = 0: DO: va = va + 1
-                    arraydata$(3, va) = RTRIM$(Veranstalter(va).Kuerzel) + ", " + RTRIM$(Veranstalter(va).Name): IF Veranstalter(va).Name = RTRIM$(Veranstaltung(node).Veranstalter) THEN standard = va
+                    arraydata$(3, va) = RTRIM$(Veranstalter(va).Kuerzel) + ", " + RTRIM$(Veranstalter(va).Name): IF RTRIM$(Veranstalter(va).Name) = RTRIM$(Veranstaltung(node).Veranstalter) THEN standard = va
                 LOOP UNTIL max(9): maxad(3) = max(9)
                 NewSelector 4, 0, "Veranstalter: ", 3, "vea", standard
             ELSE
                 NewMenItem 4, 0, "Neuen Veranstalter erstellen", "new"
             END IF
             r = 0: DO: r = r + 1
-                arraydata$(4, r) = RTRIM$(Rubrik(r).Name): IF Rubrik(r).Name = RTRIM$(Veranstaltung(node).Rubrik) THEN standard = r
+                arraydata$(4, r) = RTRIM$(Rubrik(r).Name): IF RTRIM$(Rubrik(r).Name) = RTRIM$(Veranstaltung(node).Rubrik) THEN standard = r
             LOOP UNTIL max(8): maxad(4) = max(8)
             NewSelector 5, 0, "Rubrik:       ", 4, "rbk", standard
             NewTime 6, 0, "Zeit 1:       ", RTRIM$(Veranstaltung(node).Zeit1)
@@ -1215,29 +1215,29 @@ SUB edit (listID$, node)
             RunMenu 1, 0, "VERANSTALTUNG BEARBEITEN"
         CASE "kaz"
             kt = 0: DO: kt = kt + 1
-                arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): IF Kategorie(kt).Name = RTRIM$(Kleinanzeige(node).Kategorie1) THEN standard = kt
+                arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): IF RTRIM$(Kategorie(kt).Name) = RTRIM$(Kleinanzeige(node).Kategorie1) THEN standard = kt
             LOOP UNTIL kt = max(12): maxad(1) = max(12)
             NewSelector 1, 0, "Kategorie 1:  ", 1, "rbk", standard
             kt = 0: DO: kt = kt + 1
-                arraydata$(2, kt) = RTRIM$(Kategorie(kt).Name): IF Kategorie(kt).Name = RTRIM$(Kleinanzeige(node).Kategorie2) THEN standard = kt
+                arraydata$(2, kt) = RTRIM$(Kategorie(kt).Name): IF RTRIM$(Kategorie(kt).Name) = RTRIM$(Kleinanzeige(node).Kategorie2) THEN standard = kt
             LOOP UNTIL kt = max(12): maxad(2) = max(12)
             NewSelector 2, 0, "Kategorie 2:  ", 2, "rbk", standard
             kt = 0: DO: kt = kt + 1
-                arraydata$(3, kt) = RTRIM$(Kategorie(kt).Name): IF Kategorie(kt).Name = RTRIM$(Kleinanzeige(node).Kategorie3) THEN standard = kt
+                arraydata$(3, kt) = RTRIM$(Kategorie(kt).Name): IF RTRIM$(Kategorie(kt).Name) = RTRIM$(Kleinanzeige(node).Kategorie3) THEN standard = kt
             LOOP UNTIL kt = max(12): maxad(3) = max(12)
             NewSelector 3, 0, "Kategorie 3:  ", 3, "rbk", standard
-            NewInput 4, 0, "Text:         ", RTRIM$(Kleinanzeige(node).Text), 0
+            NewInput 4, 0, "Name:         ", RTRIM$(Kleinanzeige(node).Name), 0
             NewInput 5, 0, "Titel:        ", RTRIM$(Kleinanzeige(node).Titel), 0
+            NewInput 6, 0, "Text:         ", RTRIM$(Kleinanzeige(node).Text), 0
             o = 0: DO: o = o + 1
                 arraydata$(4, o) = RTRIM$(Objekt(o).Name): IF Objekt(o).ID = Kleinanzeige(node).Objekt THEN standard = o
             LOOP UNTIL o = max(2): maxad(4) = max(2)
-            NewSelector 6, 0, "Objekt:       ", 4, "obj", standard
+            NewSelector 7, 0, "Objekt:       ", 4, "obj", standard
             a = 0: DO: a = a + 1
                 arraydata$(5, a) = LST$(Ausgabe(a).Monat): IF Ausgabe(a).Monat = Kleinanzeige(node).Ausgabe THEN standard = a
             LOOP UNTIL a = max(3): maxad(5) = max(3)
-            NewSelector 7, 0, "Ausgabe:      ", 5, "asg", standard
-            NewInput 8, 0, "Telefon:      ", RTRIM$(Kleinanzeige(node).Telefon), 1
-            NewInput 9, 0, "Name:         ", RTRIM$(Kleinanzeige(node).Name), 0
+            NewSelector 8, 0, "Ausgabe:      ", 5, "asg", standard
+            NewInput 9, 0, "Telefon:      ", RTRIM$(Kleinanzeige(node).Telefon), 1
             NewInput 10, 0, "Chiffre:      ", RTRIM$(Kleinanzeige(node).Chiffre), 0
             NewInput 11, 0, "Notiz:        ", RTRIM$(Kleinanzeige(node).Notiz), 0
             NewMenItem 13, 0, "Speichern", "save"
@@ -1407,12 +1407,13 @@ FUNCTION search (listID$, placeholder$)
             IF mousebutton = -1 THEN
                 IF mousey >= buttonsly AND mousey <= buttonsuy THEN 'close button
                     IF mousex >= closebuttonlx AND mousex <= closebuttonux THEN
+                        logThis "Programm durch X-Button beendet."
                         SYSTEM
-                        IF mousex >= minbuttonlx AND mousex <= minbuttonux THEN 'minimize button
-                            minimize
-                            IF maximized = 1 THEN
-                                GOTO reprintsearch
-                            END IF
+                    END IF
+                    IF mousex >= minbuttonlx AND mousex <= minbuttonux THEN 'minimize button
+                        minimize
+                        IF maximized = 1 THEN
+                            GOTO reprintsearch
                         END IF
                     END IF
                 END IF
@@ -1945,7 +1946,6 @@ SUB RunMenu (selectedm, layout, titel$)
                                 SYSTEM
                             END IF
                             IF mousex >= minbuttonlx AND mousex <= minbuttonux THEN 'minimize button
-                                logThis "Programm minimiert."
                                 minimize
                                 IF maximized = 1 THEN
                                     change = 1
@@ -2592,7 +2592,7 @@ SUB RunMenu (selectedm, layout, titel$)
                         DO
                             ac = ac + 1
                             IF number(selectedm) = 1 THEN
-                                IF ac$(ac) = Taste$ AND ASC(Taste$) > 47 AND ASC(Taste$) < 58 THEN
+                                IF ac$(ac) = Taste$ AND ((ASC(Taste$) > 47 AND ASC(Taste$) < 58) OR Taste$ = "/" OR Taste$ = " " OR Taste$ = "." OR Taste$ = ",") THEN
                                     g(selectedm) = g(selectedm) + 1
                                     char$(selectedm, g(selectedm)) = Taste$
                                 END IF
@@ -2607,6 +2607,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             g(selectedm) = g(selectedm) + 1
                             char$(selectedm, g(selectedm)) = replace$(Taste$)
                         END IF
+                        Taste$ = ""
                     END IF
                     IF gbf(selectedm) <> g(selectedm) THEN
                         LOCATE firstline + yoffset(selectedm) + overflow(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + gbf(selectedm) - (overflowlimit(selectedm) * overflow(selectedm)) + 2
@@ -3063,6 +3064,7 @@ SUB Background (layout, titel$, maintrigger)
 END SUB
 
 SUB minimize
+    logThis "Programm maximiert."
     hwnd& = _WINDOWHANDLE 'need the windows handle to play with it
     IF username$ <> "" THEN
         loginstring$ = "Angemeldet als: " + username$
@@ -3601,16 +3603,26 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
     SELECT CASE listID$
         CASE "kaz"
             IF max(10) > 0 THEN
-                FORMkaztitel$ = "@KAZ_Titel:<$z6.5f" + CHR$(34) + "Swis721 BlkCn BT" + CHR$(34) + ">"
-                FORMkaztext$ = "<$z6.5f" + CHR$(34) + "Swis721 Cn BT" + CHR$(34) + ">"
+                FORMkaztitel$ = "@KAZ_Titel:<f$>"
+                FORMkaztext$ = "@KAZ_Normal"
                 FORMkazkat1$ = "@KAZ_Rubrik:<f$>"
                 FORMkazkat2$ = "@KAZ_Rubrik2:<$>"
                 OPEN netpath$ + "export\KAZ_" + ausgabe$ + "(" + username$ + ").XTG" FOR OUTPUT AS #5
                 'header
                 PRINT #5, "<v1.70><e10>"
-                PRINT #5, FORMkazkat1$ + "Aktivit" + CHR$(228) + "ten"
                 'variable content
                 kt = 0: DO: kt = kt + 1
+                    SELECT CASE RTRIM$(Kategorie(kt).Name)
+                        CASE "Kurse/Workshops/Seminare": PRINT #5, FORMkazkat1$ + "Aktivit" + CHR$(228) + "ten"
+                        CASE "Frau sucht Mann": PRINT #5, FORMkazkat1$ + "Kontakte"
+                        CASE "Mietgesuche": PRINT #5, FORMkazkat1$ + "Vermietung"
+                        CASE "Stellen- & Jobangebote": PRINT #5, FORMkazkat1$ + "Stellenmarkt"
+                        CASE "Fahrzeug-Verleih": PRINT #5, FORMkazkat1$ + "Fahrzeuge"
+                        CASE "Sonstiger Ankauf": PRINT #5, FORMkazkat1$ + "Handel"
+                        CASE "Veranstaltungen": PRINT #5, FORMkazkat1$ + "Treffs"
+                        CASE "Bands": PRINT #5, FORMkazkat1$ + "Musik"
+                        CASE "Pauschal/Fl" + CHR$(129) + "ge": PRINT #5, FORMkazkat1$ + "Reisen"
+                    END SELECT
                     printed(kt) = 0
                     ka = 0: DO: ka = ka + 1
                         progressBar 0, ka + (max(10) * (kt - 1)), (max(10) * max(12))
@@ -3619,31 +3631,15 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                         IF Kleinanzeige(ka).Kategorie1 = Kategorie(kt).Name AND Kleinanzeige(ka).Ausgabe = VAL(ausgabe$) THEN
                             IF printed(kt) = 0 THEN
                                 printed(kt) = 1
-                                PRINT #5, FORMkazkat2$ + RTRIM$(Kategorie(kt).Name)
+                                IF RTRIM$(Kategorie(kt).Name) <> "Verschiedenes" THEN
+                                    PRINT #5, FORMkazkat2$ + RTRIM$(Kategorie(kt).Name)
+                                ELSE
+                                    PRINT #5, FORMkazkat1$ + RTRIM$(Kategorie(kt).Name)
+                                END IF
                             END IF
-                            PRINT #5, FORMkaztitel$ + RTRIM$(Kleinanzeige(ka).Titel) + FORMkaztext$ + RTRIM$(Kleinanzeige(ka).Text)
+                            PRINT #5, FORMkaztitel$ + RTRIM$(Kleinanzeige(ka).Titel) + FORMkaztext$ + RTRIM$(Kleinanzeige(ka).Text) + " [T]" + RTRIM$(Kleinanzeige(ka).Telefon)
                         END IF
                     LOOP UNTIL ka = max(10)
-                    SELECT CASE kt 'rewrite to new categories
-                        CASE 4
-                            PRINT #5, FORMkazkat1$ + "Kontakte"
-                        CASE 12
-                            PRINT #5, FORMkazkat1$ + "Vermietung"
-                        CASE 13
-                            PRINT #5, FORMkazkat1$ + "Stellenmarkt"
-                        CASE 16
-                            PRINT #5, FORMkazkat1$ + "Fahrzeuge"
-                        CASE 17
-                            PRINT #5, FORMkazkat1$ + "Handel"
-                        CASE 19
-                            PRINT #5, FORMkazkat1$ + "Treffs"
-                        CASE 20
-                            PRINT #5, FORMkazkat1$ + "Musik"
-                        CASE 21
-                            PRINT #5, FORMkazkat1$ + "Reisen"
-                        CASE 23
-                            PRINT #5, FORMkazkat1$ + RTRIM$(Kategorie(kt + 1).Name)
-                    END SELECT
                 LOOP UNTIL kt = max(12) - 1
                 progressBar 0, max(10) * max(12), (max(10) * max(12))
                 COLOR colour&("fg"), colour&("bg")
@@ -4277,7 +4273,7 @@ SUB obscure (type$) 'only obscures data, not make it entirely inaccessible :D
                     Kategorie(kt).Kuerzel = Ost$(Kategorie(kt).Kuerzel)
                     Kategorie(kt).Objekt = Ova(Kategorie(kt).Objekt)
                     Kategorie(kt).Name = Ost$(Kategorie(kt).Name)
-                LOOP UNTIL kt = max(8)
+                LOOP UNTIL kt = max(12)
             END IF
     END SELECT
 END SUB
