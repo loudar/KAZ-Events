@@ -2991,6 +2991,17 @@ SUB Background (layout, titel$, maintrigger)
     IF maintrigger = 1 THEN
         COLOR colour&("fg"), colour&("bg")
         CLS
+        IF darkmode = 1 THEN
+            newgcolor 1, 1, 0, colour&("black")
+            newgcolor 1, 2, 100, _RGBA(0, 0, 25, 255)
+            newgradient 1, 2
+            drawgradient 1, 0, maxx, 0, maxy, "v"
+        ELSE
+            newgcolor 1, 1, 0, colour&("white")
+            newgcolor 1, 2, 100, _RGBA(240, 240, 255, 255)
+            newgradient 1, 2
+            drawgradient 1, 0, maxx, 0, maxy, "v"
+        END IF
         'borderthickness = 5
         'rectangle 0, 0, maxx, borderthickness, 0, colour&("fg"), "BF"
         'rectangle 0, 0, borderthickness, maxy, 0, colour&("fg"), "BF"
@@ -4675,6 +4686,96 @@ FUNCTION API_request (URL AS STRING, File AS STRING)
 END FUNCTION
 
 REM $INCLUDE:'code/SaveImage.BM'
+
+SUB newgcolor (gradient, gcolor, gpos, col&)
+    IF gcolor > 0 AND gcolor <= maxcolors THEN
+        gcol&(gradient, gcolor) = col&
+        gpos(gradient, gcolor) = gpos
+    END IF
+END SUB
+
+SUB newgradient (gradient, maxgrcolors)
+    IF gradient > 0 AND gradient <= maxgradients AND maxgrcolors > 0 AND maxgrcolors <= maxcolors THEN
+        maxgcol&(gradient) = maxgrcolors
+    END IF
+END SUB
+
+FUNCTION gradientcolor& (gradient, grposition)
+    IF maxgcol&(gradient) > 0 THEN
+        grcolor = 0: DO: grcolor = grcolor + 1
+            IF grposition = gpos(gradient, grcolor) THEN
+                gradientcolor& = gcol&(gradient, grcolor)
+                EXIT FUNCTION
+            ELSE
+                IF grcolor < maxgcol&(gradient) THEN
+                    IF grposition > gpos(gradient, grcolor) AND grposition < gpos(gradient, grcolor + 1) THEN
+                        r1 = _RED(gcol&(gradient, grcolor))
+                        g1 = _GREEN(gcol&(gradient, grcolor))
+                        b1 = _BLUE(gcol&(gradient, grcolor))
+                        a1 = _ALPHA(gcol&(gradient, grcolor))
+                        r2 = _RED(gcol&(gradient, grcolor + 1))
+                        g2 = _GREEN(gcol&(gradient, grcolor + 1))
+                        b2 = _BLUE(gcol&(gradient, grcolor + 1))
+                        a2 = _ALPHA(gcol&(gradient, grcolor + 1))
+                        p1 = gpos(gradient, grcolor)
+                        p2 = gpos(gradient, grcolor + 1)
+                        f = (grposition - p1) / (p2 - p1)
+                        IF r1 > r2 THEN
+                            r = r1 - ((r1 - r2) * f)
+                        ELSEIF r1 = r2 THEN
+                            r = r1
+                        ELSE
+                            r = r1 + ((r2 - r1) * f)
+                        END IF
+                        IF g1 > g2 THEN
+                            g = g1 - ((g1 - g2) * f)
+                        ELSEIF g1 = g2 THEN
+                            g = g1
+                        ELSE
+                            g = g1 + ((g2 - g1) * f)
+                        END IF
+                        IF b1 > b2 THEN
+                            b = b1 - ((b1 - b2) * f)
+                        ELSEIF b1 = b2 THEN
+                            b = b1
+                        ELSE
+                            b = b1 + ((b2 - b1) * f)
+                        END IF
+                        IF a1 > a2 THEN
+                            a = a1 - ((a1 - a2) * f)
+                        ELSEIF a1 = a2 THEN
+                            a = a1
+                        ELSE
+                            a = a1 + ((a2 - a1) * f)
+                        END IF
+                        gradientcolor& = _RGBA(INT(r), INT(g), INT(b), INT(a))
+                        EXIT FUNCTION
+                    END IF
+                END IF
+            END IF
+        LOOP UNTIL grcolor = maxgcol&(gradient)
+    ELSE
+        gradientcolor& = _RGBA(0, 0, 0, 0)
+        EXIT FUNCTION
+    END IF
+END FUNCTION
+
+SUB drawgradient (gradient, lx, ux, ly, uy, orientation$)
+    SELECT CASE orientation$
+        CASE "h"
+            IF ux - lx > 0 THEN
+                rx = 0: DO: rx = rx + 1
+                    LINE (lx + rx, ly)-(lx + rx, uy), gradientcolor&(gradient, rx / (ux - lx) * 100)
+                LOOP UNTIL rx >= ux - lx
+            END IF
+        CASE "v"
+            IF uy - ly > 0 THEN
+                ry = 0: DO: ry = ry + 1
+                    LINE (lx, ly + ry)-(ux, ly + ry), gradientcolor&(gradient, ry / (uy - ly) * 100)
+                LOOP UNTIL ry >= uy - ly
+            END IF
+    END SELECT
+END SUB
 
 FUNCTION colour& (color$)
     SELECT CASE color$

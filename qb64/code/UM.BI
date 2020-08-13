@@ -123,3 +123,11 @@ DIM SHARED minbuttonlx
 DIM SHARED minbuttonux
 DIM SHARED buttonsly
 DIM SHARED buttonsuy
+'gradients
+DIM SHARED maxgradients
+DIM SHARED maxcolors
+maxgradients = 20
+maxcolors = 20 'per gradient
+DIM SHARED gcol&(maxgradients, maxcolors) 'saves color in gradient
+DIM SHARED gpos(maxgradients, maxcolors) 'saves position of color in gradient
+DIM SHARED maxgcol&(maxgradients) 'saves maximum amount of colors in gradients
