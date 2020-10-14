@@ -10,7 +10,7 @@ GOTO restart 'ueberspringt den errorhandler zu beginn
 errorhandler:
 _AUTODISPLAY
 _DEST 0
-COLOR colour&("fg"), colour&("bg")
+COLOR col&("fg"), col&("bg")
 CLS
 LOCATE 5, 5
 logThis "[ Fehler" + STR$(ERR) + "in Zeile" + STR$(_ERRORLINE) + " ]"
@@ -227,7 +227,7 @@ NEXT
 
 REM $INCLUDE:'code/FONTS.BI'
 
-COLOR colour&("fg"), colour&("bg")
+COLOR col&("fg"), col&("bg")
 CLS
 loadall
 
@@ -261,7 +261,7 @@ IF endparameter$ <> "system" THEN
 
     Background 0, "LOGIN", 1
     IF login = 0 THEN
-        COLOR colour&("red"), colour&("transparent")
+        COLOR col&("red"), col&("transparent")
         LOCATE firstline + 1, firstchar: PRINT "[ Anmeldung fehlgeschlagen. ]"
         _DELAY 2
         GOTO loginmenu
@@ -270,7 +270,7 @@ IF endparameter$ <> "system" THEN
     ELSE
         admin = 0
     END IF
-    COLOR colour&("green"), colour&("transparent")
+    COLOR col&("green"), col&("transparent")
     LOCATE firstline + 1, firstchar: PRINT "[ Angemeldet. ]"
     _DELAY 1
 ELSE
@@ -296,18 +296,18 @@ DO
             NewMenItem 5 + admin, 0, "Einstellungen", "settings"
             NewMenItem 6 + admin, 0, "Programm beenden", "system"
             NewMenItem 1, maxrows - 16, "Abmelden", "logout"
-            RunMenu 1, 0, "START"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "pk"
             NewMenItem 1, 0, "Veranstaltungen", "ver"
             NewMenItem 2, 0, "Veranstalter", "vea"
             NewMenItem 3, 0, "Rubriken", "rbk"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "PK"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "ka"
             NewMenItem 1, 0, "Kleinanzeigen", "kaz"
             NewMenItem 2, 0, "Kategorien", "kat"
             NewMenItem 3, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "KAZ"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "ver"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
@@ -316,14 +316,14 @@ DO
             NewMenItem 4 + admin, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(11)), "yellow"
             IF max(11) > 0 THEN newStatus "Neueste: " + RTRIM$(Veranstaltung(max(11)).Titel), "yellow"
-            RunMenu 1, 0, "VERANSTALTUNGEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "asg"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(3)), "yellow"
             IF max(3) > 0 THEN newStatus "Neueste: " + LST$(Ausgabe(max(3)).Monat), "yellow"
-            RunMenu 1, 0, "AUSGABEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "kaz"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
@@ -331,7 +331,7 @@ DO
             NewMenItem 4, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(10)), "yellow"
             IF max(10) > 0 THEN newStatus "Neueste: " + RTRIM$(Kleinanzeige(max(10)).Titel), "yellow"
-            RunMenu 1, 0, "KLEINANZEIGEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "vea"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
@@ -339,13 +339,13 @@ DO
             NewMenItem 4, 0, "<- Abbrechen", "start"
             newStatus "Anzahl: " + LST$(max(9)), "yellow"
             IF max(9) > 0 THEN newStatus "Neuester: " + RTRIM$(Veranstalter(max(9)).Name), "yellow"
-            RunMenu 1, 0, "VERANSTALTER"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "usr"
             IF admin = 1 THEN NewMenItem 1, 0, "Suche", "search"
             IF admin = 1 THEN NewMenItem 2, 0, "Neu", "new"
             NewMenItem 1 + (admin * 2), 0, "Bearbeiten", "edit"
             NewMenItem 2 + (admin * 2), 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "BENUTZER"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
             u = 0: DO: u = u + 1
                 IF RTRIM$(User(u).Name) = username$ THEN node = u
             LOOP UNTIL u >= maxu(1)
@@ -354,37 +354,37 @@ DO
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "RUBRIKEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "aov"
             NewMenItem 1, 0, "Postleitzahlen", "plz"
             NewMenItem 2, 0, "Orte", "ort"
             NewMenItem 3, 0, "Adressen", "adr"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, ""
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "ort"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "ADRESSEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "plz"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "POSTLEITZAHLEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "adr"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "ADRESSEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "kat"
             NewMenItem 1, 0, "Suche", "search"
             NewMenItem 2, 0, "Neu", "new"
             NewMenItem 3, 0, "Drucken", "print"
             NewMenItem 4, 0, "<- Abbrechen", "start"
-            RunMenu 1, 0, "KATEGORIEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
         CASE "settings"
             NewToggle 1, 0, "Dunkles Design", "darkmode"
             NewToggle 2, 0, "Grosses Fenster", "size"
@@ -392,13 +392,13 @@ DO
             NewToggle 4, 0, "Transparenz", "transparency"
             NewSlider 5, 0, 0, 100, "Skalierung", "scale", ((fontheight - 16) / (20 - 16)) * 100
             IF admin = 1 AND timerdifference < 0.2 THEN
-                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", colour&("fg"), "r"
+                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden. SUPERFAST!!!", col&("fg"), "r"
             ELSEIF admin = 1 THEN
-                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden.", colour&("fg"), "r"
+                NewText 6, 0, "Startzeit: " + starttime$ + " Sekunden.", col&("fg"), "r"
             END IF
             NewMenItem 6 + admin, 0, "<- Abbrechen", "start"
             NewMenItem 6 + admin, 16, "Speichern", "save"
-            RunMenu 1, 0, "EINSTELLUNGEN"
+            RunMenu 1, 0, GetMTitle$(endparameter$)
             IF endparameter$ = "save" THEN
                 rfontheight = 16 + ((20 - 16) * (value(3) / 100))
                 OPEN settingspath$ + "settings.bremer" FOR OUTPUT AS #1
@@ -478,7 +478,7 @@ DO
             END SELECT
             CLOSE #6
             printviaprinter
-            NewText 1, 0, "Drucken erfolgreich.", colour&("green"), "r"
+            NewText 1, 0, "Drucken erfolgreich.", col&("green"), "r"
             RunMenu 1, 0, "DRUCKEN"
             _DELAY 2
             endparameter$ = "start"
@@ -550,17 +550,19 @@ DO
                     a = 0: DO: a = a + 1: arraydata$(1, a) = LST$(Ausgabe(a).Monat): LOOP UNTIL a = max(3): maxad(1) = max(3)
                     NewDate 2, 0, "Datum:          ", DATE$
                     NewSelector 3, 0, "Ort:            ", 2, "ort", 1
-                    ot = 0: DO: ot = ot + 1: arraydata$(2, ot) = RTRIM$(Ort(ot).Name): LOOP UNTIL ot = max(4): maxad(2) = max(4)
+                    ot = 0: DO: ot = ot + 1:
+                        arraydata$(2, ot) = RTRIM$(Ort(ot).Kuerzel) + ", " + RTRIM$(Ort(ot).Name)
+                    LOOP UNTIL ot = max(4): maxad(2) = max(4)
                     rejected = 0
                     IF max(9) > 0 THEN
                         NewSelector 4, 0, "Veranstalter:   ", 3, "vea", 1
                         va = 0: DO: va = va + 1
                             IF Veranstalter(va).Kuerzel <> longchar$(MID$(Veranstalter(va).Kuerzel, 1, 1), LEN(Veranstalter(va).Kuerzel)) AND Veranstalter(va).Name <> longchar$(MID$(Veranstalter(va).Name, 1, 1), LEN(Veranstalter(va).Name)) THEN
-                                arraydata$(3, va) = _TRIM$(Veranstalter(va).Kuerzel) + ", " + LTRIM$(RTRIM$(Veranstalter(va).Name))
+                                arraydata$(3, va) = _TRIM$(Veranstalter(va).Kuerzel) + ", " + _TRIM$(Veranstalter(va).Name)
                             ELSE
                                 arraydata$(3, va) = ""
                             END IF
-                        LOOP UNTIL va = max(9): maxad(3) = max(9) ' - rejected
+                        LOOP UNTIL va = max(9): maxad(3) = max(9)
                     ELSE
                         NewMenItem 4, 0, "Neuen Veranstalter erstellen", "new"
                     END IF
@@ -576,9 +578,9 @@ DO
                     NewMenItem 14, 0, "Speichern", "save"
                     NewMenItem 14, 13, "<- Abbrechen", "back"
                     NewMenItem 14, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2) + 1, 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2) + 1, 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 11
-                    RunMenu 1, 0, "NEUE VERANSTALTUNG"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "kaz"
                     NewSelector 1, 0, "Kategorie 1:    ", 1, "kat", 1
                     kt = 0: DO: kt = kt + 1: arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): LOOP UNTIL kt = max(12): maxad(1) = max(12)
@@ -599,9 +601,9 @@ DO
                     NewMenItem 13, 0, "Speichern", "save"
                     NewMenItem 13, 13, "<- Abbrechen", "back"
                     NewMenItem 13, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 10
-                    RunMenu 1, 0, "NEUE KLEINANZEIGE"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "vea"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewInput 2, 0, "Name:           ", "", 0
@@ -618,9 +620,9 @@ DO
                     NewMenItem 9, 0, "Speichern", "save"
                     NewMenItem 9, 13, "<- Abbrechen", "back"
                     NewMenItem 9, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 9
-                    RunMenu 1, 0, "NEUER VERANSTALTER"
+                    RunMenu 1, 0, "NEUER" + GetMTitle$("D" + endparameter$)
                     IF endparameter$ = "new" THEN endparameterbf$ = "adr"
                 CASE "adr"
                     NewSelector 1, 0, "Postleitzahl:   ", 1, "plz", 1
@@ -632,9 +634,9 @@ DO
                     NewMenItem 6, 0, "Speichern", "save"
                     NewMenItem 6, 13, "<- Abbrechen", "back"
                     NewMenItem 6, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 6
-                    RunMenu 1, 0, "NEUE ADRESSE"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "rbk"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewSelector 2, 0, "Objekt:         ", 1, "obj", 1
@@ -643,9 +645,9 @@ DO
                     NewMenItem 5, 0, "Speichern", "save"
                     NewMenItem 5, 13, "<- Abbrechen", "back"
                     NewMenItem 5, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 8
-                    RunMenu 1, 0, "NEUE RUBRIK"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "usr"
                     NewInput 1, 0, "Name:           ", "", 0
                     NewInput 2, 0, "Passwort:       ", "", 0
@@ -655,18 +657,18 @@ DO
                     NewMenItem 7, 0, "Speichern", "save"
                     NewMenItem 7, 13, "<- Abbrechen", "back"
                     NewMenItem 7, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 1
-                    RunMenu 1, 0, "NEUER BENUTZER"
+                    RunMenu 1, 0, "NEUER" + GetMTitle$("D" + endparameter$)
                 CASE "ort"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewInput 2, 0, "Name:           ", "", 0
                     NewMenItem 4, 0, "Speichern", "save"
                     NewMenItem 4, 13, "<- Abbrechen", "back"
                     NewMenItem 4, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 4
-                    RunMenu 1, 0, "NEUER ORT"
+                    RunMenu 1, 0, "NEUER" + GetMTitle$("D" + endparameter$)
                 CASE "plz"
                     NewInput 1, 0, "Postleitzahl:   ", "", 1
                     NewSelector 2, 0, "Ort:            ", 2, "ort", 1
@@ -675,9 +677,9 @@ DO
                     NewMenItem 5, 0, "Speichern", "save"
                     NewMenItem 5, 13, "<- Abbrechen", "back"
                     NewMenItem 5, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 5
-                    RunMenu 1, 0, "NEUE POSTLEITZAHL"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "asg"
                     NewSelector 1, 0, "Objekt:         ", 1, "obj", 1
                     o = 0: DO: o = o + 1: arraydata$(1, o) = RTRIM$(Objekt(o).Name): LOOP UNTIL o = max(2): maxad(2) = max(2)
@@ -687,9 +689,9 @@ DO
                     NewMenItem 6, 0, "Speichern", "save"
                     NewMenItem 6, 13, "<- Abbrechen", "back"
                     NewMenItem 6, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 3
-                    RunMenu 1, 0, "NEUE AUSGABE"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
                 CASE "kat"
                     NewInput 1, 0, "K" + CHR$(129) + "rzel:         ", "", 0
                     NewSelector 2, 0, "Objekt:         ", 1, "obj", 1
@@ -698,9 +700,9 @@ DO
                     NewMenItem 5, 0, "Speichern", "save"
                     NewMenItem 5, 13, "<- Abbrechen", "back"
                     NewMenItem 5, 29, "Einf" + CHR$(129) + "gen", "paste"
-                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
+                    NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
                     listID = 12
-                    RunMenu 1, 0, "NEUE KATEGORIE"
+                    RunMenu 1, 0, "NEUE" + GetMTitle$("D" + endparameter$)
             END SELECT
         CASE "save"
             SELECT CASE endparameterbfbfbf$
@@ -709,7 +711,7 @@ DO
                         IF max(11) > 0 THEN
                             v = 0: DO: v = v + 1
                                 IF Veranstaltung(v).Ausgabe = VAL(UserInput$(1)) AND Veranstaltung(v).Datum = UserInput$(2) AND Veranstaltung(v).Zeit1 = UserInput$(7) AND Veranstaltung(v).Zeit2 = UserInput$(8) AND Veranstaltung(v).Titel = UserInput$(10) THEN
-                                    NewText 1, 0, "Diese Veranstaltung existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparamterbf$ = "ver"
+                                    NewText 1, 0, "Diese Veranstaltung existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparamterbf$ = "ver"
                                 END IF
                             LOOP UNTIL v = max(11)
                         END IF
@@ -738,7 +740,7 @@ DO
                         Veranstaltung(node).TextLang = UserInput$(12)
                         writeBinary "ver"
                         IF readBinary("ver") = 1 THEN
-                            NewText 1, 0, "Veranstaltung " + RTRIM$(Veranstaltung(node).Titel) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Veranstaltung " + RTRIM$(Veranstaltung(node).Titel) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 0.2: endparameter$ = "new": endparameterbf$ = "ver"
@@ -766,7 +768,7 @@ DO
                     Kleinanzeige(node).Notiz = UserInput$(11)
                     writeBinary "kaz"
                     IF readBinary("kaz") = 1 THEN
-                        NewText 1, 0, "Kleinanzeige" + STR$(Kleinanzeige(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
+                        NewText 1, 0, "Kleinanzeige" + STR$(Kleinanzeige(node).ID) + " erfolgreich gespeichert.", col&("green"), "r"
                         RunMenu 1, 0, "SPEICHERN"
                     END IF
                     _DELAY 1: endparameter$ = "new"
@@ -775,10 +777,10 @@ DO
                     IF dontadd = 0 THEN
                         va = 0: DO: va = va + 1
                             IF Veranstalter(va).Kuerzel = UserInput$(1) THEN
-                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
+                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
                             IF Veranstalter(va).Name = UserInput$(2) THEN
-                                NewText 1, 0, "Dieser Veranstalter existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
+                                NewText 1, 0, "Dieser Veranstalter existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "vea"
                             END IF
                         LOOP UNTIL va = max(9)
                     END IF
@@ -801,7 +803,7 @@ DO
                         Veranstalter(node).Notiz = UserInput$(7)
                         writeBinary "vea"
                         IF readBinary("vea") = 1 THEN
-                            NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Veranstalter " + RTRIM$(Veranstalter(node).Name) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -811,7 +813,7 @@ DO
                     IF dontadd = 0 THEN
                         d = 0: DO: d = d + 1
                             IF LST$(Adresse(d).PLZ) = UserInput$(1) AND RTRIM$(Adresse(d).Ort) = UserInput$(2) AND RTRIM$(Adresse(d).Land) = UserInput$(3) AND RTRIM$(Adresse(d).Strasse) = UserInput$(4) THEN
-                                NewText 1, 0, "Diese Adresse existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "adr"
+                                NewText 1, 0, "Diese Adresse existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "adr"
                             END IF
                         LOOP UNTIL d = max(6)
                     END IF
@@ -827,7 +829,7 @@ DO
                         Adresse(node).Strasse = UserInput$(4)
                         writeBinary "adr"
                         IF readBinary("adr") = 1 THEN
-                            NewText 1, 0, "Adresse " + LST$(Adresse(node).ID) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Adresse " + LST$(Adresse(node).ID) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                     END IF
@@ -837,10 +839,10 @@ DO
                     IF dontadd = 0 THEN
                         r = 0: DO: r = r + 1
                             IF Rubrik(r).Kuerzel = UserInput$(1) THEN
-                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "rbk"
+                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "rbk"
                             END IF
                             IF Rubrik(r).Name = UserInput$(1) THEN
-                                NewText 1, 0, "Diese Rubrik existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "rbk"
+                                NewText 1, 0, "Diese Rubrik existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "rbk"
                             END IF
                         LOOP UNTIL r = max(8)
                     END IF
@@ -854,7 +856,7 @@ DO
                         Rubrik(node).Name = UserInput$(3)
                         writeBinary "rbk"
                         IF readBinary("rbk") = 1 THEN
-                            NewText 1, 0, "Rubrik " + RTRIM$(Rubrik(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Rubrik " + RTRIM$(Rubrik(node).Name) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -864,23 +866,23 @@ DO
                     IF dontadd = 0 THEN
                         u = 0: DO: u = u + 1
                             IF User(u).Name = UserInput$(1) THEN
-                                NewText 1, 0, "Benutzername existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN"
+                                NewText 1, 0, "Benutzername existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN"
                                 _DELAY 2: endparameter$ = "start"
                             END IF
                         LOOP UNTIL u = max(1)
                     END IF
-                    IF UserInput$(2) = "" THEN NewText 1, 0, "Passwort darf nicht leer sein.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "start"
+                    IF UserInput$(2) = "" THEN NewText 1, 0, "Passwort darf nicht leer sein.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "start"
                     IF endparameter$ = "save" THEN
                         IF dontadd = 0 THEN
                             max(1) = max(1) + 1
                             node = max(1)
-                            pfp& = Robohash(User(node).Name)
-                            Result = SaveImage(netpath$ + "data\pfp\" + User(node).Name + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
-                            IF Result = 1 THEN 'file already found on drive
-                                KILL exportimage2$ 'delete the old file
-                                Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
-                            END IF
-                            _FREEIMAGE pfp&
+                            'pfp& = Robohash(User(node).Name)
+                            'Result = SaveImage(netpath$ + "data\pfp\" + User(node).Name + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
+                            'IF Result = 1 THEN 'file already found on drive
+                            '    KILL exportimage2$ 'delete the old file
+                            '    Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
+                            'END IF
+                            '_FREEIMAGE pfp&
                         END IF
                         User(node).Name = UserInput$(1)
                         IF dontadd = 0 THEN User(node).Profilbild = User(node).Name + ".png"
@@ -891,7 +893,7 @@ DO
                         User(node).LetzterLogin = DATE$ + "@" + TIME$
                         writeBinary "usr"
                         IF readBinary("usr") = 1 THEN
-                            NewText 1, 0, "Benutzer " + RTRIM$(User(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Benutzer " + RTRIM$(User(node).Name) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -901,7 +903,7 @@ DO
                     IF dontadd = 0 THEN
                         ot = 0: DO: ot = ot + 1
                             IF Ort(ot).Name = UserInput$(2) THEN
-                                NewText 1, 0, "Dieser Ort existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "ort"
+                                NewText 1, 0, "Dieser Ort existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "ort"
                             END IF
                         LOOP UNTIL ot = max(4)
                     END IF
@@ -914,7 +916,7 @@ DO
                         Ort(node).Name = UserInput$(2)
                         writeBinary "ort"
                         IF readBinary("ort") = 1 THEN
-                            NewText 1, 0, "Ort " + RTRIM$(Ort(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Ort " + RTRIM$(Ort(node).Name) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -924,7 +926,7 @@ DO
                     IF dontadd = 0 THEN
                         p = 0: DO: p = p + 1
                             IF PLZ(max(5)).PLZ = VAL(UserInput$(1)) THEN
-                                NewText 1, 0, "Diese Postleitzahl existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "plz"
+                                NewText 1, 0, "Diese Postleitzahl existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "plz"
                             END IF
                         LOOP UNTIL p = max(5)
                     END IF
@@ -938,7 +940,7 @@ DO
                         PLZ(node).Land = UserInput$(3)
                         writeBinary "plz"
                         IF readBinary("plz") = 1 THEN
-                            NewText 1, 0, "Postleitzahl " + LST$(PLZ(node).PLZ) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Postleitzahl " + LST$(PLZ(node).PLZ) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -949,7 +951,7 @@ DO
                         IF max(3) > 0 THEN
                             a = 0: DO: a = a + 1
                                 IF Ausgabe(a).Monat = VAL(UserInput$(2)) THEN
-                                    NewText 1, 0, "Dieser Monat existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "asg"
+                                    NewText 1, 0, "Dieser Monat existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "asg"
                                 END IF
                             LOOP UNTIL a = max(3)
                         END IF
@@ -970,7 +972,7 @@ DO
                         Ausgabe(node).Ende = UserInput$(4)
                         writeBinary "asg"
                         IF readBinary("asg") = 1 THEN
-                            NewText 1, 0, "Ausgabe " + LST$(Ausgabe(node).Monat) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Ausgabe " + LST$(Ausgabe(node).Monat) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 2: endparameter$ = "start"
@@ -980,10 +982,10 @@ DO
                     IF dontadd = 0 THEN
                         kt = 0: DO: kt = kt + 1
                             IF Kategorie(kt).Kuerzel = UserInput$(1) THEN
-                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "kat"
+                                NewText 1, 0, "Dieses K" + CHR$(129) + "rzel existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "kat"
                             END IF
                             IF Kategorie(kt).Name = UserInput$(1) THEN
-                                NewText 1, 0, "Diese Kategorie existiert bereits.", colour&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "kat"
+                                NewText 1, 0, "Diese Kategorie existiert bereits.", col&("red"), "r": RunMenu 1, 0, "SPEICHERN": _DELAY 2: endparameter$ = "new": endparameterbf$ = "kat"
                             END IF
                         LOOP UNTIL kt = max(12)
                     END IF
@@ -997,7 +999,7 @@ DO
                         Kategorie(node).Name = UserInput$(3)
                         writeBinary "kat"
                         IF readBinary("kat") = 1 THEN
-                            NewText 1, 0, "Kategorie " + RTRIM$(Kategorie(node).Name) + " erfolgreich gespeichert.", colour&("green"), "r"
+                            NewText 1, 0, "Kategorie " + RTRIM$(Kategorie(node).Name) + " erfolgreich gespeichert.", col&("green"), "r"
                             RunMenu 1, 0, "SPEICHERN"
                         END IF
                         _DELAY 1: endparameter$ = "new"
@@ -1026,154 +1028,134 @@ END SUB
 SUB display (listID$, node)
     SELECT CASE listID$
         CASE "ver"
-            NewText 1, 0, "Ausgabe:      " + LST$(Veranstaltung(node).Ausgabe), colour&("fg"), "r"
-            NewText 2, 0, "Datum:        " + RTRIM$(Veranstaltung(node).Datum), colour&("fg"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(Veranstaltung(node).Ort), colour&("fg"), "r"
-            NewText 4, 0, "Veranstalter: " + RTRIM$(Veranstaltung(node).Veranstalter), colour&("fg"), "r"
-            NewText 5, 0, "Rubriken:     " + RTRIM$(Veranstaltung(node).Rubrik), colour&("fg"), "r"
+            NewText 1, 0, "Ausgabe:      " + LST$(Veranstaltung(node).Ausgabe), col&("fg"), "r"
+            NewText 2, 0, "Datum:        " + RTRIM$(Veranstaltung(node).Datum), col&("fg"), "r"
+            NewText 3, 0, "Ort:          " + RTRIM$(Veranstaltung(node).Ort), col&("fg"), "r"
+            NewText 4, 0, "Veranstalter: " + RTRIM$(Veranstaltung(node).Veranstalter), col&("fg"), "r"
+            NewText 5, 0, "Rubriken:     " + RTRIM$(Veranstaltung(node).Rubrik), col&("fg"), "r"
             IF RTRIM$(Veranstaltung(node).Zeitcode) = "" THEN
-                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1), colour&("fg"), "r"
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1), col&("fg"), "r"
             ELSEIF RTRIM$(Veranstaltung(node).Zeit3) = "00:00" THEN
-                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2), colour&("fg"), "r"
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2), col&("fg"), "r"
             ELSE
-                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), colour&("fg"), "r"
+                NewText 6, 0, "Zeit:         " + RTRIM$(Veranstaltung(node).Zeit1) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit2) + RTRIM$(Veranstaltung(node).Zeitcode) + RTRIM$(Veranstaltung(node).Zeit3), col&("fg"), "r"
             END IF
-            NewText 7, 0, "Zeitcode:     " + RTRIM$(Veranstaltung(node).Zeitcode), colour&("fg"), "r"
-            NewText 8, 0, "Titel:        " + RTRIM$(Veranstaltung(node).Titel), colour&("fg"), "r"
-            NewText 9, 0, "Text:         " + RTRIM$(Veranstaltung(node).Text), colour&("fg"), "r"
-            NewText 10, 0, "Langer Text: " + RTRIM$(Veranstaltung(node).TextLang), colour&("fg"), "r"
+            NewText 7, 0, "Zeitcode:     " + RTRIM$(Veranstaltung(node).Zeitcode), col&("fg"), "r"
+            NewText 8, 0, "Titel:        " + RTRIM$(Veranstaltung(node).Titel), col&("fg"), "r"
+            NewText 9, 0, "Text:         " + RTRIM$(Veranstaltung(node).Text), col&("fg"), "r"
+            NewText 10, 0, "Langer Text: " + RTRIM$(Veranstaltung(node).TextLang), col&("fg"), "r"
             NewMenItem 12, 0, "<- Abbrechen", "back"
             NewMenItem 12, 16, "Bearbeiten", "edit"
             NewMenItem 12, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 12, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "VERANSTALTUNG"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "kaz"
-            NewText 1, 0, "Kategorien:   " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), colour&("fg"), "r"
-            NewText 2, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), colour&("fg"), "r"
-            NewText 3, 0, "Titel:        " + RTRIM$(Kleinanzeige(node).Titel), colour&("fg"), "r"
-            NewText 4, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), colour&("fg"), "r"
+            NewText 1, 0, "Kategorien:   " + RTRIM$(Kleinanzeige(node).Kategorie1) + ", " + RTRIM$(Kleinanzeige(node).Kategorie2) + ", " + RTRIM$(Kleinanzeige(node).Kategorie3), col&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Kleinanzeige(node).Name), col&("fg"), "r"
+            NewText 3, 0, "Titel:        " + RTRIM$(Kleinanzeige(node).Titel), col&("fg"), "r"
+            NewText 4, 0, "Text:         " + RTRIM$(Kleinanzeige(node).Text), col&("fg"), "r"
             o = 0: DO: o = o + 1
                 IF Objekt(o).ID = Kleinanzeige(node).Objekt THEN
-                    NewText 5, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), colour&("fg"), "r"
+                    NewText 5, 0, "Objekt:       " + RTRIM$(Objekt(o).Name), col&("fg"), "r"
                 END IF
             LOOP UNTIL o = max(2)
-            NewText 6, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), colour&("fg"), "r"
-            NewText 7, 0, "Telefon:      " + RTRIM$(Kleinanzeige(node).Telefon), colour&("fg"), "r"
-            NewText 8, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), colour&("fg"), "r"
-            NewText 9, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), colour&("fg"), "r"
+            NewText 6, 0, "Ausgabe:      " + LST$(Kleinanzeige(node).Ausgabe), col&("fg"), "r"
+            NewText 7, 0, "Telefon:      " + RTRIM$(Kleinanzeige(node).Telefon), col&("fg"), "r"
+            NewText 8, 0, "Chiffre:      " + RTRIM$(Kleinanzeige(node).Chiffre), col&("fg"), "r"
+            NewText 9, 0, "Notiz:        " + RTRIM$(Kleinanzeige(node).Notiz), col&("fg"), "r"
             NewMenItem 11, 0, "<- Abbrechen", "back"
             NewMenItem 11, 16, "Bearbeiten", "edit"
             NewMenItem 11, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 11, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "KLEINANZEIGE"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "vea"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Veranstalter(node).Kuerzel), colour&("fg"), "r"
-            NewText 2, 0, "Name:         " + RTRIM$(Veranstalter(node).Name), colour&("fg"), "r"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Veranstalter(node).Kuerzel), col&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Veranstalter(node).Name), col&("fg"), "r"
             d = 0: DO: d = d + 1
                 IF Veranstalter(node).Adresse = Adresse(d).ID THEN
-                    NewText 3, 0, "Adresse:      " + RTRIM$(Adresse(d).Ort) + ", " + RTRIM$(Adresse(d).Strasse), colour&("fg"), "r"
+                    NewText 3, 0, "Adresse:      " + RTRIM$(Adresse(d).Ort) + ", " + RTRIM$(Adresse(d).Strasse), col&("fg"), "r"
                 END IF
             LOOP UNTIL d = max(6)
-            NewText 4, 0, "Telefon:      " + LST$(Veranstalter(node).Telefon), colour&("fg"), "r"
-            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(node).Telefax), colour&("fg"), "r"
-            NewText 6, 0, "Anrede:       " + RTRIM$(Veranstalter(node).Anrede), colour&("fg"), "r"
-            NewText 7, 0, "Notiz:        " + RTRIM$(Veranstalter(node).Notiz), colour&("fg"), "r"
+            NewText 4, 0, "Telefon:      " + LST$(Veranstalter(node).Telefon), col&("fg"), "r"
+            NewText 5, 0, "Telefax:      " + LST$(Veranstalter(node).Telefax), col&("fg"), "r"
+            NewText 6, 0, "Anrede:       " + RTRIM$(Veranstalter(node).Anrede), col&("fg"), "r"
+            NewText 7, 0, "Notiz:        " + RTRIM$(Veranstalter(node).Notiz), col&("fg"), "r"
             NewMenItem 9, 0, "<- Abbrechen", "back"
             NewMenItem 9, 16, "Bearbeiten", "edit"
             NewMenItem 9, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 9, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "VERANSTALTER"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "adr"
-            NewText 1, 0, "ID:           " + LST$(Adresse(node).ID), colour&("fg"), "r"
-            NewText 2, 0, "Postleitzahl: " + LST$(Adresse(node).PLZ), colour&("fg"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(Adresse(node).Ort), colour&("fg"), "r"
-            NewText 4, 0, "Land:         " + RTRIM$(Adresse(node).Land), colour&("fg"), "r"
-            NewText 5, 0, "Strasse:      " + RTRIM$(Adresse(node).Strasse), colour&("fg"), "r"
+            NewText 1, 0, "ID:           " + LST$(Adresse(node).ID), col&("fg"), "r"
+            NewText 2, 0, "Postleitzahl: " + LST$(Adresse(node).PLZ), col&("fg"), "r"
+            NewText 3, 0, "Ort:          " + RTRIM$(Adresse(node).Ort), col&("fg"), "r"
+            NewText 4, 0, "Land:         " + RTRIM$(Adresse(node).Land), col&("fg"), "r"
+            NewText 5, 0, "Strasse:      " + RTRIM$(Adresse(node).Strasse), col&("fg"), "r"
             NewMenItem 7, 0, "<- Abbrechen", "back"
             NewMenItem 7, 16, "Bearbeiten", "edit"
             NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 7, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "ADRESSE"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "rbk"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Rubrik(node).Kuerzel), colour&("fg"), "r"
-            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Rubrik(node).Objekt).Name), colour&("fg"), "r"
-            NewText 3, 0, "Name:         " + RTRIM$(Rubrik(node).Name), colour&("fg"), "r"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Rubrik(node).Kuerzel), col&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Rubrik(node).Objekt).Name), col&("fg"), "r"
+            NewText 3, 0, "Name:         " + RTRIM$(Rubrik(node).Name), col&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "RUBRIK"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "usr"
-            NewText 1, 0, "Benutzername:  " + RTRIM$(User(node).Name), colour&("fg"), "r"
+            NewText 1, 0, "Benutzername:  " + RTRIM$(User(node).Name), col&("fg"), "r"
             IF LEN(RTRIM$(User(node).Passwort)) > 0 THEN stars$ = longchar$("*", LEN(RTRIM$(User(node).Passwort)))
-            NewText 2, 0, "Passwort:      " + stars$, colour&("fg"), "r"
+            NewText 2, 0, "Passwort:      " + stars$, col&("fg"), "r"
             SetArrayData 30, 1
-            NewText 3, 0, "Zugang:        " + arraydata$(User(node).Zugang, 1), colour&("fg"), "r"
-            NewText 4, 0, "Abteilung:     " + RTRIM$(User(node).Abteilung), colour&("fg"), "r"
-            NewText 5, 0, "Telefon:       " + STR$(User(node).Telefon), colour&("fg"), "r"
-            NewText 6, 0, "Letzter Login: " + RTRIM$(User(node).LetzterLogin), colour&("fg"), "r"
+            NewText 3, 0, "Zugang:        " + arraydata$(User(node).Zugang, 1), col&("fg"), "r"
+            NewText 4, 0, "Abteilung:     " + RTRIM$(User(node).Abteilung), col&("fg"), "r"
+            NewText 5, 0, "Telefon:       " + STR$(User(node).Telefon), col&("fg"), "r"
+            NewText 6, 0, "Letzter Login: " + RTRIM$(User(node).LetzterLogin), col&("fg"), "r"
             NewMenItem 8, 0, "<- Abbrechen", "back"
             NewMenItem 8, 16, "Bearbeiten", "edit"
             NewMenItem 8, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 8, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "BENUTZER"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "ort"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Ort(node).Kuerzel), colour&("fg"), "r"
-            NewText 2, 0, "Name:         " + RTRIM$(Ort(node).Name), colour&("fg"), "r"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Ort(node).Kuerzel), col&("fg"), "r"
+            NewText 2, 0, "Name:         " + RTRIM$(Ort(node).Name), col&("fg"), "r"
             NewMenItem 4, 0, "<- Abbrechen", "back"
             NewMenItem 4, 16, "Bearbeiten", "edit"
             NewMenItem 4, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 4, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "ORT"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "plz"
-            NewText 1, 0, "Postleitzahl: " + LST$(PLZ(node).PLZ), colour&("fg"), "r"
-            NewText 2, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("fg"), "r"
-            NewText 3, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("fg"), "r"
+            NewText 1, 0, "Postleitzahl: " + LST$(PLZ(node).PLZ), col&("fg"), "r"
+            NewText 2, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), col&("fg"), "r"
+            NewText 3, 0, "Land:         " + RTRIM$(PLZ(node).Land), col&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "ORT"
-        CASE "adr"
-            NewText 1, 0, "ID:          " + STR$(Adresse(node).ID), colour&("fg"), "r"
-            NewText 2, 0, "Postleitzahl:" + STR$(Adresse(node).PLZ), colour&("fg"), "r"
-            NewText 3, 0, "Ort:         " + RTRIM$(Adresse(node).Ort), colour&("fg"), "r"
-            NewText 4, 0, "Land:        " + RTRIM$(Adresse(node).Land), colour&("fg"), "r"
-            NewText 5, 0, "Strasse:     " + RTRIM$(Adresse(node).Strasse), colour&("fg"), "r"
-            NewMenItem 7, 0, "<- Abbrechen", "back"
-            NewMenItem 7, 16, "Bearbeiten", "edit"
-            NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
-            NewMenItem 7, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "ADRESSE"
-        CASE "plz"
-            NewText 1, 0, "Postleitzahl:" + STR$(PLZ(node).PLZ), colour&("fg"), "r"
-            NewText 2, 0, "Land:         " + RTRIM$(PLZ(node).Land), colour&("fg"), "r"
-            NewText 3, 0, "Ort:          " + RTRIM$(PLZ(node).Ort), colour&("fg"), "r"
-            NewMenItem 5, 0, "<- Abbrechen", "back"
-            NewMenItem 5, 16, "Bearbeiten", "edit"
-            NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
-            NewMenItem 5, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "POSTLEITZAHL"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "asg"
-            NewText 1, 0, "ID:          " + STR$(Ausgabe(node).ID), colour&("fg"), "r"
-            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), colour&("fg"), "r"
-            NewText 3, 0, "Monat:       " + STR$(Ausgabe(node).Monat), colour&("fg"), "r"
-            NewText 4, 0, "Anfangsdatum: " + Ausgabe(node).Anfang, colour&("fg"), "r"
-            NewText 5, 0, "Enddatum:     " + Ausgabe(node).Ende, colour&("fg"), "r"
+            NewText 1, 0, "ID:          " + STR$(Ausgabe(node).ID), col&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Ausgabe(node).Objekt).Name), col&("fg"), "r"
+            NewText 3, 0, "Monat:       " + STR$(Ausgabe(node).Monat), col&("fg"), "r"
+            NewText 4, 0, "Anfangsdatum: " + Ausgabe(node).Anfang, col&("fg"), "r"
+            NewText 5, 0, "Enddatum:     " + Ausgabe(node).Ende, col&("fg"), "r"
             NewMenItem 7, 0, "<- Abbrechen", "back"
             NewMenItem 7, 16, "Bearbeiten", "edit"
             NewMenItem 7, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 7, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "AUSGABE"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
         CASE "kat"
-            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Kategorie(node).Kuerzel), colour&("fg"), "r"
-            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Kategorie(node).Objekt).Name), colour&("fg"), "r"
-            NewText 3, 0, "Name:         " + RTRIM$(Kategorie(node).Name), colour&("fg"), "r"
+            NewText 1, 0, "K" + CHR$(129) + "rzel:       " + RTRIM$(Kategorie(node).Kuerzel), col&("fg"), "r"
+            NewText 2, 0, "Objekt:       " + RTRIM$(Objekt(Kategorie(node).Objekt).Name), col&("fg"), "r"
+            NewText 3, 0, "Name:         " + RTRIM$(Kategorie(node).Name), col&("fg"), "r"
             NewMenItem 5, 0, "<- Abbrechen", "back"
             NewMenItem 5, 16, "Bearbeiten", "edit"
             NewMenItem 5, 30, "L" + CHR$(148) + "schen", "delete"
             NewMenItem 5, 41, "Kopieren", "copy"
-            RunMenu 1, 0, "KATEGORIE"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$)
     END SELECT
 END SUB
 
@@ -1211,8 +1193,8 @@ SUB edit (listID$, node)
             NewMenItem 14, 0, "Speichern", "save"
             NewMenItem 14, 13, "<- Abbrechen", "back"
             NewMenItem 14, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "VERANSTALTUNG BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "kaz"
             kt = 0: DO: kt = kt + 1
                 arraydata$(1, kt) = RTRIM$(Kategorie(kt).Name): IF RTRIM$(Kategorie(kt).Name) = RTRIM$(Kleinanzeige(node).Kategorie1) THEN standard = kt
@@ -1243,8 +1225,8 @@ SUB edit (listID$, node)
             NewMenItem 13, 0, "Speichern", "save"
             NewMenItem 13, 13, "<- Abbrechen", "back"
             NewMenItem 13, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "KLEINANZEIGE BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "vea"
             NewInput 1, 0, "K" + CHR$(129) + "rzel:       ", RTRIM$(Veranstalter(node).Kuerzel), 0
             NewInput 2, 0, "Name:         ", RTRIM$(Veranstalter(node).Name), 0
@@ -1261,8 +1243,8 @@ SUB edit (listID$, node)
             NewMenItem 9, 0, "Speichern", "save"
             NewMenItem 9, 13, "<- Abbrechen", "back"
             NewMenItem 9, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "VERANSTALTER BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "adr"
             p = 0: DO
                 p = p + 1: arraydata$(1, p) = LST$(PLZ(p).PLZ): IF PLZ(p).PLZ = Adresse(node).PLZ THEN standard = p
@@ -1277,8 +1259,8 @@ SUB edit (listID$, node)
             NewMenItem 6, 0, "Speichern", "save"
             NewMenItem 6, 13, "<- Abbrechen", "back"
             NewMenItem 6, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "ADRESSE BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "rbk"
             NewInput 1, 0, "K" + CHR$(129) + "rzel:       ", RTRIM$(Rubrik(node).Kuerzel), 0
             o = 0: DO: o = o + 1
@@ -1289,8 +1271,8 @@ SUB edit (listID$, node)
             NewMenItem 5, 0, "Speichern", "save"
             NewMenItem 5, 13, "<- Abbrechen", "back"
             NewMenItem 5, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "RUBRIK BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "usr"
             IF node = 0 THEN
                 DO: node = node + 1
@@ -1314,16 +1296,16 @@ SUB edit (listID$, node)
             NewMenItem 7, 0, "Speichern", "save"
             NewMenItem 7, 13, "<- Abbrechen", "back"
             NewMenItem 7, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "BENUTZER BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "ort"
             NewInput 1, 0, "K" + CHR$(129) + "rzel:       ", RTRIM$(Ort(node).Kuerzel), 0
             NewInput 2, 0, "Name:         ", RTRIM$(Ort(node).Name), 0
             NewMenItem 4, 0, "Speichern", "save"
             NewMenItem 4, 13, "<- Abbrechen", "back"
             NewMenItem 4, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "ORT BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "plz"
             NewInput 1, 0, "Postleitzahl: ", LST$(PLZ(node).PLZ), 1
             ot = 0: DO: ot = ot + 1
@@ -1334,8 +1316,8 @@ SUB edit (listID$, node)
             NewMenItem 5, 0, "Speichern", "save"
             NewMenItem 5, 13, "<- Abbrechen", "back"
             NewMenItem 5, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "POSTLEITZAHL BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "asg"
             o = 0: DO: o = o + 1
                 arraydata$(1, o) = RTRIM$(Objekt(o).Name): IF Objekt(o).ID = Ausgabe(node).Objekt THEN standard = o
@@ -1345,8 +1327,8 @@ SUB edit (listID$, node)
             NewMenItem 4, 0, "Speichern", "save"
             NewMenItem 4, 13, "<- Abbrechen", "back"
             NewMenItem 4, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "AUSGABE BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
         CASE "kat"
             NewInput 1, 0, "K" + CHR$(129) + "rzel:       ", RTRIM$(Kategorie(node).Kuerzel), 0
             o = 0: DO: o = o + 1
@@ -1357,15 +1339,15 @@ SUB edit (listID$, node)
             NewMenItem 5, 0, "Speichern", "save"
             NewMenItem 5, 13, "<- Abbrechen", "back"
             NewMenItem 5, 29, "L" + CHR$(148) + "schen", "delete"
-            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", colour&("offfocus"), "r"
-            RunMenu 1, 0, "KATEGORIE BEARBEITEN"
+            NewText INT((maxlines - firstline) / 2), 0, "[STRG + ENTER], um eine Liste zu bearbeiten", col&("offfocus"), "r"
+            RunMenu 1, 0, GetMTitle$("D" + endparameter$) + "BEARBEITEN"
     END SELECT
 END SUB
 
 FUNCTION search (listID$, placeholder$)
     reprintsearch:
     Background 0, "SUCHE:", 1
-    COLOR colour&("transparent"), colour&("transparent")
+    COLOR col&("transparent"), col&("transparent")
     searchheader listID$
     LOCATE firstline + 3, firstchar
     PRINT "Keine Suchergebnisse."
@@ -1374,13 +1356,13 @@ FUNCTION search (listID$, placeholder$)
     searchxoffset = 14
     searchyoffset = 2
 
-    LINE ((firstchar + 30 + searchxoffset - 1) * fontwidth, (searchyoffset + 1) * fontheight + 5)-((firstchar + 60 + searchxoffset) * fontwidth + (fontwidth / 2), ((searchyoffset + 1) * fontheight) + 9), colour&("fg"), BF
+    LINE ((firstchar + 30 + searchxoffset - 1) * fontwidth, (searchyoffset + 1) * fontheight + 5)-((firstchar + 60 + searchxoffset) * fontwidth + (fontwidth / 2), ((searchyoffset + 1) * fontheight) + 9), col&("fg"), BF
 
     endsearch = 0
     g = 0
     gbf = 0
     IF placeholder$ <> "" THEN
-        LINE ((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), colour&("bg"), BF
+        LINE ((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), col&("bg"), BF
         LOCATE 1 + searchyoffset, firstchar + 30 + searchxoffset
         DO
             g = g + 1
@@ -1394,9 +1376,9 @@ FUNCTION search (listID$, placeholder$)
     DO
         Taste$ = INKEY$
         IF TIMER MOD 2 = 0 THEN
-            LINE ((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), colour&("fg"), BF
+            LINE ((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), col&("fg"), BF
         ELSE
-            LINE ((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), colour&("bg"), BF
+            LINE ((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + g - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), col&("bg"), BF
         END IF
 
         mouseinput = _MOUSEINPUT
@@ -1487,10 +1469,10 @@ FUNCTION search (listID$, placeholder$)
 
         IF gbf <> g THEN
             selectedo = 1
-            LINE ((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), colour&("bg"), BF
+            LINE ((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2), (1 + searchyoffset) * fontheight + 1)-((firstchar + 30 + searchxoffset + gbf - 1) * fontwidth + (fontwidth / 2) + 1, searchyoffset * fontheight - 1), col&("bg"), BF
             gbf = g
             LOCATE 1 + searchyoffset, firstchar + 30 + searchxoffset
-            COLOR colour&("fg"), colour&("bg")
+            COLOR col&("fg"), col&("bg")
             suchbegriff$ = ""
             IF g > 0 THEN
                 g = 0
@@ -1509,7 +1491,7 @@ FUNCTION search (listID$, placeholder$)
         IF suchbegriffbf$ <> suchbegriff$ OR reprinto = 1 OR placeholder$ <> "" THEN
             placeholder$ = ""
             reprinto = 0
-            IF suchbegriff$ = "" OR suchbegriff$ = " " THEN LINE (1, (firstline) * fontheight)-(maxx, maxy), colour&("bg")
+            IF suchbegriff$ = "" OR suchbegriff$ = " " THEN LINE (1, (firstline) * fontheight)-(maxx, maxy), col&("bg")
             maxo = 0
             o = 0
             node = 0
@@ -1568,15 +1550,15 @@ FUNCTION search (listID$, placeholder$)
                 LOOP UNTIL node = max(listID)
                 maxo = o
                 IF maxo > 0 THEN
-                    LINE (1, (firstline) * fontheight)-(maxx, maxy), colour&("bg"), BF
+                    LINE (1, (firstline) * fontheight)-(maxx, maxy), col&("bg"), BF
                     searchheader listID$
                     o = selectedo - 1
                     DO
                         o = o + 1
                         IF darkmode = 1 THEN
-                            IF o = selectedo THEN COLOR colour&("fg"), colour&("dark grey") ELSE COLOR colour&("fg"), colour&("bg")
+                            IF o = selectedo THEN COLOR col&("fg"), col&("dark grey") ELSE COLOR col&("fg"), col&("bg")
                         ELSE
-                            IF o = selectedo THEN COLOR colour&("fg"), colour&("light grey") ELSE COLOR colour&("fg"), colour&("bg")
+                            IF o = selectedo THEN COLOR col&("fg"), col&("light grey") ELSE COLOR col&("fg"), col&("bg")
                         END IF
                         LOCATE firstline + o - selectedo + 3, firstchar
                         SELECT CASE listID 'auflistung der suchergebnisse
@@ -1637,19 +1619,19 @@ FUNCTION search (listID$, placeholder$)
                     LOOP UNTIL o >= maxo OR o - selectedo >= maxlines - firstline - 3
 
                     'half- to nonvariable elements
-                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight), colour&("fg"), BF 'top line
+                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight), col&("fg"), BF 'top line
                     IF searchbottomfixed = 1 THEN
-                        LINE ((firstchar - 1.5) * fontwidth, (maxlines - firstline + 5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - firstline + 5) * fontheight), colour&("fg"), BF 'bottom line
+                        LINE ((firstchar - 1.5) * fontwidth, (maxlines - firstline + 5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - firstline + 5) * fontheight), col&("fg"), BF 'bottom line
                     ELSE
-                        LINE ((firstchar - 1.5) * fontwidth, (firstline + o - selectedo + 3) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + o - selectedo + 3) * fontheight), colour&("fg"), BF 'bottom line
+                        LINE ((firstchar - 1.5) * fontwidth, (firstline + o - selectedo + 3) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (firstline + o - selectedo + 3) * fontheight), col&("fg"), BF 'bottom line
                     END IF
-                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-((firstchar - 1.5) * fontwidth, (maxlines - firstline + 5) * fontheight), colour&("fg"), BF 'left line
-                    LINE (fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - firstline + 5) * fontheight), colour&("fg"), BF 'search indicator line
+                    LINE ((firstchar - 1.5) * fontwidth, (firstline + 1.5) * fontheight)-((firstchar - 1.5) * fontwidth, (maxlines - firstline + 5) * fontheight), col&("fg"), BF 'left line
+                    LINE (fontwidth * (maxrows - (firstchar * 2)), (firstline + 1.5) * fontheight)-(fontwidth * (maxrows - (firstchar * 2)), (maxlines - firstline + 5) * fontheight), col&("fg"), BF 'search indicator line
                     factor = (selectedo - 1) / maxo
                     difference = ((maxlines - 3) * fontheight) - (firstline * fontheight)
-                    LINE (fontwidth * (maxrows - (firstchar * 2)) - 10, ((firstline + 1.5) * fontheight) + (factor * difference))-(fontwidth * (maxrows - (firstchar * 2)), ((firstline + 1.5) * fontheight) + (factor * difference) + 30), colour&("fg"), BF 'search indicator
+                    LINE (fontwidth * (maxrows - (firstchar * 2)) - 10, ((firstline + 1.5) * fontheight) + (factor * difference))-(fontwidth * (maxrows - (firstchar * 2)), ((firstline + 1.5) * fontheight) + (factor * difference) + 30), col&("fg"), BF 'search indicator
                 ELSE
-                    LINE (1, (firstline) * fontheight)-(maxx, maxy), colour&("bg"), BF
+                    LINE (1, (firstline) * fontheight)-(maxx, maxy), col&("bg"), BF
                     LOCATE firstline + 1, firstchar
                     PRINT "Keine Suchergebnisse."
                 END IF
@@ -1676,22 +1658,22 @@ SUB searchbutton
     buttonly = ((maxlines + 1) * fontheight) - 7
     buttonuy = (maxlines + 2) * fontheight + 3
     IF buttonstatus = 0 THEN
-        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("bg"), "BF"
-        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("fg"), "B"
-        COLOR colour&("fg"), colour&("transparent")
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, col&("bg"), "BF"
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, col&("fg"), "B"
+        COLOR col&("fg"), col&("transparent")
     ELSE
-        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, colour&("fg"), "BF"
-        COLOR colour&("bg"), colour&("transparent")
+        rectangle buttonlx, buttonly, buttonux, buttonuy, UMround, col&("fg"), "BF"
+        COLOR col&("bg"), col&("transparent")
     END IF
     PRINT "<- Abbrechen",
-    COLOR colour&("fg"), colour&("bg")
+    COLOR col&("fg"), col&("bg")
     PRINT "Suchergebnisse: " + LST$(maxo) + "    "
     _DISPLAY
 END SUB
 
 SUB searchheader (listID$)
     LOCATE firstline + 1, firstchar
-    COLOR colour&("fg"), colour&("transparent")
+    COLOR col&("fg"), col&("transparent")
     SELECT CASE listID$
         CASE "usr": listID = 1: PRINT "Benutzername", "Zugangsberechtigung", , "Letzter Login"
         CASE "obj": listID = 2: PRINT "ID", , "Name"
@@ -1802,21 +1784,21 @@ SUB RunGraph (endparameter$)
         LOOP UNTIL grapha = 12
         average = average / 12
         'output graph
-        LINE (0, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety - 50)-(maxx, maxy), colour&("fg"), BF 'Background
+        LINE (0, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety - 50)-(maxx, maxy), col&("fg"), BF 'Background
         IF darkmode = 1 THEN
-            LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) - average + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) - average + graphoffsety), colour&("light grey"), BF 'average
+            LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) - average + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) - average + graphoffsety), col&("light grey"), BF 'average
         ELSE
-            LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) - average + graphoffsety), colour&("dark grey"), BF 'average
+            LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) - average + graphoffsety), col&("dark grey"), BF 'average
         END IF
-        LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) + graphoffsety + 2), colour&("bg"), BF 'x-axis
-        LINE ((firstchar - 0.75) * fontwidth, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety)-(firstchar * fontwidth, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety), colour&("bg"), BF 'top label line
-        LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety + 2)-(firstchar * fontwidth - 2, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety), colour&("bg"), BF 'y-axis
+        LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety)-(maxx - (firstchar * fontwidth * 2), maxy - (firstchar * fontwidth) + graphoffsety + 2), col&("bg"), BF 'x-axis
+        LINE ((firstchar - 0.75) * fontwidth, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety)-(firstchar * fontwidth, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety), col&("bg"), BF 'top label line
+        LINE (firstchar * fontwidth, maxy - (firstchar * fontwidth) + graphoffsety + 2)-(firstchar * fontwidth - 2, maxy - (firstchar * fontwidth) - (maxy / 6) + graphoffsety), col&("bg"), BF 'y-axis
         'connecting dots
         grapha = 0: DO: grapha = grapha + 1
-            LINE ((firstchar * fontwidth) + ((grapha - 1) * ((maxx - (firstchar * fontwidth * 2)) / 12)), maxy - (firstchar * fontwidth) - pheight(grapha - 1) + graphoffsety)-((firstchar * fontwidth) + ((grapha) * ((maxx - (firstchar * fontwidth * 2)) / 12)), maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety), colour&("red")
-            LINE ((firstchar * fontwidth) + (grapha * ((maxx - (firstchar * fontwidth * 2)) / 12)) - 2, maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety - 2)-((firstchar * fontwidth) + (grapha * ((maxx - (firstchar * fontwidth * 2)) / 12)) + 2, maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety + 2), colour&("red"), BF
+            LINE ((firstchar * fontwidth) + ((grapha - 1) * ((maxx - (firstchar * fontwidth * 2)) / 12)), maxy - (firstchar * fontwidth) - pheight(grapha - 1) + graphoffsety)-((firstchar * fontwidth) + ((grapha) * ((maxx - (firstchar * fontwidth * 2)) / 12)), maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety), col&("red")
+            LINE ((firstchar * fontwidth) + (grapha * ((maxx - (firstchar * fontwidth * 2)) / 12)) - 2, maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety - 2)-((firstchar * fontwidth) + (grapha * ((maxx - (firstchar * fontwidth * 2)) / 12)) + 2, maxy - (firstchar * fontwidth) - pheight(grapha + 1) + graphoffsety + 2), col&("red"), BF
         LOOP UNTIL grapha = 11
-        COLOR colour&("bg"), colour&("transparent")
+        COLOR col&("bg"), col&("transparent")
         'x-axis labels
         grapha = -1: DO: grapha = grapha + 1
             LOCATE INT((maxy - (firstchar * fontwidth) + graphoffsety) / fontheight) + 2, INT(((firstchar * fontwidth) + (grapha * ((maxx - (firstchar * fontwidth * 2)) / 12))) / fontwidth) + 1
@@ -1849,6 +1831,7 @@ SUB RunMenu (selectedm, layout, titel$)
             maximized = 0
         END IF
         firstprint = 1
+        cc = 0
         IF maxtemparray(menID) > 0 AND menID <> 0 THEN
             IF menID$ = "edit" OR menID$ = "new" THEN
                 m2 = 0: DO: m2 = m2 + 1
@@ -1894,6 +1877,37 @@ SUB RunMenu (selectedm, layout, titel$)
         END IF
         IF endparameter$ = "kaz" OR endparameter$ = "ver" THEN RunGraph endparameter$
         DO
+            'file drop check
+            IF _TOTALDROPPEDFILES = 1 THEN
+                df$ = _DROPPEDFILE
+                IF _FILEEXISTS(df$) THEN
+                    droptype$ = "file"
+                ELSE
+                    IF _DIREXISTS(a$) THEN
+                        droptype$ = "folder"
+                    ELSE
+                        droptype$ = "empty"
+                    END IF
+                END IF
+                _FINISHDROP
+                SELECT CASE droptype$
+                    CASE "file"
+                        p = 0: DO: p = p + 1
+                            IF MID$(df$, p, 1) = "\" THEN
+                                u = p
+                            END IF
+                        LOOP UNTIL p = LEN(df$)
+                        IF MID$(df$, LEN(df$) - 6, 7) = ".bremer" THEN
+                            endparameter$ = MID$(df$, u + 1, LEN(df$) - 7 - u)
+                            endmenu = 1
+                        END IF
+                        IF MID$(df$, LEN(df$) - 5, 6) = ".event" THEN
+                            'fill temparray with data from file, set the listID to the proper number
+                            endmenu = 1
+                        END IF
+                END SELECT
+            END IF
+
             m = 0
             DO
                 IF fps = 0 THEN
@@ -1902,44 +1916,15 @@ SUB RunMenu (selectedm, layout, titel$)
                 m = m + 1
                 prevm = selectedm
 
-                'file drop check
-                IF _TOTALDROPPEDFILES = 1 THEN
-                    df$ = _DROPPEDFILE
-                    IF _FILEEXISTS(df$) THEN
-                        droptype$ = "file"
-                    ELSE
-                        IF _DIREXISTS(a$) THEN
-                            droptype$ = "folder"
-                        ELSE
-                            droptype$ = "empty"
-                        END IF
-                    END IF
-                    _FINISHDROP
-                    SELECT CASE droptype$
-                        CASE "file"
-                            p = 0: DO: p = p + 1
-                                IF MID$(df$, p, 1) = "\" THEN
-                                    u = p
-                                END IF
-                            LOOP UNTIL p = LEN(df$)
-                            IF MID$(df$, LEN(df$) - 6, 7) = ".bremer" THEN
-                                endparameter$ = MID$(df$, u + 1, LEN(df$) - 7 - u)
-                                endmenu = 1
-                            END IF
-                            IF MID$(df$, LEN(df$) - 5, 6) = ".event" THEN
-                                'fill temparray with data from file, set the listID to the proper number
-                                endmenu = 1
-                            END IF
-                    END SELECT
-                END IF
-
                 'Mouse selection
                 mouseinput = _MOUSEINPUT
                 mousebutton = _MOUSEBUTTON(1)
+                mouseright = _MOUSEBUTTON(2)
                 mousex = _MOUSEX
                 mousey = _MOUSEY
                 IF mouseinput = -1 THEN
                     IF mousebutton = -1 THEN
+                        'top bar buttons
                         IF mousey >= buttonsly AND mousey <= buttonsuy THEN 'close button
                             IF mousex >= closebuttonlx AND mousex <= closebuttonux THEN
                                 logThis "Programm durch X-Button beendet."
@@ -1953,6 +1938,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                 END IF
                             END IF
                         END IF
+                        'moving the window
                         IF mousey < topbarheight THEN
                             DO
                                 mouseinput = _MOUSEINPUT
@@ -1963,8 +1949,40 @@ SUB RunMenu (selectedm, layout, titel$)
                             currentposy = currentposy + (_MOUSEY - mousey)
                         END IF
                     END IF
+                    'activates context menu
+                    IF mouseright = -1 AND context.active = 0 THEN
+                        context.active = 1
+                        context.x = mousex
+                        context.y = mousey
+                        context.change = 1
+                    END IF
                 END IF
                 IF mouseinput = -1 AND mousetrigger = 0 THEN
+                    'quicker selection looop
+                    m3 = 0: DO: m3 = m3 + 1
+                        IF mousex > (firstchsar + xoffset(m3) - 1) * fontwidth - (fontwidth / 2) AND mousex < endx(m3) THEN
+                            IF mousey > basey(m3) AND mousey < endy(m3) THEN
+                                change(selectedm) = 1: selectedm = m3: change(selectedm) = 1
+                                IF maxad(m3) > 0 THEN
+                                    e = 0: DO
+                                        e = e + 1
+                                        IF mousex > melementxl(m3, e) AND mousex < melementxr(m3, e) THEN
+                                            selected(m3) = e
+                                            change(m3) = 1
+                                        END IF
+                                    LOOP UNTIL e = maxad(m3)
+                                END IF
+                                IF mousebutton = -1 AND mousetrigger = 0 THEN
+                                    GOTO engageonm
+                                ELSE
+                                    m = selectedm
+                                    GOTO commitchange
+                                END IF
+                            END IF
+                        END IF
+                    LOOP UNTIL m3 = maxm
+
+                    'change selected in-item element
                     IF mousex > changevalxl(selectedm) AND mousex < changevalxr(selectedm) THEN
                         IF mousey > increasevalyu(selectedm) AND mousey < increasevalyb(selectedm) AND mousebutton = -1 THEN
                             mousetrigger = 1
@@ -1975,27 +1993,24 @@ SUB RunMenu (selectedm, layout, titel$)
                         END IF
                     END IF
 
-                    IF mousex > (firstchsar + xoffset(m) - 1) * fontwidth - (fontwidth / 2) AND mousex < endx(m) THEN
-                        IF mousey > basey(m) AND mousey < endy(m) THEN
-                            change(selectedm) = 1: selectedm = m: change(selectedm) = 1
-                            IF maxad(m) > 0 THEN
-                                e = 0: DO
-                                    e = e + 1
-                                    IF mousex > melementxl(m, e) AND mousex < melementxr(m, e) THEN
-                                        selected(m) = e
-                                        change(m) = 1
+                    'choose context menu item
+                    IF context.active = 1 AND cc > 0 THEN
+                        c = 0: DO: c = c + 1
+                            rectangle context.x - _FONTWIDTH, context.y - (_FONTHEIGHT * 0.7), context.x + (longest * _FONTWIDTH) + _FONTWIDTH, context.y + (cc * _FONTHEIGHT) + (_FONTHEIGHT * 0.5), UMround, col&("fg"), "BF"
+                            IF mousex > context.x - _FONTWIDTH AND mousex < context.x + (longest * _FONTWIDTH) + _FONTWIDTH THEN
+                                IF mousey > context.y + ((c - 1) * _FONTHEIGHT) AND mousey < context.y + (c * _FONTHEIGHT) THEN
+                                    context.selected = c
+                                    context.change = 1
+                                    IF mousebutton = -1 THEN
+                                        endparameter$ = RTRIM$(citem(c).dest)
+                                        endmenu = 1
                                     END IF
-                                LOOP UNTIL e = maxad(m)
+                                END IF
                             END IF
-                            IF mousebutton = -1 THEN
-                                GOTO engageonm
-                            ELSE
-                                m = selectedm
-                                GOTO commitchange
-                            END IF
-                        END IF
+                        LOOP UNTIL c = cc
                     END IF
 
+                    'mousewheel
                     mousewheel = _MOUSEWHEEL
                     IF mousewheel <> 0 THEN
                         IF mousex > melementxl(selectedm, selected(selectedm)) AND mousex < melementxr(selectedm, selected(selectedm)) THEN
@@ -2008,6 +2023,11 @@ SUB RunMenu (selectedm, layout, titel$)
                     END IF
                 ELSEIF mousebutton <> -1 THEN
                     mousetrigger = 0
+                END IF
+                IF context.active = 1 AND (mousebutton = -1) AND endmenu <> 1 THEN 'disables context menu
+                    context.active = 0
+                    m = maxm
+                    GOTO reprintmenu
                 END IF
 
                 'Key selection
@@ -2051,12 +2071,100 @@ SUB RunMenu (selectedm, layout, titel$)
                                     LOOP UNTIL g = g(selectedm)
                                 END IF
                                 _CLIPBOARD$ = UIn$
+                            CASE "date"
+                                _CLIPBOARD$ = LST$(year(selectedm)) + "-" + LST$(month(selectedm)) + "-" + LST$(day(selectedm))
+                            CASE "time"
+                                _CLIPBOARD$ = LST$(hour(selectedm)) + "-" + LST$(minute(selectedm))
                         END SELECT
                         clearStatus
                         newStatus "Element Kopiert.", "green"
                     END IF
                     IF hitk = 118 OR hitk = 86 THEN 'ctrl + v
                         paste:
+                        SELECT CASE type$(selectedm)
+                            CASE "input"
+                                IF LEN(_CLIPBOARD$) > 0 THEN
+                                    p = 0: DO: p = p + 1
+                                        char$(selectedm, p) = MID$(_CLIPBOARD$, p, 1)
+                                    LOOP UNTIL p = LEN(_CLIPBOARD$)
+                                    g(selectedm) = p
+                                    gbf(selectedm) = p
+                                END IF
+                            CASE "selector"
+                                ad = 0: DO: ad = ad + 1
+                                    IF LEN(_CLIPBOARD$) < LEN(arraydata$(array(selectedm), ad)) THEN
+                                        p = 0: DO: p = p + 1
+                                            IF MID$(arraydata$(array(selectedm), ad), p, LEN(_CLIPBOARD$)) = _CLIPBOARD$ THEN
+                                                selected(selectedm) = ad: ad = maxad(array(selectedm))
+                                            END IF
+                                        LOOP UNTIL p >= LEN(arraydata$(array(selectedm), ad)) - LEN(_CLIPBOARD$) + 1
+                                    ELSEIF _CLIPBOARD$ = arraydata$(array(selectedm), ad) THEN
+                                        selected(selectedm) = ad: ad = maxad(array(selectedm)): change(selectedm) = 1
+                                    END IF
+                                LOOP UNTIL ad = maxad(array(selectedm))
+                            CASE "date"
+                                IF LEN(_CLIPBOARD$) > 10 THEN
+                                    year(selectedm) = VAL(MID$(_CLIPBOARD$, 1, 4))
+                                    month(selectedm) = VAL(MID$(_CLIPBOARD$, 6, 2))
+                                    day(selectedm) = VAL(MID$(_CLIPBOARD$, 9, 2))
+                                END IF
+                            CASE "time"
+                                IF LEN(_CLIPBOARD$) >= 5 THEN
+                                    hour(selectedm) = VAL(MID$(_CLIPBOARD$, 1, 2))
+                                    minute(selectedm) = VAL(MID$(_CLIPBOARD$, 4, 2))
+                                END IF
+                        END SELECT
+                        change(selectedm) = 1
+                        maxcliparray = 0
+                        clearStatus
+                        newStatus "Eingef" + CHR$(129) + "gt.", "green"
+                    END IF
+                END IF
+                IF type$(selectedm) = "input" THEN
+                    showpassword = 0: change(selectedm) = 1
+                END IF
+                IF _KEYDOWN(100308) = -1 OR _KEYDOWN(100307) = -1 THEN 'alt
+                    hitk = _KEYHIT
+                    IF hitk = 97 OR hitk = 65 THEN 'alt + a
+                        IF type$(selectedm) = "input" THEN
+                            DO: LOOP UNTIL _KEYDOWN(hitk) = 0 'prevents multiple triggers
+                            IF allsel(selectedm) = 1 THEN allsel(selectedm) = 0 ELSE allsel(selectedm) = 1
+                        END IF
+                    END IF
+                    IF hitk = 67 OR hitk = 99 THEN 'alt + c
+                        copy:
+                        _CLIPBOARD$ = ""
+                        m2 = 0: DO: m2 = m2 + 1
+                            SELECT CASE type$(m2)
+                                CASE "text"
+                                    IF LEN(text$(m2)) > 0 THEN
+                                        cliparray$(m2) = cutcontent$(text$(m2))
+                                        IF LEN(cliparray$(m2)) = 50 THEN
+                                            cliparray$(m2) = ""
+                                        END IF
+                                    ELSE
+                                        cliparray$(m2) = ""
+                                    END IF
+                                CASE "input"
+                                    UIn$ = ""
+                                    IF g(m2) > 0 THEN
+                                        g = 0: DO: g = g + 1
+                                            UIn$ = UIn$ + char$(m2, g)
+                                        LOOP UNTIL g = g(m2)
+                                    END IF
+                                    cliparray$(m2) = UIn$
+                                CASE "date"
+                                    cliparray$(m2) = LST$(year(selectedm)) + "-" + LST$(month(selectedm)) + "-" + LST$(day(selectedm))
+                                CASE "time"
+                                    cliparray$(m2) = LST$(hour(selectedm)) + "-" + LST$(minute(selectedm))
+                            END SELECT
+                            _CLIPBOARD$ = _CLIPBOARD$ + CHR$(13) + cliparray$(m2)
+                        LOOP UNTIL m2 = maxm
+                        maxcliparray = maxm
+                        clearStatus
+                        newStatus "Alles Kopiert.", "green"
+                    END IF
+                    IF hitk = 118 OR hitk = 86 THEN 'alt + v
                         IF maxcliparray > 0 THEN
                             m2 = 0: DO: m2 = m2 + 1
                                 SELECT CASE type$(m2)
@@ -2096,50 +2204,8 @@ SUB RunMenu (selectedm, layout, titel$)
                             LOOP UNTIL m2 = maxm OR m2 = maxcliparray
                             maxcliparray = 0
                             clearStatus
-                            newStatus "Eingef" + CHR$(129) + "gt.", "green"
+                            newStatus "Alles Eingef" + CHR$(129) + "gt.", "green"
                         END IF
-                    END IF
-                ELSE
-                    IF type$(selectedm) = "input" THEN
-                        showpassword = 0: change(selectedm) = 1
-                    END IF
-                END IF
-                IF _KEYDOWN(100308) = -1 OR _KEYDOWN(100307) = -1 THEN 'alt
-                    hitk = _KEYHIT
-                    IF hitk = 97 OR hitk = 65 THEN 'alt + a
-                        IF type$(selectedm) = "input" THEN
-                            DO: LOOP UNTIL _KEYDOWN(hitk) = 0 'prevents multiple triggers
-                            IF allsel(selectedm) = 1 THEN allsel(selectedm) = 0 ELSE allsel(selectedm) = 1
-                        END IF
-                    END IF
-                    IF hitk = 67 OR hitk = 99 THEN 'alt + c
-                        copy:
-                        _CLIPBOARD$ = ""
-                        m2 = 0: DO: m2 = m2 + 1
-                            SELECT CASE type$(m2)
-                                CASE "text"
-                                    IF LEN(text$(m2)) > 0 THEN
-                                        cliparray$(m2) = cutcontent$(text$(m2))
-                                        IF LEN(cliparray$(m2)) = 50 THEN
-                                            cliparray$(m2) = ""
-                                        END IF
-                                    ELSE
-                                        cliparray$(m2) = ""
-                                    END IF
-                                CASE "input"
-                                    UIn$ = ""
-                                    IF g(m2) > 0 THEN
-                                        g = 0: DO: g = g + 1
-                                            UIn$ = UIn$ + char$(m2, g)
-                                        LOOP UNTIL g = g(m2)
-                                    END IF
-                                    cliparray$(m2) = UIn$
-                            END SELECT
-                            _CLIPBOARD$ = _CLIPBOARD$ + CHR$(13) + cliparray$(m2)
-                        LOOP UNTIL m2 = maxm
-                        maxcliparray = maxm
-                        clearStatus
-                        newStatus "Alles Kopiert.", "green"
                     END IF
                 END IF
                 IF _KEYDOWN(100304) = -1 OR _KEYDOWN(100303) = -1 THEN 'shift
@@ -2149,9 +2215,13 @@ SUB RunMenu (selectedm, layout, titel$)
                         shiftlog = 1
                     END IF
                 END IF
-                IF _KEYHIT = 15360 THEN
+                IF _KEYHIT = 15360 THEN 'F2
                     _CLIPBOARDIMAGE = canvas&
                     newStatus "Screenshot kopiert.", "green"
+                END IF
+                IF _KEYHIT = 17408 OR _KEYDOWN(17408) THEN 'F10
+                    endparameter$ = "save"
+                    endmenu = 1
                 END IF
                 Taste$ = INKEY$
                 IF Taste$ <> "" THEN
@@ -2244,6 +2314,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                 END IF
                             ELSEIF type$(selectedm) = "date" THEN
+                                buffer(selectedm, selected) = 0
                                 IF selected(selectedm) < 3 THEN
                                     selected(selectedm) = selected(selectedm) + 1
                                     change(selectedm) = 1
@@ -2252,6 +2323,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                     IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
                                 END IF
                             ELSEIF type$(selectedm) = "time" THEN
+                                buffer(selectedm, selected) = 0
                                 IF selected(selectedm) < 2 THEN
                                     selected(selectedm) = selected(selectedm) + 1
                                     change(selectedm) = 1
@@ -2265,6 +2337,7 @@ SUB RunMenu (selectedm, layout, titel$)
                             END IF
                         CASE CHR$(0) + CHR$(75) 'arrow left
                             IF type$(selectedm) = "selector" OR type$(selectedm) = "date" OR type$(selectedm) = "time" THEN
+                                buffer(selectedm, selected) = 0
                                 IF selected(selectedm) > 1 THEN
                                     selected(selectedm) = selected(selectedm) - 1
                                     change(selectedm) = 1
@@ -2276,7 +2349,25 @@ SUB RunMenu (selectedm, layout, titel$)
                             END IF
                         CASE CHR$(9)
                             IF shiftlog = 0 THEN
-                                IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                                IF type$(selectedm) = "date" THEN
+                                    IF selected(selectedm) < 3 THEN
+                                        selected(selectedm) = selected(selectedm) + 1
+                                        change(selectedm) = 1
+                                        change(selectedm - 1) = 1
+                                    ELSE
+                                        IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                                    END IF
+                                ELSEIF type$(selectedm) = "time" THEN
+                                    IF selected(selectedm) < 2 THEN
+                                        selected(selectedm) = selected(selectedm) + 1
+                                        change(selectedm) = 1
+                                        change(selectedm - 1) = 1
+                                    ELSE
+                                        IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                                    END IF
+                                ELSE
+                                    IF selectedm < maxm THEN selectedm = selectedm + 1 ELSE selectedm = 1
+                                END IF
                             ELSE
                                 shiftlog = 0
                             END IF
@@ -2303,15 +2394,15 @@ SUB RunMenu (selectedm, layout, titel$)
                                                 value(m) = INT(value(selectedm) / (maxx / 4) * 100)
                                                 printslider:
                                                 'cleanup
-                                                LINE (basex(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + 1)-(endx(selectedm), (firstline + yoffset(selectedm)) * fontheight - 1), colour&("black"), BF
+                                                LINE (basex(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + 1)-(endx(selectedm), (firstline + yoffset(selectedm)) * fontheight - 1), col&("black"), BF
 
                                                 'horizontal
-                                                LINE (basex(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + (fontheight / 2))-(endx(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + (fontheight / 2) + 1), colour&("white"), BF
+                                                LINE (basex(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + (fontheight / 2))-(endx(selectedm), (firstline + yoffset(selectedm) - 1) * fontheight + (fontheight / 2) + 1), col&("white"), BF
                                                 'vertical @ value
-                                                LINE (basex(selectedm) + (value(selectedm) / maxval(selectedm) * (maxx / 4)), (firstline + yoffset(selectedm) - 1) * fontheight + 1)-(basex(selectedm) + 4 + (value(selectedm) / maxval(selectedm) * (maxx / 4)), (firstline + yoffset(selectedm)) * fontheight - 1), colour&("white"), BF
+                                                LINE (basex(selectedm) + (value(selectedm) / maxval(selectedm) * (maxx / 4)), (firstline + yoffset(selectedm) - 1) * fontheight + 1)-(basex(selectedm) + 4 + (value(selectedm) / maxval(selectedm) * (maxx / 4)), (firstline + yoffset(selectedm)) * fontheight - 1), col&("white"), BF
                                                 xvalue = firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + ((maxx / 4) / fontwidth) + 2
                                                 LOCATE firstline + yoffset(selectedm), xvalue
-                                                COLOR colour&("fg"), colour&("bg")
+                                                COLOR col&("fg"), col&("bg")
                                                 PRINT value(selectedm); "   "
                                             ELSEIF _MOUSEINPUT = -1 AND _MOUSEX < basex(selectedm) OR _MOUSEX > basex(selectedm) + 4 + (maxx / 4) THEN
                                                 IF _MOUSEX < basex(selectedm) THEN
@@ -2383,7 +2474,7 @@ SUB RunMenu (selectedm, layout, titel$)
                 'if change is there, print the menu again
                 IF change = 1 OR firstprint = 1 OR change(m) = 1 THEN
                     IF change(m) = 1 THEN
-                        LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("bg"), BF
+                        LINE (basex(m), basey(m))-(endx(m), endy(m)), col&("bg"), BF
                     END IF
                     IF runm = m + 1 THEN
                         change = 0
@@ -2391,22 +2482,22 @@ SUB RunMenu (selectedm, layout, titel$)
                     SELECT CASE type$(m)
                         CASE "slider"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
-                            COLOR colour&("fg"), colour&("bg")
+                            COLOR col&("fg"), col&("bg")
                             PRINT text$(m)
                             'horizontal
                             IF selectedm = m THEN
-                                LINE (basex(m), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2))-(basex(m) + (maxx / 4), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2) + 1), colour&("fg"), BF
+                                LINE (basex(m), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2))-(basex(m) + (maxx / 4), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2) + 1), col&("fg"), BF
                             ELSE
-                                LINE (basex(m), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2))-(basex(m) + (maxx / 4), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2) + 1), colour&("offfocus"), BF
+                                LINE (basex(m), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2))-(basex(m) + (maxx / 4), (firstline + yoffset(m) - 1) * fontheight + (fontheight / 2) + 1), col&("offfocus"), BF
                             END IF
                             'vertical
-                            rectangle basex(m) + (value(m) / maxval(m) * (maxx / 4)), (firstline + yoffset(m) - 1) * fontheight + 1, basex(m) + (UMround * 2) + (value(m) / maxval(m) * (maxx / 4)), (firstline + yoffset(m)) * fontheight - 1, UMround, colour&("red"), "BF"
+                            rectangle basex(m) + (value(m) / maxval(m) * (maxx / 4)), (firstline + yoffset(m) - 1) * fontheight + 1, basex(m) + (UMround * 2) + (value(m) / maxval(m) * (maxx / 4)), (firstline + yoffset(m)) * fontheight - 1, UMround, col&("red"), "BF"
                             xvalue = firstchar + xoffset(m) + LEN(text$(m)) + ((maxx / 4) / fontwidth) + 2
                             LOCATE firstline + yoffset(m), xvalue
                             PRINT value(m); "   "
                         CASE "date"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
-                            COLOR colour&("fg"), colour&("transparent")
+                            COLOR col&("fg"), col&("transparent")
                             PRINT text$(m) + " ";
                             'counting elements
                             melementxl(m, 1) = fontwidth * (firstchar + xoffset(m) + LEN(text$(m)))
@@ -2415,12 +2506,12 @@ SUB RunMenu (selectedm, layout, titel$)
                             melementxr(m, 2) = melementxl(m, 2) + (fontwidth * LEN(convmonth$(month(m))))
                             melementxl(m, 3) = melementxr(m, 2) + fontwidth
                             melementxr(m, 3) = melementxl(m, 3) + (fontwidth * LEN(convday$(day(m))))
-                            LINE (melementxl(m, 1) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, 3) + (fontwidth / 2), decreasevalyb(m) + 2), colour&("bg"), BF
+                            LINE (melementxl(m, 1) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, 3) + (fontwidth / 2), decreasevalyb(m) + 2), col&("bg"), BF
                             IF selectedm = m THEN
-                                COLOR colour&("fg"), colour&("transparent")
-                                LINE (melementxl(m, selected(m)) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, selected(m)) + (fontwidth / 2), decreasevalyb(m) + 2), colour&("red"), BF
+                                COLOR col&("fg"), col&("transparent")
+                                LINE (melementxl(m, selected(m)) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, selected(m)) + (fontwidth / 2), decreasevalyb(m) + 2), col&("red"), BF
                             ELSE
-                                COLOR colour&("offfocus"), colour&("transparent")
+                                COLOR col&("offfocus"), col&("transparent")
                             END IF
                             PRINT convyear$(year(m)) + " "; convmonth$(month(m)) + " "; convday$(day(m)) + "   "
                             'triangles
@@ -2428,19 +2519,19 @@ SUB RunMenu (selectedm, layout, titel$)
                             drawTriangle changevalxl(m), decreasevalyu(m), triscale, 1
                         CASE "time"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
-                            COLOR colour&("fg"), colour&("transparent")
+                            COLOR col&("fg"), col&("transparent")
                             PRINT text$(m) + " ";
                             'counting elements
                             melementxl(m, 1) = fontwidth * (firstchar + xoffset(m) + LEN(text$(m)))
                             melementxr(m, 1) = fontwidth * (firstchar + xoffset(m) + LEN((text$(m)) + convhour$(hour(m))))
                             melementxl(m, 2) = melementxr(m, 1) + fontwidth
                             melementxr(m, 2) = melementxl(m, 2) + (fontwidth * LEN(convminute$(minute(m))))
-                            LINE (melementxl(m, 1) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, 2) + (fontwidth / 2), decreasevalyb(m) + 2), colour&("bg"), BF
+                            LINE (melementxl(m, 1) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, 2) + (fontwidth / 2), decreasevalyb(m) + 2), col&("bg"), BF
                             IF selectedm = m THEN
-                                COLOR colour&("fg"), colour&("transparent")
-                                IF selectedm = m THEN LINE (melementxl(m, selected(m)) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, selected(m)) + (fontwidth / 2), decreasevalyb(m) + 2), colour&("red"), BF
+                                COLOR col&("fg"), col&("transparent")
+                                IF selectedm = m THEN LINE (melementxl(m, selected(m)) - (fontwidth / 2), increasevalyu(m) - 4)-(melementxr(m, selected(m)) + (fontwidth / 2), decreasevalyb(m) + 2), col&("red"), BF
                             ELSE
-                                COLOR colour&("offfocus"), colour&("transparent")
+                                COLOR col&("offfocus"), col&("transparent")
                             END IF
                             PRINT convhour$(hour(m)); ":"; convminute$(minute(m)); " Uhr   "
                             'triangles
@@ -2449,39 +2540,39 @@ SUB RunMenu (selectedm, layout, titel$)
                         CASE "selector"
                             'zeigt nicht editierbaren text an
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
-                            COLOR colour&("fg"), colour&("bg")
+                            COLOR col&("fg"), col&("bg")
                             PRINT text$(m);
                             IF selectedm <> m THEN
-                                COLOR colour&("offfocus"), colour&("bg")
+                                COLOR col&("offfocus"), col&("bg")
                             ELSE
-                                COLOR colour&("red"), colour&("bg")
+                                COLOR col&("red"), col&("bg")
                             END IF
                             PRINT " < "; _TRIM$(arraydata$(array(m), selected(m))); " >  ";
-                            COLOR colour&("offfocus")
+                            COLOR col&("offfocus")
                             suche$ = ""
                             IF g(m) > 0 AND m = selectedm THEN
                                 gbf(m) = 0: DO: gbf(m) = gbf(m) + 1: suche$ = suche$ + char$(m, gbf(m)): LOOP UNTIL gbf(m) = g(m)
                             END IF
                             PRINT "-" + suche$ + SPC(100 - LEN(arraydata$(array(m), selected(m))) - LEN(suche$))
-                            rectangle (firstchar + xoffset(m) + LEN(text$(m)) - 0.5) * fontwidth, (firstline + yoffset(m) - 1) * fontheight - 6, (firstchar + xoffset(m) + LEN(arraydata$(array(m), selected(m))) + LEN(text$(m)) + 5) * fontwidth, (firstline + yoffset(m)) * fontheight + 4, UMround, colour&("fg"), "B"
+                            rectangle (firstchar + xoffset(m) + LEN(text$(m)) - 0.5) * fontwidth, (firstline + yoffset(m) - 1) * fontheight - 6, (firstchar + xoffset(m) + LEN(arraydata$(array(m), selected(m))) + LEN(text$(m)) + 5) * fontwidth, (firstline + yoffset(m)) * fontheight + 4, UMround, col&("fg"), "B"
                             endx(m) = basex(m) + (LEN(text$(m)) + LEN(arraydata$(array(m), selected(m))) + 11) * fontwidth + (fontwidth / 2)
                         CASE "toggle"
-                            LINE (basex(m), basey(m))-(endx(m), endy(m)), colour&("bg"), BF
+                            LINE (basex(m), basey(m))-(endx(m), endy(m)), col&("bg"), BF
                             IF selectedm = m THEN
-                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("red"), "B"
-                                COLOR colour&("red"), colour&("bg")
+                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, col&("red"), "B"
+                                COLOR col&("red"), col&("bg")
                             ELSE
-                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("offfocus"), "B"
-                                COLOR colour&("fg"), colour&("bg")
+                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, col&("offfocus"), "B"
+                                COLOR col&("fg"), col&("bg")
                             END IF
                             IF state(m) = 0 THEN
                                 IF selectedm = m THEN
-                                    rectangle basex(m) + 2, basey(m) + 2, endx(m) - (endx(m) - basex(m)) / 2 - 2, endy(m) - 2, UMround, colour&("fg"), "BF"
+                                    rectangle basex(m) + 2, basey(m) + 2, endx(m) - (endx(m) - basex(m)) / 2 - 2, endy(m) - 2, UMround, col&("fg"), "BF"
                                 ELSE
-                                    rectangle basex(m) + 2, basey(m) + 2, endx(m) - (endx(m) - basex(m)) / 2 - 2, endy(m) - 2, UMround, colour&("offfocus"), "BF"
+                                    rectangle basex(m) + 2, basey(m) + 2, endx(m) - (endx(m) - basex(m)) / 2 - 2, endy(m) - 2, UMround, col&("offfocus"), "BF"
                                 END IF
                             ELSE
-                                rectangle basex(m) + (endx(m) - basex(m)) / 2 + 2, basey(m) + 2, endx(m) - 2, endy(m) - 2, UMround, colour&("red"), "BF"
+                                rectangle basex(m) + (endx(m) - basex(m)) / 2 + 2, basey(m) + 2, endx(m) - 2, endy(m) - 2, UMround, col&("red"), "BF"
                             END IF
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             PRINT text$(m)
@@ -2489,24 +2580,24 @@ SUB RunMenu (selectedm, layout, titel$)
                             'zeigt nicht editierbaren text an
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             IF selectedm <> m THEN
-                                COLOR colour&("fg"), colour&("transparent")
+                                COLOR col&("fg"), col&("transparent")
                             ELSE
-                                COLOR colour&("red"), colour&("transparent")
+                                COLOR col&("red"), col&("transparent")
                             END IF
                             PRINT text$(m)
 
                             'zeigt editierbaren text an
                             IF allsel(selectedm) = 0 THEN
                                 IF selectedm = m THEN
-                                    COLOR colour&("red"), colour&("bg")
+                                    COLOR col&("red"), col&("bg")
                                 ELSE
-                                    COLOR colour&("offfocus"), colour&("bg")
+                                    COLOR col&("offfocus"), col&("bg")
                                 END IF
                             ELSE
                                 IF selectedm = m THEN
-                                    IF darkmode = 1 THEN COLOR colour&("red"), colour&("dark grey"): ELSE COLOR colour&("red"), colour&("light grey")
+                                    IF darkmode = 1 THEN COLOR col&("red"), col&("dark grey"): ELSE COLOR col&("red"), col&("light grey")
                                 ELSE
-                                    IF darkmode = 1 THEN COLOR colour&("white"), colour&("dark grey"): ELSE COLOR colour&("black"), colour&("light grey")
+                                    IF darkmode = 1 THEN COLOR col&("white"), col&("dark grey"): ELSE COLOR col&("black"), col&("light grey")
                                 END IF
                             END IF
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m) + LEN(text$(m)) + 2
@@ -2517,7 +2608,7 @@ SUB RunMenu (selectedm, layout, titel$)
                                     gbf(m) = gbf(m) + 1
                                     o = 0: DO: o = o + 1
                                         IF gbf(m) = overflowlimit(m) * o THEN
-                                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
+                                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("bg"), BF
                                             overflow(m) = o
                                             LOCATE firstline + yoffset(m) + overflow(m), firstchar + xoffset(m) + LEN(text$(m)) + 2
                                         END IF
@@ -2534,11 +2625,11 @@ SUB RunMenu (selectedm, layout, titel$)
                         CASE "menu"
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             IF m <> selectedm THEN
-                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("fg"), "B"
-                                COLOR colour&("fg"), colour&("transparent")
+                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, col&("fg"), "B"
+                                COLOR col&("fg"), col&("transparent")
                             ELSE
-                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, colour&("red"), "BF"
-                                COLOR colour&("white"), colour&("transparent")
+                                rectangle basex(m), basey(m), endx(m), endy(m), UMround, col&("red"), "BF"
+                                COLOR col&("white"), col&("transparent")
                             END IF
                             PRINT text$(m)
                         CASE "text"
@@ -2550,34 +2641,34 @@ SUB RunMenu (selectedm, layout, titel$)
                             END SELECT
                             LOCATE firstline + yoffset(m), firstchar + xoffset(m)
                             IF selectedm = m THEN
-                                COLOR colour&("fg"), colour&("red")
+                                COLOR col&("fg"), col&("red")
                             ELSE
-                                COLOR clr&(m), colour&("transparent")
+                                COLOR clr&(m), col&("transparent")
                             END IF
                             PRINT text$(m)
                             _FONT r&
                     END SELECT
                     IF type$(m) = "selector" OR type$(m) = "date" OR type$(m) = "time" THEN 'thick line below elements
-                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m)) * fontheight + 4), colour&("bg"), BF
-                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 1)-(endx(m) + (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 4), colour&("fg"), BF
+                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m)) * fontheight + 4), col&("bg"), BF
+                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 1)-(endx(m) + (fontwidth / 2), (firstline + yoffset(m)) * fontheight + 4), col&("fg"), BF
                     ELSEIF type$(m) = "input" THEN
-                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
-                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(endx(m) + (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("fg"), BF
+                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("bg"), BF
+                        LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(endx(m) + (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("fg"), BF
                     END IF
                 END IF
                 change(m) = 0
                 IF type$(selectedm) = "input" THEN
                     IF Taste$ <> "" THEN
                         IF Taste$ = CHR$(8) AND g(selectedm) > 0 AND allsel(selectedm) = 0 THEN
-                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
+                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("bg"), BF
                             g(selectedm) = g(selectedm) - 1: char$(selectedm, g(selectedm) + 1) = ""
                             IF g(selectedm) < overflowlimit(selectedm) * overflow(selectedm) AND overflow(selectedm) > 0 THEN
-                                LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
+                                LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("bg"), BF
                                 overflow(selectedm) = overflow(selectedm) - 1
                             END IF
                             'reduce overflow here
                         ELSEIF Taste$ = CHR$(8) AND g(selectedm) > 0 AND allsel(selectedm) = 1 THEN
-                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), colour&("bg"), BF
+                            LINE ((firstchar + xoffset(m) - 1.5) * fontwidth - (fontwidth / 2), (firstline + yoffset(m) + overflow(m)) * fontheight + 1)-(maxx, (firstline + yoffset(m) + overflow(m)) * fontheight + 4), col&("bg"), BF
                             g(selectedm) = 0: DO: g(selectedm) = g(selectedm) + 1: char$(selectedm, g(selectedm)) = "": LOOP UNTIL g(selectedm) = gbf(selectedm): g(selectedm) = 0: PRINT " "
                             allsel(selectedm) = 0
                             overflow = -1: DO: overflow = overflow + 1
@@ -2617,11 +2708,11 @@ SUB RunMenu (selectedm, layout, titel$)
                     END IF
                     IF TIMER MOD 2 = 0 AND g(selectedm) = gbf(selectedm) THEN
                         LOCATE firstline + yoffset(selectedm) + overflow(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + gbf(selectedm) - (overflowlimit(selectedm) * overflow(selectedm)) + 2
-                        COLOR colour&("red"), colour&("bg")
+                        COLOR col&("red"), col&("bg")
                         PRINT "|  "
                     ELSE
                         LOCATE firstline + yoffset(selectedm) + overflow(selectedm), firstchar + xoffset(selectedm) + LEN(text$(selectedm)) + gbf(selectedm) - (overflowlimit(selectedm) * overflow(selectedm)) + 2
-                        COLOR colour&("bg"), colour&("bg")
+                        COLOR col&("bg"), col&("bg")
                         PRINT "   "
                     END IF
                     IF change(m) = 1 AND selectedm <> m THEN
@@ -2659,10 +2750,94 @@ SUB RunMenu (selectedm, layout, titel$)
                                 ELSEIF UCASE$(suche$) = UCASE$(arraydata$(array(selectedm), ad)) THEN
                                     selected(selectedm) = ad: ad = maxad(array(selectedm)): change(selectedm) = 1
                                 END IF
+                                IF UCASE$(MID$(arraydata$(array(selectedm), ad), 1, LEN(suche$))) = UCASE$(suche$) THEN
+                                    selected(selectedm) = ad: ad = maxad(array(selectedm))
+                                END IF
                             LOOP UNTIL ad = maxad(array(selectedm))
                         ELSEIF g(selectedm) = 0 THEN
                             gbf(selectedm) = 0
                         END IF
+                    END IF
+                ELSEIF type$(selectedm) = "date" OR type$(selectedm) = "time" THEN
+                    IF Taste$ <> "" THEN
+                        IF ((ASC(Taste$) > 47 AND ASC(Taste$) < 58)) THEN
+                            IF buffer(selectedm, selected) = 0 THEN
+                                buffer(selectedm, selected) = VAL(Taste$)
+                            ELSEIF buffer(selectedm, selected) < 10000 THEN
+                                buffer(selectedm, selected) = (buffer(selectedm, selected) * 10) + VAL(Taste$)
+                            END IF
+                            change(selectedm) = 1
+                        ELSEIF Taste$ = CHR$(8) THEN
+                            buffer(selectedm, selected) = (buffer(selectedm, selected) - (buffer(selectedm, selected) MOD 10)) / 10
+                            change(selectedm) = 1
+                        END IF
+                        IF change(selectedm) = 1 THEN
+                            IF type$(selectedm) = "date" THEN
+                                SELECT CASE selected(selectedm)
+                                    CASE 1
+                                        IF buffer(selectedm, selected) > 1900 THEN
+                                            yearbf = year(selectedm)
+                                            year(selectedm) = buffer(selectedm, selected)
+                                            IF day(selectedm) = maxday(yearbf, month(selectedm)) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
+                                        END IF
+                                    CASE 2
+                                        IF buffer(selectedm, selected) < 13 AND buffer(selectedm, selected) > 0 THEN
+                                            monthbf = month(selectedm)
+                                            month(selectedm) = buffer(selectedm, selected)
+                                            IF day(selectedm) = maxday(year(selectedm), monthbf) THEN day(selectedm) = maxday(year(selectedm), month(selectedm))
+                                        END IF
+                                    CASE 3
+                                        IF buffer(selectedm, selected) < maxday(year(selectedm), month(selectedm)) AND buffer(selectedm, selected) > 0 THEN
+                                            day(selectedm) = buffer(selectedm, selected)
+                                        END IF
+                                END SELECT
+                            ELSEIF type$(selectedm) = "time" THEN
+                                SELECT CASE selected(selectedm)
+                                    CASE 1
+                                        IF buffer(selectedm, selected) < 24 THEN
+                                            hour(selectedm) = buffer(selectedm, selected)
+                                        END IF
+                                    CASE 2
+                                        IF buffer(selectedm, selected) < 60 THEN
+                                            minute(selectedm) = buffer(selectedm, selected)
+                                        END IF
+                                END SELECT
+                            END IF
+                        END IF
+                    END IF
+                END IF
+                IF context.active = 1 AND context.change = 1 THEN
+                    context.change = 0
+                    c = 0
+                    longest = 0
+                    m3 = 0: DO: m3 = m3 + 1
+                        IF type$(m3) = "menu" THEN
+                            c = c + 1
+                            citem(c).name = text$(m3)
+                            citem(c).dest = destination$(m3)
+                            IF LEN(RTRIM$(citem(c).name)) > longest THEN longest = LEN(RTRIM$(citem(c).name))
+                        END IF
+                    LOOP UNTIL m3 = maxm
+                    cc = c
+
+                    IF cc > 0 THEN
+                        context.x = INT(context.x / _FONTWIDTH(r&)) * _FONTWIDTH(r&)
+                        context.y = INT(context.y / _FONTHEIGHT(r&)) * _FONTHEIGHT(r&)
+                        drawlx = context.x - _FONTWIDTH(r&)
+                        drawly = context.y - (_FONTHEIGHT(r&) * 0.7)
+                        drawux = context.x + (longest * _FONTWIDTH(r&)) + _FONTWIDTH(r&)
+                        drawuy = context.y + (cc * _FONTHEIGHT(r&)) + (_FONTHEIGHT(r&) * 0.5)
+                        LINE (drawlx, drawly)-(drawux, drawuy), col&("bg"), BF
+                        rectangle drawlx, drawly, drawux, drawuy, UMround, col&("fg"), "BF"
+                        c = 0: DO: c = c + 1
+                            LOCATE context.y / _FONTHEIGHT + c, context.x / _FONTWIDTH + 1
+                            IF context.selected = c THEN
+                                COLOR col&("red"), col&("fg")
+                            ELSE
+                                COLOR col&("bg"), col&("fg")
+                            END IF
+                            PRINT RTRIM$(citem(c).name)
+                        LOOP UNTIL c = cc
                     END IF
                 END IF
             LOOP UNTIL m = maxm
@@ -2672,13 +2847,13 @@ SUB RunMenu (selectedm, layout, titel$)
             fps = fps + 1
             IF frametime >= 1 THEN
                 LOCATE maxlines - 1, maxrows - 4
-                COLOR colour&("fg"), colour&("bg")
+                COLOR col&("fg"), col&("bg")
                 PRINT fps
-                IF fps < (framerate * 2) THEN 'removes rounding in case the framerate drops below half, potentially saves some time
+                IF fps < (framerate / 2) THEN 'removes rounding in case the framerate drops below half, potentially saves some time
+                    UMround = 0
+                ELSE
                     UMround = 4
                     IF st > 0 THEN printStatus
-                ELSE
-                    UMround = 0
                 END IF
                 fps = 0
             END IF
@@ -2686,7 +2861,7 @@ SUB RunMenu (selectedm, layout, titel$)
             _PUTIMAGE (0, 0), canvas&
             _DISPLAY
             _DEST canvas&
-            _LIMIT framerate
+            _LIMIT framerate * 2
         LOOP UNTIL endmenu = 1 OR interactable = 0
         m = 0: DO: m = m + 1
             SELECT CASE type$(m)
@@ -2773,7 +2948,7 @@ SUB printStatus
     maxst = st
     _FONT b&
     st = 0: DO: st = st + 1
-        COLOR colour&(color$(st)), colour&("bg")
+        COLOR col&(color$(st)), col&("bg")
         LOCATE firstline + st, maxrows - LEN(sttext$(st)) - 10
         PRINT SPC(5) + sttext$(st)
     LOOP UNTIL st = maxst
@@ -2832,6 +3007,36 @@ FUNCTION convminute$ (minute)
     ELSEIF minute > 0 THEN
         convminute$ = "0" + LST$(minute)
     ELSE: convminute$ = "00": END IF
+END FUNCTION
+
+FUNCTION GetMTitle$ (endparameter$)
+    SELECT CASE endparameter$
+        CASE "start": GetMTitle$ = "START"
+        CASE "pk": GetMTitle$ = "PK"
+        CASE "vea": GetMTitle$ = "VERANSTALTER"
+        CASE "Dvea": GetMTitle$ = "VERANSTALTER"
+        CASE "ver": GetMTitle$ = "VERANSTALTUNGEN"
+        CASE "Dver": GetMTitle$ = "VERANSTALTUNG"
+        CASE "ka": GetMTitle$ = "KAZ"
+        CASE "kaz": GetMTitle$ = "KLEINANZEIGEN"
+        CASE "Dkaz": GetMTitle$ = "KLEINANZEIGE"
+        CASE "asg": GetMTitle$ = "AUSGABEN"
+        CASE "Dasg": GetMTitle$ = "AUSGABE"
+        CASE "usr": GetMTitle$ = "BENUTZER"
+        CASE "Dusr": GetMTitle$ = "BENUTZER"
+        CASE "rbk": GetMTitle$ = "RUBRIKEN"
+        CASE "Drbk": GetMTitle$ = "RUBRIK"
+        CASE "aov": GetMTitle$ = ""
+        CASE "adr": GetMTitle$ = "ADRESSEN"
+        CASE "Dadr": GetMTitle$ = "ADRESSE"
+        CASE "ort": GetMTitle$ = "ORTE"
+        CASE "Dort": GetMTitle$ = "ORT"
+        CASE "plz": GetMTitle$ = "POSTLEITZAHLEN"
+        CASE "Dplz": GetMTitle$ = "POSTLEITZAHL"
+        CASE "kat": GetMTitle$ = "KATEGORIEN"
+        CASE "Dkat": GetMTitle$ = "KATEGORIE"
+        CASE "settings": GetMTitle$ = "EINSTELLUNGEN"
+    END SELECT
 END FUNCTION
 
 SUB NewSlider (yoffset, xoffset, minval, maxval, text$, destination$, standard)
@@ -2989,24 +3194,24 @@ END SUB
 
 SUB Background (layout, titel$, maintrigger)
     IF maintrigger = 1 THEN
-        COLOR colour&("fg"), colour&("bg")
+        COLOR col&("fg"), col&("bg")
         CLS
         IF darkmode = 1 THEN
-            newgcolor 1, 1, 0, colour&("black")
-            newgcolor 1, 2, 100, _RGBA(0, 0, 25, 255)
-            newgradient 1, 2
-            drawgradient 1, 0, maxx, 0, maxy, "v"
+            'newgcolor 1, 1, 0, col&("black")
+            'newgcolor 1, 2, 100, _RGBA(0, 0, 25, 255)
+            'newgradient 1, 2
+            'drawgradient 1, 0, maxx, 0, maxy, "v"
         ELSE
-            newgcolor 1, 1, 0, colour&("white")
-            newgcolor 1, 2, 100, _RGBA(240, 240, 255, 255)
-            newgradient 1, 2
-            drawgradient 1, 0, maxx, 0, maxy, "v"
+            'newgcolor 1, 1, 0, col&("white")
+            'newgcolor 1, 2, 100, _RGBA(240, 240, 255, 255)
+            'newgradient 1, 2
+            'drawgradient 1, 0, maxx, 0, maxy, "v"
         END IF
         'borderthickness = 5
-        'rectangle 0, 0, maxx, borderthickness, 0, colour&("fg"), "BF"
-        'rectangle 0, 0, borderthickness, maxy, 0, colour&("fg"), "BF"
-        'rectangle 0, maxy, maxx, maxy - borderthickness, 0, colour&("fg"), "BF"
-        'rectangle maxx, 0, maxx - borderthickness, maxy, 0, colour&("fg"), "BF"
+        'rectangle 0, 0, maxx, borderthickness, 0, col&("fg"), "BF"
+        'rectangle 0, 0, borderthickness, maxy, 0, col&("fg"), "BF"
+        'rectangle 0, maxy, maxx, maxy - borderthickness, 0, col&("fg"), "BF"
+        'rectangle maxx, 0, maxx - borderthickness, maxy, 0, col&("fg"), "BF"
         lheight = 54
         _PUTIMAGE (0, 0)-((lheight * 4.82), lheight), l%
         closebuttonlx = (maxrows - 4) * fontwidth - 10
@@ -3015,22 +3220,22 @@ SUB Background (layout, titel$, maintrigger)
         minbuttonux = closebuttonlx
         buttonsly = 10
         buttonsuy = (fontheight * 1.5) + 10
-        rectangle minbuttonlx, buttonsly, closebuttonux, buttonsuy, UMround, colour&("fg"), "B"
-        LINE (minbuttonux, buttonsly)-(minbuttonux, buttonsuy), colour&("fg")
+        rectangle minbuttonlx, buttonsly, closebuttonux, buttonsuy, UMround, col&("fg"), "B"
+        LINE (minbuttonux, buttonsly)-(minbuttonux, buttonsuy), col&("fg")
         factor = 3
         'close button
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+        LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
         'minimize button
-        LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor) - 3), colour&("fg"), BF
+        LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor) - 3), col&("fg"), BF
         IF username$ <> "" THEN
             'name
             IF bigwindow = 0 THEN
@@ -3045,30 +3250,30 @@ SUB Background (layout, titel$, maintrigger)
             PRINT "Angemeldet als: " + _TRIM$(username$)
 
             'profile image
-            IF _FILEEXISTS(netpath$ + "data\pfp\" + username$ + ".png") = 0 THEN
-                pfp& = Robohash(username$)
-                Result = SaveImage(netpath$ + "data\pfp\" + username$ + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
-                IF Result = 1 THEN 'file already found on drive
-                    KILL exportimage2$ 'delete the old file
-                    Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
-                END IF
-                _FREEIMAGE pfp&
-            END IF
-            pfp& = _LOADIMAGE(netpath$ + "data\pfp\" + username$ + ".png", 32)
-            pfpsize = 4
-            _PUTIMAGE ((usernamepos - (2.5 + pfpsize)) * fontwidth, (firstline - pfpsize + 0.5) * fontheight)-((usernamepos - 2.5) * fontwidth, ((firstline - pfpsize + 0.5) * fontheight) + (pfpsize * fontwidth)), pfp&
+            'IF _FILEEXISTS(netpath$ + "data\pfp\" + username$ + ".png") = 0 THEN
+            '    pfp& = Robohash(username$)
+            '    Result = SaveImage(netpath$ + "data\pfp\" + username$ + ".png", pfp&, 0, 0, _WIDTH(pfp&), _HEIGHT(pfp&))
+            '    IF Result = 1 THEN 'file already found on drive
+            '        KILL exportimage2$ 'delete the old file
+            '        Result = SaveImage(exportimage2$, 0, 0, 0, _WIDTH, _HEIGHT) 'save the new one again
+            '    END IF
+            '    _FREEIMAGE pfp&
+            'END IF
+            'pfp& = _LOADIMAGE(netpath$ + "data\pfp\" + username$ + ".png", 32)
+            'pfpsize = 4
+            '_PUTIMAGE ((usernamepos - (2.5 + pfpsize)) * fontwidth, (firstline - pfpsize + 0.5) * fontheight)-((usernamepos - 2.5) * fontwidth, ((firstline - pfpsize + 0.5) * fontheight) + (pfpsize * fontwidth)), pfp&
 
             'thiccc line
-            LINE (((usernamepos - 2 - pfpsize) * fontwidth) - (fontwidth / 2), (firstline - 1) * fontheight - 3)-(maxx, (firstline - 1) * fontheight), colour&("bg"), BF
-            LINE (((usernamepos - 2 - pfpsize) * fontwidth) - (fontwidth / 2), (firstline - 1) * fontheight - 3)-(maxx, (firstline - 1) * fontheight), colour&("fg"), BF
+            LINE (((usernamepos - 2 - pfpsize) * fontwidth) - (fontwidth / 2), (firstline - 1) * fontheight - 3)-(maxx, (firstline - 1) * fontheight), col&("bg"), BF
+            LINE (((usernamepos - 2 - pfpsize) * fontwidth) - (fontwidth / 2), (firstline - 1) * fontheight - 3)-(maxx, (firstline - 1) * fontheight), col&("fg"), BF
         END IF
         SELECT CASE layout
             CASE 0
                 ' :)
             CASE 1
-                LINE ((maxx / 2) - maxx / 6, (firstline - 1) * fontheight)-((maxx / 2) + maxx / 7, (maxlines - 2) * fontheight), colour&("fg"), B
-                LINE ((maxx / 2) + maxx / 6, (firstline - 1) * fontheight)-(maxx - 20, (maxlines / 2) * fontheight), colour&("fg"), B
-                LINE ((maxx / 2) + maxx / 6, (maxlines / 2 + 1) * fontheight)-(maxx - 20, (maxlines - 2) * fontheight), colour&("fg"), B
+                LINE ((maxx / 2) - maxx / 6, (firstline - 1) * fontheight)-((maxx / 2) + maxx / 7, (maxlines - 2) * fontheight), col&("fg"), B
+                LINE ((maxx / 2) + maxx / 6, (firstline - 1) * fontheight)-(maxx - 20, (maxlines / 2) * fontheight), col&("fg"), B
+                LINE ((maxx / 2) + maxx / 6, (maxlines / 2 + 1) * fontheight)-(maxx - 20, (maxlines - 2) * fontheight), col&("fg"), B
         END SELECT
     END IF
     SetTitel titel$
@@ -3095,7 +3300,7 @@ SUB minimize
     currentposx = -5
     currentposy = _DESKTOPHEIGHT - 40 - _HEIGHT
     _DEST 0
-    COLOR colour&("fg"), colour&("bg")
+    COLOR col&("fg"), col&("bg")
     CLS
     closebuttonlx = _WIDTH - (4 * fontwidth) - 10
     closebuttonux = _WIDTH - 10
@@ -3104,22 +3309,22 @@ SUB minimize
     buttonsly = 10
     buttonsuy = (fontheight * 1.5) + 10
     factor = 3
-    rectangle minbuttonlx, buttonsly, closebuttonux, buttonsuy, UMround, colour&("fg"), "B"
-    LINE (closebuttonlx, buttonsly)-(closebuttonlx, buttonsuy), colour&("fg")
+    rectangle minbuttonlx, buttonsly, closebuttonux, buttonsuy, UMround, col&("fg"), "B"
+    LINE (closebuttonlx, buttonsly)-(closebuttonlx, buttonsuy), col&("fg")
     'close button
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
-    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) + 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) + 1, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 1, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 1, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 2, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 2, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
+    LINE (closebuttonlx + ((closebuttonux - closebuttonlx) / factor) - 3, buttonsuy - ((buttonsuy - buttonsly) / factor))-(closebuttonux - ((closebuttonux - closebuttonlx) / factor) - 3, buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg")
     'maximize button
-    LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), colour&("fg"), B
-    LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor) + 1), colour&("fg"), B
+    LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor)), col&("fg"), B
+    LINE (minbuttonlx + ((minbuttonux - minbuttonlx) / factor), buttonsuy - ((buttonsuy - buttonsly) / factor))-(minbuttonux - ((minbuttonux - minbuttonlx) / factor), buttonsly + ((buttonsuy - buttonsly) / factor) + 1), col&("fg"), B
     LOCATE 2, 3
     PRINT loginstring$
     _DISPLAY
@@ -3185,21 +3390,21 @@ SUB minimize
         currentposx = 0
         currentposy = 0
     END IF
-    COLOR colour&("fg"), colour&("bg")
+    COLOR col&("fg"), col&("bg")
     CLS
 END SUB
 
 SUB SetTitel (titel$)
     _FONT h&
     LOCATE 2
-    COLOR colour&("fg"), colour&("transparent")
+    COLOR col&("fg"), col&("transparent")
     PRINT SPC(17) + titel$
     _FONT r&
 END SUB
 
 SUB loadall
     timerstart = TIMER(.001)
-    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Verzeichnisse...", 1, 1, colour&("fg"), colour&("bg")
+    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Verzeichnisse...", 1, 1, col&("fg"), col&("bg")
     'checkt, ob alle ordner und dateien da sind, wenn nicht, dann werden sie erstellt
     IF _DIREXISTS(netpath$ + "data") = 0 THEN MKDIR netpath$ + "data"
 
@@ -3234,17 +3439,17 @@ SUB loadall
     progressBar 0, maxloadprogress, maxloadprogress
     timerend = TIMER(.001)
     timerdifference = timerend - timerstart
-    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Daten erfolgreich!", 1, 1, colour&("fg"), colour&("bg")
+    quickprint maxlines / 2 + 2, maxrows / 2, "Laden der Daten erfolgreich!", 1, 1, col&("fg"), col&("bg")
     starttime$ = LST$(timerdifference)
-    quickprint maxlines / 2 + 3, maxrows / 2, "Ladezeit: " + starttime$ + " Sekunden", 1, 1, colour&("fg"), colour&("bg")
+    quickprint maxlines / 2 + 3, maxrows / 2, "Ladezeit: " + starttime$ + " Sekunden", 1, 1, col&("fg"), col&("bg")
     CLS
 END SUB
 
 SUB progressBar (position, progress, maxprogress)
     SELECT CASE position
         CASE 0 'center
-            LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 + 200, maxy / 2 - 45), colour&("red"), B
-            LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 - 200 + ((progress / maxprogress) * 400), maxy / 2 - 45), colour&("red"), BF
+            LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 + 200, maxy / 2 - 45), col&("red"), B
+            LINE (maxx / 2 - 200, maxy / 2 - 50)-(maxx / 2 - 200 + ((progress / maxprogress) * 400), maxy / 2 - 45), col&("red"), BF
     END SELECT
 END SUB
 
@@ -3253,7 +3458,7 @@ SUB load (short$, plural$)
     IF readBinary(short$) <> 1 THEN
         resetToStandard (short$)
         writeBinary (short$)
-        IF readBinary(short$) = 2 THEN quickprint maxlines / 2 + 2, maxrows / 2, plural$ + ": Keine Daten gefunden.", 1, 1, colour&("fg"), colour&("bg")
+        IF readBinary(short$) = 2 THEN quickprint maxlines / 2 + 2, maxrows / 2, plural$ + ": Keine Daten gefunden.", 1, 1, col&("fg"), col&("bg")
     END IF
     'quickprint maxlines / 2 + 2, maxrows / 2, plural$ + " geladen.", 1, 1
 END SUB
@@ -3281,11 +3486,11 @@ SUB rectangle (lx, ly, ux, uy, round, clr&, outline$)
             rectangleoutline lx, ly, ux, uy, round, clr&
             PAINT (lx + ((ux - lx) / 2), ly + ((uy - ly) / 2)), clr&, clr&
             IF shading = 1 THEN
-                IF clr& = colour&("white") THEN
+                IF clr& = col&("white") THEN
                     shader& = _RGBA(0, 0, 0, 80)
                 ELSE
-                    IF colour&("bg") <> colour&("white") THEN
-                        shader& = colour&("white")
+                    IF col&("bg") <> col&("white") THEN
+                        shader& = col&("white")
                     ELSE
                         shader& = _RGBA(0, 0, 0, 80)
                     END IF
@@ -3334,7 +3539,7 @@ SUB rectangleoutline (lx, ly, ux, uy, round, clr&)
         DO: x = x + ((0.5 * _PI) / round / detail)
             PSET ((ux - round) - (SIN(x) * round), (uy - round) + (COS(x) * round)), clr&
         LOOP UNTIL x >= 0
-        '           lines:
+        'lines:
         LINE (lx + round, ly)-(ux - round, ly), clr&
         LINE (lx + round, uy)-(ux - round, uy), clr&
         LINE (lx, ly + round)-(lx, uy - round), clr&
@@ -3637,8 +3842,8 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                     printed(kt) = 0
                     ka = 0: DO: ka = ka + 1
                         progressBar 0, ka + (max(10) * (kt - 1)), (max(10) * max(12))
-                        COLOR colour&("fg"), colour&("bg")
-                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT((ka + (max(10) * (kt - 1))) / (max(10) * max(12)) * 100)) + "%", 1, 1, colour&("fg"), colour&("bg")
+                        COLOR col&("fg"), col&("bg")
+                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT((ka + (max(10) * (kt - 1))) / (max(10) * max(12)) * 100)) + "%", 1, 1, col&("fg"), col&("bg")
                         IF Kleinanzeige(ka).Kategorie1 = Kategorie(kt).Name AND Kleinanzeige(ka).Ausgabe = VAL(ausgabe$) THEN
                             IF printed(kt) = 0 THEN
                                 printed(kt) = 1
@@ -3653,8 +3858,8 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                     LOOP UNTIL ka = max(10)
                 LOOP UNTIL kt = max(12) - 1
                 progressBar 0, max(10) * max(12), (max(10) * max(12))
-                COLOR colour&("fg"), colour&("bg")
-                quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... 100%", 1, 1, colour&("fg"), colour&("bg")
+                COLOR col&("fg"), col&("bg")
+                quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... 100%", 1, 1, col&("fg"), col&("bg")
                 CLOSE #5
             ELSE
 
@@ -3701,7 +3906,7 @@ SUB exportToQuark (listID$, ausgabe$, start$, end$)
                                     v = 0: DO: v = v + 1
                                         prog = prog + 1
                                         progressBar 0, prog, dif
-                                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT(prog / dif * 100)) + "%", 1, 1, colour&("fg"), colour&("bg")
+                                        quickprint maxlines / 2 + 2, maxrows / 2, "Exportiere nach Quark... " + LST$(INT(prog / dif * 100)) + "%", 1, 1, col&("fg"), col&("bg")
                                         IF (Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND RTRIM$(Veranstaltung(v).Datum) = Datum$ AND OrtF$(v) = Ort(ot).Name) OR (Veranstaltung(v).Rubrik = Rubrik(r).Name AND Veranstaltung(v).Ausgabe = VAL(ausgabe$) AND RTRIM$(Veranstaltung(v).Datum) = Datum$ AND RTRIM$(Veranstaltung(v).Veranstalter) = "" AND RTRIM$(Veranstaltung(v).Ort) = Ort(ot).Name) THEN
                                             'headers
                                             IF printedd(d) = 0 THEN
@@ -3813,7 +4018,7 @@ SUB drawTriangle (x, y, trianglescale, direction)
     p3x = p1x + ((p2x - p1x) / 2)
     p3y = p1y + (((fontwidth * trianglescale) * 2 / 3) * direction)
 
-    tricolor& = colour&("fg")
+    tricolor& = col&("fg")
     'triangle
     LINE (p1x, p1y)-(p2x, p2y), tricolor&: LINE (p1x, p1y)-(p3x, p3y), tricolor&: LINE (p2x, p2y)-(p3x, p3y), tricolor&
     PAINT (p1x + ((p2x - p1x) / 2), p1y + ((p3y - p1y) / 2)), tricolor&, tricolor&
@@ -4656,25 +4861,25 @@ END SUB
 
 FUNCTION Robohash& (stringhash AS STRING)
     logThis "Generiere Profilbild fuer " + stringhash + "..."
-    DIM URL AS STRING
-    DIM URLFile AS STRING
-    DIM a%
-    URLFile = stringhash + ".png"
-    URL = "https://robohash.org/" + stringhash
-    a% = API_request(URL, URLFile)
-    DIM U AS INTEGER
-    U = FREEFILE
-    OPEN URLFile FOR BINARY AS #U
-    IF LOF(U) <> 0 THEN
-        Robohash = _LOADIMAGE(URLFile, 32)
-    ELSE
-        CLOSE #U
-        KILL URLFile
-        Robohash = 0
-    END IF
-    CLOSE #U
-    KILL URLFile
-    logThis "Profilbild erfolgreich generiert."
+    'DIM URL AS STRING
+    'DIM URLFile AS STRING
+    'DIM a%
+    'URLFile = stringhash + ".png"
+    'URL = "https://robohash.org/" + stringhash
+    'a% = API_request(URL, URLFile)
+    'DIM U AS INTEGER
+    'U = FREEFILE
+    'OPEN URLFile FOR BINARY AS #U
+    'IF LOF(U) <> 0 THEN
+    '    Robohash = _LOADIMAGE(URLFile, 32)
+    'ELSE
+    '    CLOSE #U
+    '    KILL URLFile
+    '    Robohash = 0
+    'END IF
+    'CLOSE #U
+    'KILL URLFile
+    'logThis "Profilbild erfolgreich generiert."
 END FUNCTION
 
 DECLARE DYNAMIC LIBRARY "urlmon"
@@ -4687,9 +4892,9 @@ END FUNCTION
 
 REM $INCLUDE:'code/SaveImage.BM'
 
-SUB newgcolor (gradient, gcolor, gpos, col&)
+SUB newgcolor (gradient, gcolor, gpos, clr&)
     IF gcolor > 0 AND gcolor <= maxcolors THEN
-        gcol&(gradient, gcolor) = col&
+        gcol&(gradient, gcolor) = clr&
         gpos(gradient, gcolor) = gpos
     END IF
 END SUB
@@ -4777,29 +4982,30 @@ SUB drawgradient (gradient, lx, ux, ly, uy, orientation$)
     END SELECT
 END SUB
 
-FUNCTION colour& (color$)
+FUNCTION col& (color$)
     SELECT CASE color$
         CASE "bg"
-            IF darkmode = 1 THEN colour& = colour&("black") ELSE colour& = colour&("white")
+            IF darkmode = 1 THEN col& = col&("black") ELSE col& = col&("white")
         CASE "fg"
-            IF darkmode = 1 THEN colour& = colour&("white") ELSE colour& = colour&("black")
+            IF darkmode = 1 THEN col& = col&("white") ELSE col& = col&("black")
         CASE "offfocus"
-            IF darkmode = 1 THEN colour& = colour&("light grey") ELSE colour& = colour&("dark grey")
+            IF darkmode = 1 THEN col& = col&("light grey") ELSE col& = col&("dark grey")
         CASE "white"
-            colour& = _RGBA(220, 220, 220, 255)
+            'col& = _RGBA(220, 220, 220, 255)
+            col& = _RGBA(240, 240, 255, 255)
         CASE "black"
-            colour& = _RGBA(15, 15, 15, 255)
+            col& = _RGBA(15, 15, 15, 255)
         CASE "red"
-            colour& = _RGBA(255, 30, 30, 255)
+            col& = _RGBA(255, 30, 30, 255)
         CASE "yellow"
-            colour& = _RGBA(249, 194, 0, 255)
+            col& = _RGBA(249, 194, 0, 255)
         CASE "green"
-            colour& = _RGBA(94, 233, 61, 255)
+            col& = _RGBA(94, 233, 61, 255)
         CASE "dark grey"
-            colour& = _RGBA(50, 50, 50, 255)
+            col& = _RGBA(50, 50, 50, 255)
         CASE "light grey"
-            colour& = _RGBA(170, 170, 170, 255)
+            col& = _RGBA(170, 170, 170, 255)
         CASE "transparent"
-            colour& = _RGBA(0, 0, 0, 0)
+            col& = _RGBA(0, 0, 0, 0)
     END SELECT
 END SUB
